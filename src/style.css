@@ -2037,19 +2037,19 @@ textarea {
   }
 }
 
-/* Cloud-white surfaces share the soft shapes and sky colors of the circuit. */
+/* Painted pit-wall panels: neutral surfaces, cobalt controls, clear driver colors. */
 :root {
-  --paper: #fcfefe;
-  --panel: #eaf4f6;
-  --ink: #294654;
-  --muted: #617e8a;
-  --accent: #db6550;
-  --line: #d9e9ed;
+  --paper: #f5f5ef;
+  --panel: #e9ece8;
+  --ink: #252b28;
+  --muted: #606b65;
+  --accent: #244fc4;
+  --line: #d6dcd4;
   --radius: 16px;
-  --shadow: 0 8px 24px #477e8f1a, 0 2px 0 #ffffffb3 inset;
+  --shadow: 0 8px 24px #2026201a, 0 2px 0 #ffffffb3 inset;
 }
 .brand {
-  background: #fcfefee8;
+  background: #f5f5efe8;
   padding: 9px 16px 10px 12px;
   border-radius: 999px;
   box-shadow: var(--shadow);
@@ -2067,7 +2067,7 @@ textarea {
 }
 .timing-tower {
   color: var(--ink);
-  background: #fcfefef2;
+  background: #f5f5eff2;
   border: 1px solid #ffffff;
   border-radius: 26px;
   box-shadow: var(--shadow);
@@ -2079,7 +2079,7 @@ textarea {
   content: '';
   position: absolute;
   z-index: -1;
-  background: #fcfefe;
+  background: #f5f5ef;
   border-radius: 50%;
   pointer-events: none;
 }
@@ -2126,19 +2126,19 @@ textarea {
   border-radius: 0 0 25px 25px;
 }
 .timing-number {
-  text-shadow: 0 0 1px #29465455;
+  text-shadow: 0 0 1px #252b2855;
 }
 .lap-widget {
   border: 1px solid #fff;
   border-radius: 26px;
   padding: 13px 17px;
-  background: #fcfefef2;
+  background: #f5f5eff2;
   box-shadow: var(--shadow);
 }
 .speed-widget {
   padding: 11px 17px;
   border-radius: 999px;
-  background: #fcfefef2;
+  background: #f5f5eff2;
   box-shadow: var(--shadow);
 }
 .track-label {
@@ -2156,15 +2156,15 @@ textarea {
   border-radius: 22px;
 }
 .primary-button {
-  box-shadow: 0 3px 0 #ae4d3d;
+  box-shadow: 0 3px 0 #17368f;
 }
 .secondary-button {
-  background: #f4f9fa;
+  background: #eceee8;
 }
 dialog,
 #setup-dialog[open] {
   border-radius: 28px;
-  box-shadow: 0 24px 80px #29465429;
+  box-shadow: 0 24px 80px #252b2829;
 }
 .track-preview {
   border-radius: 22px;
@@ -2182,7 +2182,7 @@ dialog,
 .setup-tabs button.active {
   background: #fff;
   color: var(--ink);
-  box-shadow: 0 3px 10px #477e8f12;
+  box-shadow: 0 3px 10px #20262012;
 }
 .grid-editor-tabs button {
   border-radius: 15px;
@@ -2199,13 +2199,13 @@ textarea,
 #reel-lights {
   border: 1px solid #ffffff;
   border-radius: 999px;
-  background: #fcfefef2;
+  background: #f5f5eff2;
   box-shadow: var(--shadow);
   padding: 16px 22px;
 }
 #reel-lights span {
   background: #d9e6e9;
-  box-shadow: inset 0 2px 4px #29465412;
+  box-shadow: inset 0 2px 4px #252b2812;
 }
 #reel-lights .lit {
   background: #f46d55;
@@ -2217,7 +2217,7 @@ textarea,
   border: 1px solid #fff;
   border-radius: 36px;
   box-shadow: var(--shadow);
-  background: #fcfefef5;
+  background: #f5f5eff5;
 }
 #reel-winner::before {
   content: '';
@@ -2227,7 +2227,7 @@ textarea,
   width: 80px;
   height: 25px;
   border-radius: 50%;
-  background: #fcfefe;
+  background: #f5f5ef;
   z-index: -1;
 }
 .reel-exit {
@@ -2374,7 +2374,7 @@ textarea,
   height: 35px;
   grid-template-columns: 18px 26px 1fr auto;
   gap: 8px;
-  border-bottom-color: #dce8eb85;
+  border-bottom-color: #d7ddd585;
 }
 .timing-driver {
   display: grid;
@@ -2414,7 +2414,7 @@ textarea,
   bottom: 24px;
   width: 256px;
   padding: 14px 16px;
-  background: #fcfefef2;
+  background: #f5f5eff2;
   border: 1px solid white;
   border-radius: 24px;
   box-shadow: var(--shadow);
@@ -2439,11 +2439,11 @@ textarea,
   overflow: visible;
 }
 #activity-chart rect {
-  fill: #55a998;
+  fill: #4164ad;
 }
 .chart-grid {
   fill: none;
-  stroke: #dce8eb;
+  stroke: #d7ddd5;
   stroke-width: 0.5;
 }
 .activity-scale {
@@ -2481,7 +2481,7 @@ textarea,
 #decision-values span {
   flex: 1;
   padding: 4px;
-  background: #eaf3f4;
+  background: #e7ebed;
   border-radius: 6px;
   text-align: center;
   text-transform: uppercase;
@@ -2663,7 +2663,7 @@ textarea,
   max-width: 450px;
   padding: 9px 15px;
   border-radius: 16px;
-  background: #fcfefee8;
+  background: #f5f5efe8;
 }
 #sound-toggle[aria-pressed='false'] {
   opacity: 0.55;
@@ -2684,22 +2684,26 @@ textarea,
 
 /* Pit wall: driver decisions left, race classification right. */
 .lap-widget {
-  top: 84px;
+  top: 72px;
   right: 24px;
   padding: 10px 16px;
 }
 .timing-tower {
   left: auto;
   right: 24px;
-  top: 174px;
-  width: 250px;
+  top: 150px;
+  width: 280px;
+  padding: 8px 10px 12px;
 }
 .timing-header {
   height: 32px;
+  padding-inline: 14px;
 }
 .timing-row {
   height: 40px;
-  gap: 10px;
+  gap: 12px;
+  padding-inline: 12px;
+  border-radius: 10px;
 }
 .timing-driver {
   gap: 3px;
@@ -2792,7 +2796,7 @@ textarea,
   align-items: center;
   gap: 18px;
   min-height: 64px;
-  border-bottom: 1px solid #dce8eb;
+  border-bottom: 1px solid #d7ddd5;
   padding: 7px 0;
 }
 .choice-row:last-child {
@@ -2814,7 +2818,7 @@ textarea,
   justify-content: space-between;
   padding: 2px 6px;
   margin: 2px 0;
-  background: #eaf1f2;
+  background: #e3e8ef;
   border-radius: 4px;
   font: 9px var(--data);
   text-transform: none;
@@ -2824,10 +2828,10 @@ textarea,
 .choice-probabilities i {
   position: absolute;
   inset: 0 auto 0 0;
-  background: #b7d4cf;
+  background: #c1cce0;
 }
 .choice-probabilities .chosen i {
-  background: #7dbbad;
+  background: #a1b6de;
 }
 .choice-probabilities b,
 .choice-probabilities em {
@@ -2845,7 +2849,7 @@ textarea,
   font-size: 11px;
   color: var(--muted);
   line-height: 1.5;
-  padding: 14px 0;
+  padding: 8px 0;
 }
 .car-condition {
   display: flex;
@@ -2853,13 +2857,13 @@ textarea,
   gap: 8px;
   padding: 8px 10px;
   border-radius: 10px;
-  background: #e2efeb;
+  background: #e7ece2;
   font-size: 11px;
-  color: #326659;
+  color: #455f35;
 }
 .car-condition.warning {
-  background: #f8e6d5;
-  color: #814823;
+  background: #f6e9cc;
+  color: #795322;
 }
 .chart-heading {
   margin-top: 20px;
@@ -2885,7 +2889,7 @@ textarea,
   color: var(--muted);
 }
 #decision-history b {
-  color: #91a5ad;
+  color: #858f87;
   padding: 0 2px;
 }
 .response-detail {
@@ -2908,7 +2912,7 @@ textarea,
   border: 1px solid #fff;
   border-radius: 30px;
   text-align: left;
-  box-shadow: 0 18px 50px #29465430;
+  box-shadow: 0 18px 50px #252b2830;
 }
 .winner-ribbon {
   position: absolute;
@@ -2918,8 +2922,8 @@ textarea,
   height: 16px;
   border-radius: 4px;
   transform: rotate(-4deg);
-  background: conic-gradient(#294654 25%, #fff 0 50%, #294654 0 75%, #fff 0) 0 0 / 16px 16px;
-  box-shadow: 0 2px 5px #29465415;
+  background: conic-gradient(#252b28 25%, #fff 0 50%, #252b28 0 75%, #fff 0) 0 0 / 16px 16px;
+  box-shadow: 0 2px 5px #252b2815;
 }
 .winner-heading {
   display: flex;
@@ -3002,8 +3006,9 @@ textarea,
     top: 148px;
     right: 12px;
     left: auto;
-    width: 174px;
-    max-height: 274px;
+    width: 186px;
+    padding: 6px;
+    max-height: 306px;
     overflow-y: auto;
   }
   .timing-row {
@@ -3136,5 +3141,110 @@ textarea,
     width: 180px;
     font-size: 11px;
     padding: 9px;
+  }
+}
+
+/* Solid number plates keep the car identity readable on neutral timing panels. */
+.timing-number {
+  background: var(--pilot);
+  color: var(--pilot-ink, #fff);
+  text-shadow: none;
+}
+.timing-row.selected {
+  background: #e3e9f2;
+  box-shadow: inset 3px 0 var(--pilot);
+}
+.timing-row:last-child {
+  border-radius: 10px;
+}
+.timing-row {
+  border-bottom-color: #d8ddd680;
+}
+#jev-activity,
+.timing-tower,
+.lap-widget,
+#reel-winner {
+  background: #f5f5effa;
+  border-color: #ffffffa8;
+}
+.choice-probabilities .chosen b,
+.choice-probabilities .chosen em {
+  color: #1b2c45;
+}
+
+.api-activity {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.api-activity .chart-heading {
+  margin-top: 0;
+}
+.api-activity .chart-heading strong {
+  font-weight: 500;
+  color: var(--ink);
+}
+.api-metrics {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.api-metrics b {
+  font: 500 13px var(--data);
+  color: var(--ink);
+  margin-right: 3px;
+}
+#activity-chart {
+  height: 44px;
+  margin-top: 6px;
+}
+#activity-chart rect {
+  fill: #d38c37;
+  opacity: 0.7;
+}
+#request-line {
+  stroke: #244fc4;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+#activity-peak {
+  fill: var(--muted);
+  font: 7px var(--data);
+}
+.activity-legend {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-size: 9px;
+  color: var(--muted);
+}
+.activity-legend > span:last-child {
+  margin-left: auto;
+}
+.sent-key::before,
+.reply-key::before {
+  content: '';
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+  width: 11px;
+  height: 2px;
+  background: #244fc4;
+}
+.reply-key::before {
+  height: 6px;
+  width: 6px;
+  border-radius: 2px;
+  background: #d38c37;
+}
+@media (max-width: 720px) {
+  .api-activity {
+    margin-top: 10px;
+    padding-top: 9px;
+  }
+  #activity-chart {
+    height: 34px;
   }
 }

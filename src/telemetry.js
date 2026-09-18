@@ -67,6 +67,7 @@ const OBS_KEYS = ['speed', 'battery', 'grip', 'damage', 'ahead', 'temperature'];
 export function cleanDecisionLog(log = []) {
   return log.map((batch) => ({
     t: batch.t,
+    ...(batch.failed ? { failed: true, calls: batch.calls } : {}),
     ...(Number.isFinite(batch.sent) ? { sent: batch.sent } : {}),
     ...(Number.isFinite(batch.ms) ? { ms: batch.ms } : {}),
     answers: batch.answers.map((answer) => ({
@@ -105,7 +106,11 @@ export function validDecisionLog(log) {
         (batch.ms === undefined ||
           (Number.isFinite(batch.ms) && batch.ms >= 0 && batch.ms <= 30000)) &&
         Array.isArray(batch.answers) &&
-        batch.answers.length > 0 &&
+        (batch.answers.length > 0 ||
+          (batch.failed === true &&
+            Number.isInteger(batch.calls) &&
+            batch.calls > 0 &&
+            batch.calls <= 10)) &&
         batch.answers.length <= 10 &&
         new Set(batch.answers.map((a) => a?.id)).size === batch.answers.length &&
         batch.answers.every(
@@ -157,6 +162,47 @@ export function decisionActivity(log, time, driverId) {
     last,
     selectedBatch,
     history: history.slice(-3).reverse(),
+  };
+}
+
+// Each driver state is one request; a successful batch contains one reply per driver.
+export function requestActivity(log, time, pending = null) {
+  const sentBins = Array(24).fill(0),
+    replyBins = Array(24).fill(0);
+  let sent = 0,
+    replies = 0,
+    inFlight = 0,
+    failed = 0,
+    latency = null;
+  const bin = (t) => Math.max(0, Math.min(23, 23 - Math.floor((time - t) / 0.5)));
+  for (const batch of log) {
+    const calls = batch.calls || batch.answers.length;
+    if (Number.isFinite(batch.sent) && batch.sent <= time + 0.0005) {
+      sent += calls;
+      if (time - batch.sent < 12) sentBins[bin(batch.sent)] += calls;
+      if (batch.t > time + 0.0005) inFlight += calls;
+    }
+    if (batch.t <= time + 0.0005) {
+      replies += batch.answers.length;
+      if (batch.failed) failed += calls;
+      if (time - batch.t < 12) replyBins[bin(batch.t)] += batch.answers.length;
+      if (Number.isFinite(batch.ms)) latency = batch.ms;
+    }
+  }
+  if (pending && pending.sent <= time + 0.0005) {
+    sent += pending.calls;
+    inFlight += pending.calls;
+    if (time - pending.sent < 12) sentBins[bin(pending.sent)] += pending.calls;
+  }
+  return {
+    sent,
+    replies,
+    inFlight,
+    failed,
+    latency,
+    sentBins,
+    replyBins,
+    sentKnown: log.every((batch) => Number.isFinite(batch.sent)),
   };
 }
 

@@ -113,3 +113,33 @@ test('selected driver response metadata stays causal and preserves probabilities
   log[0].answers[0].response.line.probabilities.left = 1.1;
   assert.equal(validDecisionLog(log), false);
 });
+
+test('Jev activity distinguishes sent, pending, received and failed requests at replay time', async () => {
+  const { requestActivity } = await import('../src/telemetry.js');
+  const log = [
+    { sent: 1, t: 2, ms: 500, answers: [answer] },
+    { sent: 3, t: 4, ms: 800, failed: true, calls: 2, answers: [] },
+  ];
+  const pending = requestActivity(log, 1.5);
+  assert.equal(pending.sent, 1);
+  assert.equal(pending.replies, 0);
+  assert.equal(pending.inFlight, 1);
+  const done = requestActivity(log, 4.5, { sent: 4.2, calls: 3 });
+  assert.equal(done.sent, 6);
+  assert.equal(done.replies, 1);
+  assert.equal(done.failed, 2);
+  assert.equal(done.inFlight, 3);
+  assert.equal(
+    done.sentBins.reduce((a, b) => a + b, 0),
+    6,
+  );
+  assert.equal(
+    done.replyBins.reduce((a, b) => a + b, 0),
+    1,
+  );
+  assert.ok(validDecisionLog(cleanDecisionLog(log)));
+  assert.equal(
+    requestActivity(log, 20).sentBins.reduce((a, b) => a + b, 0),
+    0,
+  );
+});

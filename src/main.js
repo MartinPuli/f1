@@ -1,6 +1,6 @@
 import { RaceSound } from './sound.js';
 const sound = new RaceSound();
-import { decisionActivity, timingGap } from './telemetry.js';
+import { decisionActivity, requestActivity, timingGap } from './telemetry.js';
 import { createSaveQueue } from './save-queue.js';
 import { defaultSettings, cleanSettings, MODEL_CHOICES, validModel } from './race-config.js';
 import {
@@ -63,6 +63,14 @@ const esc = (s) =>
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   );
+function numberInk(hex) {
+  const c = hex
+    .slice(1)
+    .match(/../g)
+    .map((v) => parseInt(v, 16) / 255)
+    .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return c[0] * 0.2126 + c[1] * 0.7152 + c[2] * 0.0722 > 0.179 ? '#172019' : '#ffffff';
+}
 // One bootstrap request sets the archive cookie before any parallel API calls.
 let sessionPromise;
 function ensureSession() {
@@ -95,15 +103,16 @@ let race = new Race(42),
 $('#app').innerHTML = `
 <header class="topbar"><a href="/" class="brand" aria-label="JEVRACE home"><img src="/logo-mark.svg" alt=""/><span>JEV<em>RACE</em></span></a><nav aria-label="Race actions"><button id="new-race" class="nav-button">${icon('Plus')} New race</button><button id="results" class="nav-button">${icon('Trophy')} Results</button></nav><div class="header-end"><button class="icon-button" data-film-launch aria-label="Watch race film" title="Watch race film">${icon('Film')}</button><button id="sound-toggle" class="icon-button" aria-label="Enable sound" title="Sound" aria-pressed="false">${icon('Volume2')}</button><span id="mode-caption" class="mode-caption">DEMO</span><button class="icon-button" id="configure" aria-label="Session API key" title="Session API key">${icon('Settings2')}</button></div></header>
 <aside id="jev-activity" hidden aria-label="Jev decision activity">
-<div class="activity-heading"><strong>JEV <small>PIT WALL</small></strong><span id="activity-total">0 decisions</span></div>
+<div class="activity-heading"><strong>JEV <small>TypeSafe</small></strong><span id="activity-total">0 decisions</span></div>
 <div class="decision-driver"><span id="decision-number"></span><div><strong id="decision-name"></strong><small id="decision-model"></small></div><span id="decision-confidence"></span></div>
 <div class="response-heading"><span>Latest response</span><span id="decision-age"></span></div>
 <div id="decision-values"></div>
 <div class="decision-context"><span id="decision-sees"></span></div>
 <div class="car-condition"><span id="decision-condition"></span><span id="decision-temperature"></span></div>
-<div class="response-heading chart-heading"><span>Grid activity</span><span id="activity-batch"></span></div>
-<svg id="activity-chart" viewBox="0 0 240 40" role="img" aria-label="Received decisions over the last twelve seconds"><path d="M0 39H240 M0 20H240" class="chart-grid"/>${Array.from({ length: 24 }, (_, i) => `<rect x="${i * 10}" y="38" width="6" height="1" rx="3"/>`).join('')}</svg>
-<div class="activity-scale"><span>−12s</span><span>now</span></div>
+<div class="api-activity" aria-label="Jev API requests and responses"><div class="response-heading chart-heading"><strong>Jev activity</strong><span id="activity-batch"></span></div>
+<div class="api-metrics"><span><b id="api-sent">0</b> sent</span><span><b id="api-replies">0</b> replies</span><span><b id="api-pending">0</b> in flight</span></div>
+<svg id="activity-chart" viewBox="0 0 240 44" role="img" aria-label="Jev requests sent and responses received in the last twelve seconds"><path d="M0 42H240 M0 22H240" class="chart-grid"/><g class="reply-bars">${Array.from({ length: 24 }, (_, i) => `<rect x="${i * 10}" y="42" width="6" height="0" rx="2"/>`).join('')}</g><path id="request-line" fill="none"/><text id="activity-peak" x="239" y="8" text-anchor="end"></text></svg>
+<div class="activity-legend"><span class="sent-key">Requests</span><span class="reply-key">Replies</span><span>last 12s</span></div></div>
 <details class="response-detail"><summary>Response & history</summary><ol id="decision-history" aria-label="Recent driver decisions"></ol><pre id="decision-response"></pre></details>
 </aside><button id="exit-demo" class="reel-exit" hidden>Exit ${icon('X')}</button><div id="reel-lights" hidden aria-label="Starting lights">${Array.from({ length: 5 }, () => '<span></span>').join('')}</div><div id="reel-winner" hidden><div class="winner-ribbon" aria-hidden="true"></div><div class="winner-heading"><span class="winner-trophy">${icon('Trophy')}</span><small>RACE WINNER</small><span id="winner-number"></span></div><strong id="winner-name"></strong><div class="winner-detail"></div><div id="winner-podium"></div><div class="winner-confetti" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="--i:${i};--turn:${i * 47}deg"></i>`).join('')}</div></div><main><section id="race-view" aria-label="Race circuit"><div id="canvas-host"></div><aside class="timing-tower" aria-label="Live standings"><div class="timing-header"><span>CLASSIFICATION</span><span>INTERVAL</span></div><div id="timing-rows"></div></aside><div class="onboard-strip"><span id="position-number"></span><span id="position-name"></span><small>ONBOARD</small></div><div class="lap-widget"><span>LAP</span><strong id="lap"></strong><span id="clock">00:00.00</span></div>
 <button class="track-label" id="rename-race" aria-label="Rename race"><span id="race-name"></span><small id="seed-label"></small>${icon('Pencil')}</button><div class="speed-widget"><strong id="selected-speed">0</strong><span>km/h</span><div id="car-telemetry" hidden><small id="driver-tactic"></small><div class="car-resources"><label>ERS <meter id="car-energy" min="0" max="1" value="1"></meter></label><label>TIRES <meter id="car-tires" min="0" max="1" value="1"></meter></label></div></div></div><div id="stage-message" role="status"></div><div class="finish-banner" id="finish-overlay" hidden></div>
@@ -683,6 +692,7 @@ function renderTiming(ranking, selected) {
     row.setAttribute('aria-label', `Follow ${car.name}`);
     row.setAttribute('aria-pressed', String(car === selected));
     row.style.setProperty('--pilot', car.color);
+    row.style.setProperty('--pilot-ink', numberInk(car.color));
     row.children[0].textContent = index + 1;
     row.children[1].textContent = car.number;
     row.children[2].querySelector('strong').textContent = car.short;
@@ -730,20 +740,37 @@ function renderActivity(car) {
       : race.time;
   const activity = decisionActivity(log, decisionTime, car.id);
   $('#activity-total').textContent = `${activity.count} decisions`;
-  $('#activity-batch').textContent =
-    !log.length && replay
-      ? 'No request log'
-      : !replay && race.waiting
-        ? 'Request in flight'
-        : `${activity.batches} ${activity.batches === 1 ? 'batch' : 'batches'}`;
+  const network = requestActivity(log, decisionTime, replay ? null : race.pendingRequest);
+  $('#api-sent').textContent = network.sentKnown ? network.sent : '—';
+  $('#api-replies').textContent = network.replies;
+  $('#api-pending').textContent = network.sentKnown ? network.inFlight : '—';
+  $('#request-line').style.display = network.sentKnown ? '' : 'none';
+  $('.sent-key').hidden = !network.sentKnown;
+  $('#activity-batch').textContent = network.failed
+    ? `${network.failed} failed`
+    : Number.isFinite(network.latency)
+      ? `${network.latency}ms / batch`
+      : 'TypeSafe API';
+  const peak = Math.max(10, ...network.sentBins, ...network.replyBins);
+  $('#activity-peak').textContent = `${peak} calls`;
   $$('#activity-chart rect').forEach((bar, i) => {
-    const height = Math.max(1, Math.min(36, activity.bins[i] * 1.8));
+    const height = (network.replyBins[i] / peak) * 30;
     bar.setAttribute('height', height);
-    bar.setAttribute('y', 39 - height);
-    bar.style.opacity = activity.bins[i] ? 0.45 + i / 44 : 0.16;
+    bar.setAttribute('y', 42 - height);
   });
+  $('#request-line').setAttribute(
+    'd',
+    network.sentBins
+      .map((n, i) => `${i ? 'L' : 'M'}${i * 10 + 3},${42 - (n / peak) * 30}`)
+      .join(' '),
+  );
+  $('#activity-chart').setAttribute(
+    'aria-label',
+    `Jev activity over 12 seconds: ${network.sentKnown ? `${network.sent} requests sent in total, ${network.inFlight} in flight` : 'send times not recorded'}, ${network.replies} replies.`,
+  );
   $('#decision-number').textContent = car.number;
   $('#decision-number').style.background = car.color;
+  $('#decision-number').style.color = numberInk(car.color);
   $('#decision-name').textContent = car.name;
   const answer = activity.selected;
   const batch = activity.selectedBatch;

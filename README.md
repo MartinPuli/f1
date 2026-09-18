@@ -84,7 +84,7 @@ Use a screen recorder at 1920 × 1080 to capture a loop. **Space** pauses; **Esc
 
 ## Race broadcast
 
-The timing tower shows gaps from recorded leader crossings, plus completed lap times and DNF status. The left Jev panel shows the selected driver’s returned choices, option probabilities, model, response age and latency, with the observation sent for that response and recent decisions. The graph covers the last twelve seconds of grid activity; classification sits on the right, below the lap counter. Its request log stores no headers, keys or raw request bodies. Older recordings without that log show no fabricated activity.
+The timing tower shows gaps from recorded leader crossings, plus completed lap times and DNF status. The left Jev panel shows the selected driver’s returned choices, option probabilities, model, response age and latency, with the observation sent for that response and recent decisions. The activity graph compares requests sent to Jev with replies received over the last twelve seconds. Counters show requests, replies, in-flight work and failed calls; the latency is measured for the last batch. No synthetic activity is generated. Classification sits on the right, below the lap counter. Its request log stores no headers, keys or raw request bodies. Older recordings without that log show no fabricated activity.
 
 **Watch film** adds a winner reveal and synthesized engine, start-light, contact and finish sounds. Sound follows the recorded speed and incident timestamps; mute with **M**. Saved frames retain the wheel steering angle and retired cars.
 

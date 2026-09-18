@@ -4,14 +4,14 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 
 const PALETTE = {
-  sky: '#b7e4ed',
-  grass: '#a6ca79',
-  road: '#697884',
-  sand: '#f3dfb2',
-  coral: '#ee8069',
-  cream: '#fff9df',
-  blue: '#4cb9e5',
-  wood: '#bd7d4d',
+  sky: '#b8d2e3',
+  grass: '#819761',
+  road: '#444b51',
+  sand: '#d7c8a4',
+  coral: '#d24732',
+  cream: '#f1f0e6',
+  blue: '#297bb8',
+  wood: '#a78057',
 };
 export class RaceScene {
   constructor(container, race) {
@@ -51,8 +51,8 @@ export class RaceScene {
     this.controls.minDistance = 35;
     this.controls.maxDistance = 600;
     this.controls.enablePan = false;
-    this.scene.add(new THREE.HemisphereLight('#e5faff', '#aec779', 2.1));
-    const sun = new THREE.DirectionalLight('#fff1c9', 3.1);
+    this.scene.add(new THREE.HemisphereLight('#edf1f4', '#8b9272', 1.65));
+    const sun = new THREE.DirectionalLight('#fff6e8', 2.5);
     sun.position.set(-70, 120, -40);
     sun.castShadow = true;
     sun.shadow.mapSize.set(this.touchDevice ? 1024 : 2048, this.touchDevice ? 1024 : 2048);
@@ -200,12 +200,12 @@ export class RaceScene {
     this.world.add(beach);
     const water = new THREE.Mesh(
       new THREE.PlaneGeometry(1600, 1600),
-      this.material('#78c6ce', { roughness: 0.35 }),
+      this.material('#528caa', { roughness: 0.35 }),
     );
     water.rotation.x = -Math.PI / 2;
     water.position.y = -7;
     this.world.add(water);
-    this.ribbon(track, -7.8, 7.8, 0.12, '#f6d99b');
+    this.ribbon(track, -7.8, 7.8, 0.12, '#c9bb99');
     this.ribbon(track, -6.7, 6.7, 0.18, PALETTE.road);
     this.ribbon(track, -6, 6, 0.21, PALETTE.road);
     for (const side of [-1, 1]) {
@@ -225,7 +225,7 @@ export class RaceScene {
         -10,
         z,
         1,
-        i % 3 === 0 ? '#76cfc1' : i % 3 === 1 ? '#9bd66b' : '#68bea0',
+        i % 3 === 0 ? '#68866a' : i % 3 === 1 ? '#92a477' : '#577765',
         this.world,
         [25 + random() * 18, h, 24 + random() * 18],
       );
@@ -244,7 +244,7 @@ export class RaceScene {
     );
     const crowns = new THREE.InstancedMesh(
       new THREE.SphereGeometry(2.6, 16, 12),
-      this.material('#52b96b'),
+      this.material('#457548'),
       spots.length * 3,
     );
     const dummy = new THREE.Object3D();
@@ -263,7 +263,7 @@ export class RaceScene {
         dummy.scale.set(size, size * (j === 1 ? 1.1 : 0.9), size);
         dummy.updateMatrix();
         crowns.setMatrixAt(i * 3 + j, dummy.matrix);
-        crowns.setColorAt(i * 3 + j, new THREE.Color(['#73ad70', '#90bb6c', '#66a986'][i % 3]));
+        crowns.setColorAt(i * 3 + j, new THREE.Color(['#557a45', '#718749', '#3b6b52'][i % 3]));
       }
     });
     trunks.castShadow = true;
@@ -275,7 +275,7 @@ export class RaceScene {
       const x = (random() - 0.5) * 200,
         z = (random() - 0.5) * 133;
       if (track.nearest(x, z).distance < 9 || (x / 108) ** 2 + (z / 73) ** 2 > 1) continue;
-      flowers.push({ x, z, color: ['#fff2a2', '#ff9abb', '#b5a0ff'][i % 3] });
+      flowers.push({ x, z, color: ['#fff2a2', '#ce4934', '#6782af'][i % 3] });
     }
     const petals = new THREE.InstancedMesh(
         new THREE.SphereGeometry(0.37, 7, 5),
@@ -323,9 +323,9 @@ export class RaceScene {
     // Place the paddock outside the generated circuit, never on the roadway.
     this.buildStands();
     for (const [x, z, c] of [
-      [-92, -34, '#ff987a'],
-      [59, -72, '#aa9aef'],
-      [89, 40, '#ffd864'],
+      [-92, -34, '#dd6630'],
+      [59, -72, '#3d60b5'],
+      [89, 40, '#deac2c'],
     ])
       this.balloon(x, 24 + random() * 8, z, c);
     // Colourful roadside flags and a few chevrons show corners without knowing the entire route.
@@ -343,7 +343,7 @@ export class RaceScene {
         1.35,
         1.2,
         0.06,
-        ['#ff836b', '#ffd65a', '#69c6e3'][Math.floor(s / 27) % 3],
+        ['#d84a30', '#d9a72d', '#397cb2'][Math.floor(s / 27) % 3],
       );
       flag.rotation.y = Math.atan2(t.x, t.z);
     }
@@ -391,7 +391,7 @@ export class RaceScene {
           9.5 + j * 0.8,
           0.3,
           1.25,
-          ['#ffd252', '#8ecde8', '#b79eec'][j],
+          ['#ffd252', '#3984b5', '#4b66ad'][j],
           finish,
           [1, 1.2, 1],
         );

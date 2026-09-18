@@ -338,6 +338,7 @@ export class Race {
     this.phase = 'lights';
     this.running = false;
     this.waiting = false;
+    this.pendingRequest = null;
     this.finished = false;
     this.error = '';
     this.nextDecision = 0;
@@ -379,6 +380,7 @@ export class Race {
     const sent = this.phase === 'lights' ? this.startClock - this.startDuration : this.time,
       requestedAt = performance.now();
     this.waiting = true;
+    this.pendingRequest = { sent, calls: active.length };
     try {
       const response = await fetch('/api/decide', {
         method: 'POST',
@@ -438,6 +440,16 @@ export class Race {
       });
     } catch (e) {
       if (generation === this.generation) {
+        this.decisionLog.push({
+          t: +(this.phase === 'lights' ? this.startClock - this.startDuration : this.time).toFixed(
+            3,
+          ),
+          sent: +sent.toFixed(3),
+          ms: Math.min(30000, Math.round(performance.now() - requestedAt)),
+          calls: active.length,
+          failed: true,
+          answers: [],
+        });
         this.error =
           e.name === 'TimeoutError'
             ? 'Jev timed out. The race is paused; you can retry.'
@@ -447,7 +459,10 @@ export class Race {
         this.addEvent('system', this.error);
       }
     } finally {
-      if (generation === this.generation) this.waiting = false;
+      if (generation === this.generation) {
+        this.waiting = false;
+        this.pendingRequest = null;
+      }
     }
   }
   apply(car, d, state) {
