@@ -462,7 +462,7 @@ export class RaceScene {
     root.add(body);
     this.world.add(root);
     const col = car.color;
-    const dark = '#263848',
+    const dark = '#172733',
       trim = '#fff6df';
     // Open-wheel single seater: tapered nose, low sidepods, exposed slicks and two wings.
     this.box(0, 0.42, 0, 1.3, 0.4, 3.65, col, body, 0.16);
@@ -499,30 +499,91 @@ export class RaceScene {
     halo.position.set(0, 1.4, 0.12);
     body.add(halo);
     this.box(0, 1.1, 0.75, 0.06, 0.6, 0.07, dark, body, 0.02);
+    // Layered wings, floor edges and an engine cover keep the silhouette low.
+    for (const side of [-1, 1]) {
+      this.box(side * 0.98, 0.31, -0.45, 0.16, 0.1, 2.7, dark, body, 0.03);
+      this.box(side * 0.78, 0.88, -0.95, 0.33, 0.08, 1.1, trim, body, 0.03);
+      this.box(side * 0.91, 0.86, 0.5, 0.2, 0.08, 0.34, dark, body, 0.02);
+      for (let n = 0; n < 3; n++)
+        this.box(side * 0.93, 0.77, -0.5 - n * 0.2, 0.29, 0.035, 0.08, dark, body, 0.01);
+    }
+    for (let n = 0; n < 3; n++)
+      this.box(
+        0,
+        0.38 + n * 0.075,
+        2.43 + n * 0.13,
+        2.7 - n * 0.13,
+        0.045,
+        0.17,
+        n === 1 ? col : dark,
+        body,
+        0.02,
+      );
+    this.box(0, 0.3, -2.2, 1.6, 0.1, 0.65, dark, body, 0.02);
+    for (const x of [-0.6, -0.3, 0, 0.3, 0.6])
+      this.box(x, 0.31, -2.36, 0.04, 0.22, 0.5, dark, body, 0.01);
+    const rearLight = this.box(0, 0.55, -2.5, 0.18, 0.12, 0.06, '#f26752', body, 0.02);
     const wheels = [];
     for (const x of [-1.23, 1.23])
       for (const z of [-1.43, 1.48]) {
         const pivot = new THREE.Group();
         pivot.position.set(x, 0.48, z);
         root.add(pivot);
-        const tire = this.mesh(new THREE.CylinderGeometry(0.51, 0.51, 0.51, 20), dark, pivot);
+        const rolling = new THREE.Group();
+        pivot.add(rolling);
+        const rubber = this.material('#17202a', { roughness: 0.88 });
+        const profile = [
+          new THREE.Vector2(0.28, -0.29),
+          new THREE.Vector2(0.43, -0.29),
+          new THREE.Vector2(0.49, -0.24),
+          new THREE.Vector2(0.52, -0.16),
+          new THREE.Vector2(0.52, 0.16),
+          new THREE.Vector2(0.49, 0.24),
+          new THREE.Vector2(0.43, 0.29),
+          new THREE.Vector2(0.28, 0.29),
+        ];
+        const tire = new THREE.Mesh(new THREE.LatheGeometry(profile, 32), rubber);
         tire.rotation.z = Math.PI / 2;
-        const hub = this.mesh(new THREE.CylinderGeometry(0.29, 0.29, 0.53, 16), '#526372', pivot);
+        tire.castShadow = true;
+        rolling.add(tire);
+        const hub = this.mesh(new THREE.CylinderGeometry(0.27, 0.27, 0.6, 24), '#84939c', rolling);
         hub.rotation.z = Math.PI / 2;
-        const center = this.mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.55, 12), trim, pivot);
-        center.rotation.z = Math.PI / 2;
         for (const side of [-1, 1]) {
           const ring = new THREE.Mesh(
-            new THREE.TorusGeometry(0.39, 0.024, 5, 20),
-            this.material('#e8ce79'),
+            new THREE.TorusGeometry(0.405, 0.016, 6, 40),
+            this.material('#e6cf7e'),
           );
           ring.rotation.y = Math.PI / 2;
-          ring.position.x = side * 0.263;
-          pivot.add(ring);
+          ring.position.x = side * 0.295;
+          rolling.add(ring);
+          const nut = this.mesh(
+            new THREE.CylinderGeometry(0.075, 0.075, 0.025, 6),
+            '#e9e7de',
+            rolling,
+          );
+          nut.rotation.z = Math.PI / 2;
+          nut.position.x = side * 0.315;
+          for (let spoke = 0; spoke < 8; spoke++) {
+            const a = (spoke * Math.PI) / 4;
+            const bar = this.box(
+              side * 0.31,
+              Math.cos(a) * 0.15,
+              Math.sin(a) * 0.15,
+              0.035,
+              0.25,
+              0.035,
+              dark,
+              rolling,
+              0.01,
+            );
+            bar.rotation.x = a;
+          }
+          const mark = this.box(side * 0.3, 0.455, 0, 0.01, 0.045, 0.08, trim, rolling, 0.008);
+          mark.rotation.x = 0.25;
         }
         const arm = this.box(x * 0.6, 0.5, z, 0.9, 0.075, 0.1, dark, body, 0.02);
         arm.rotation.y = x > 0 ? 0.22 : -0.22;
-        wheels.push({ pivot, tire, hub, front: z > 0 });
+        wheels.push({ pivot, rolling, front: z > 0 });
       }
     const number = this.text(car.number, trim, 128, 128);
     number.scale.set(0.5, 0.68, 1);
@@ -537,7 +598,7 @@ export class RaceScene {
     label.scale.set(1.2, 1.2, 1);
     label.position.set(0, 3.1, 0);
     root.add(label);
-    root.userData = { body, wheels, label };
+    root.userData = { body, wheels, label, rearLight };
     return root;
   }
   resize() {
@@ -620,10 +681,11 @@ export class RaceScene {
         ? 0
         : Math.sin(c.distance * 3) * Math.min(c.speed * 0.0015, 0.028);
       mesh.userData.wheels.forEach((w) => {
-        w.pivot.rotation.y = w.front ? c.steer * 0.3 : 0;
-        w.tire.rotation.x = c.distance / 0.49;
-        w.hub.rotation.x = c.distance / 0.49;
+        w.pivot.rotation.y = w.front ? (c.wheelSteer ?? c.steer) * 0.42 : 0;
+        w.rolling.rotation.x = c.distance / 0.52;
       });
+      mesh.userData.rearLight.visible =
+        !!c.retired || (c.intent?.power === 'harvest' && Math.floor(this.race.time * 4) % 2 === 0);
       mesh.userData.label.visible = this.mode !== 'follow' || i !== this.selected;
       mesh.userData.label.scale.setScalar(this.mode === 'follow' ? 1 : 1.6);
       mesh.userData.label.scale.multiply(new THREE.Vector3(1.2, 1.2, 1));
@@ -668,10 +730,14 @@ export class RaceScene {
     } else if (this.mode === 'orbit') this.controls.update();
     this.carMeshes.forEach((mesh, i) => {
       const distance = mesh.position.distanceTo(this.camera.position);
+      const other = this.race.cars[i];
+      const behind =
+        (other.x - car.x) * Math.sin(car.heading) + (other.z - car.z) * Math.cos(car.heading) < -2;
+      // Keep a following car from filling the lens between the camera and its subject.
       mesh.visible =
         this.mode !== 'follow' ||
         i === this.selected ||
-        (!this.race.cars[i].finished && distance > 5.5);
+        (!other.finished && distance > 5.5 && !(behind && distance < 14));
       mesh.userData.label.visible =
         this.mode !== 'follow' || (i !== this.selected && distance > 16 && distance < 100);
     });

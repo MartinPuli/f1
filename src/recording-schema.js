@@ -1,7 +1,21 @@
+import { cleanDecisionLog, validDecisionLog } from './telemetry.js';
 import { validSettings, cleanSettings, validModel, DRIVER_IDS } from './race-config.js';
 export function validRecord(r) {
   return (
     r &&
+    (r.events === undefined ||
+      (Array.isArray(r.events) &&
+        r.events.length <= 120 &&
+        r.events.every(
+          (e) =>
+            Number.isFinite(e.time) &&
+            e.time >= 0 &&
+            e.time <= 501 &&
+            typeof e.id === 'string' &&
+            e.id.length <= 20 &&
+            typeof e.text === 'string' &&
+            e.text.length <= 200,
+        ))) &&
     (r.settings === undefined || validSettings(r.settings)) &&
     /^[a-f0-9-]{36}$/.test(r.id) &&
     typeof r.name === 'string' &&
@@ -22,6 +36,7 @@ export function validRecord(r) {
     r.duration <= 501 &&
     Number.isFinite(r.created) &&
     Number.isInteger(r.decisions) &&
+    (r.decisionLog === undefined || validDecisionLog(r.decisionLog)) &&
     typeof r.finished === 'boolean' &&
     Array.isArray(r.drivers) &&
     [5, 10].includes(r.drivers.length) &&
@@ -30,6 +45,8 @@ export function validRecord(r) {
     (!r.settings || r.settings.drivers.length === r.drivers.length) &&
     r.drivers.every(
       (d) =>
+        (d.retirement == null || d.retirement === 'Mechanical failure') &&
+        (d.retired === undefined || typeof d.retired === 'boolean') &&
         (d.resolvedModel == null || validModel(d.resolvedModel)) &&
         typeof d.name === 'string' &&
         d.name.length <= 40 &&
@@ -56,7 +73,7 @@ export function validRecord(r) {
         f.cars.every(
           (c) =>
             Array.isArray(c) &&
-            [9, 15].includes(c.length) &&
+            [9, 15, 16].includes(c.length) &&
             c.length === r.frames[0].cars[0].length &&
             c.every(Number.isFinite),
         ),
@@ -78,6 +95,11 @@ export function cleanRecord(r) {
     ...(r.startDelay !== undefined ? { startDelay: r.startDelay } : {}),
     finished: r.finished,
     decisions: r.decisions,
+    incidents: r.incidents === true,
+    ...(r.events
+      ? { events: r.events.map((e) => ({ id: e.id, time: e.time, text: e.text })) }
+      : {}),
+    ...(r.decisionLog ? { decisionLog: cleanDecisionLog(r.decisionLog) } : {}),
     drivers: r.drivers.map((d) => ({
       id: d.id,
       name: d.name,
@@ -89,6 +111,8 @@ export function cleanRecord(r) {
       progress: d.progress,
       offTrack: d.offTrack,
       collisions: d.collisions,
+      retired: d.retired === true,
+      ...(d.retirement ? { retirement: d.retirement } : {}),
     })),
     frames: r.frames.map((f) => ({ t: f.t, cars: f.cars })),
   };

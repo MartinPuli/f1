@@ -1,3 +1,4 @@
+import { raceIncidents } from './incidents.js';
 import { resolveContact, updateResources } from './physics.js';
 import { driveControls, validIntent, roadReading } from './driving.js';
 import { defaultSettings, cleanSettings, DRIVERS } from './race-config.js';
@@ -115,6 +116,10 @@ export function createCars(track, count = DRIVERS.length) {
       lapStart: 0,
       lapTimes: [],
       finished: false,
+      retired: false,
+      retirement: null,
+      gripLoss: 0,
+      brakeFault: 0,
       finishTime: null,
       offTrack: 0,
       collisions: 0,
@@ -222,6 +227,8 @@ export function integrate(car, dt, track) {
     off = road.distance > track.width / 2;
   if (off && !car.off) car.offTrack++;
   car.off = off;
+  car.gripLoss = Math.max(0, (car.gripLoss || 0) - dt);
+  car.brakeFault = Math.max(0, (car.brakeFault || 0) - dt);
   car.contactCooldown = Math.max(0, car.contactCooldown - dt);
   car.pedalThrottle =
     (car.pedalThrottle || 0) + clamp(car.throttle - (car.pedalThrottle || 0), -12 * dt, 6 * dt);
@@ -248,7 +255,10 @@ export function integrate(car, dt, track) {
     (car.wheelSteer ?? 0) + clamp(car.steer - (car.wheelSteer ?? 0), -2.8 * dt, 2.8 * dt);
   const yaw = (car.speed / 3.1) * Math.tan(car.wheelSteer * 0.42),
     limit =
-      (off ? 6 : 18 * (0.8 + car.tires * 0.2) * (1 - car.damage * 0.2)) / Math.max(car.speed, 3);
+      (off
+        ? 6
+        : 18 * (car.gripLoss > 0 ? 0.55 : 1) * (0.8 + car.tires * 0.2) * (1 - car.damage * 0.2)) /
+      Math.max(car.speed, 3);
   car.heading += (clamp(yaw, -limit, limit) + (car.impactYaw || 0)) * dt;
   car.impactYaw = (car.impactYaw || 0) * Math.exp(-4 * dt);
   car.sideSpeed = (car.sideSpeed || 0) * Math.exp(-(off ? 1.8 : 5) * dt);
@@ -270,6 +280,7 @@ export class Race {
   constructor(seed = 42) {
     this.seed = seed;
     this.mode = 'demo';
+    this.incidents = false;
     this.settings = defaultSettings();
     this.limit = 3;
     this.generation = 0;
@@ -292,7 +303,9 @@ export class Race {
     this.nextDecision = 0;
     this.retryNotBefore = 0;
     this.decisions = 0;
+    this.decisionLog = [];
     this.events = [];
+    this.incidentFlags = { contact: false, failure: false };
     this.accumulator = 0;
     this.lastLog = 0;
     this.frames = [];
@@ -313,16 +326,18 @@ export class Race {
   }
   addEvent(id, text) {
     this.events.unshift({ id, text, time: this.time });
-    this.events = this.events.slice(0, 40);
+    this.events = this.events.slice(0, 120);
   }
   async decide() {
-    const active = this.cars.filter((c) => !c.finished),
+    const active = this.cars.filter((c) => !c.finished && !c.retired),
       states = active.map((c) => observe(c, this.cars, this.track, this.time, this.limit));
     if (this.mode === 'demo') {
       active.forEach((c, i) => this.apply(c, demoDecision(states[i], c), states[i]));
       return;
     }
     const generation = this.generation;
+    const sent = this.phase === 'lights' ? this.startClock - this.startDuration : this.time,
+      requestedAt = performance.now();
     this.waiting = true;
     try {
       const response = await fetch('/api/decide', {
@@ -352,8 +367,20 @@ export class Race {
       body.decisions.forEach((d, i) => {
         if (!validIntent(d)) throw new Error('Jev returned an invalid driving target.');
       });
+      this.decisionLog.push({
+        t: +(this.phase === 'lights' ? this.startClock - this.startDuration : this.time).toFixed(3),
+        sent: +sent.toFixed(3),
+        ms: Math.round(performance.now() - requestedAt),
+        answers: body.decisions.map((d, i) => ({
+          id: active[i].id,
+          line: d.line,
+          pace: d.pace,
+          power: d.power || 'neutral',
+          ...(Number.isFinite(d.confidence) ? { confidence: d.confidence } : {}),
+        })),
+      });
       body.decisions.forEach((d, i) => {
-        if (active[i].finished) return;
+        if (active[i].finished || active[i].retired) return;
         active[i].resolvedModel =
           d.model || this.settings.drivers.find((p) => p.id === active[i].id).model;
         this.apply(
@@ -420,7 +447,7 @@ export class Race {
       if (
         this.mode === 'jev' &&
         this.startClock >= this.startDuration &&
-        this.cars.some((car) => !car.finished && !car.intent)
+        this.cars.some((car) => !car.finished && !car.retired && !car.intent)
       ) {
         this.accumulator = 0;
         break;
@@ -430,7 +457,7 @@ export class Race {
         this.startClock += 0.025;
         if (
           this.startClock < this.startDuration ||
-          (this.mode === 'jev' && this.cars.some((car) => !car.intent))
+          (this.mode === 'jev' && this.cars.some((car) => !car.retired && !car.intent))
         )
           continue;
         this.phase = 'racing';
@@ -441,6 +468,7 @@ export class Race {
         continue;
       }
       this.time += 0.025;
+      raceIncidents(this);
       for (const car of this.cars) {
         if (this.time < (car.launchTime ?? 0)) continue;
         if (car.pendingIntent && this.time >= car.pendingIntent.at) {
@@ -451,7 +479,7 @@ export class Race {
           });
           car.pendingIntent = null;
         }
-        if (car.intent && !car.finished) {
+        if (car.intent && !car.finished && !car.retired) {
           const controls = driveControls(
             observe(car, this.cars, this.track, this.time, this.limit),
             car.intent,
@@ -459,7 +487,25 @@ export class Race {
           );
           Object.assign(car, controls);
         }
+        if (car.retired) {
+          // An engine failure still leaves steering: coast toward the nearest
+          // runoff area before stopping, without moving the car by teleport.
+          const road = this.track.nearest(car.x, car.z);
+          const p = this.track.at(road.s + 10),
+            t = this.track.tangent(road.s + 10);
+          car.retireSide ??= road.offset < 0 ? -1 : 1;
+          const dx = p.x + t.z * car.retireSide * 8.5 - car.x;
+          const dz = p.z - t.x * car.retireSide * 8.5 - car.z;
+          car.steer = clamp(angle(Math.atan2(dx, dz) - car.heading) * 2, -1, 1);
+          car.throttle = 0;
+          car.brake = road.distance > 7 ? 0.45 : 0.04;
+        }
+        if (car.brakeFault > 0) {
+          car.throttle = 0;
+          car.brake = 1;
+        }
         integrate(car, 0.025, this.track);
+        if (car.retired) continue;
         const lap = Math.min(this.limit, Math.max(0, Math.floor(car.progress / this.track.length)));
         if (lap > car.lap) {
           car.lapTimes.push(this.time - car.lapStart);
@@ -493,7 +539,7 @@ export class Race {
         }
       }
       if (this.time - this.lastFrame >= (this.cars.length > 5 ? 0.2 : 0.1)) this.captureFrame();
-      if (this.cars.every((c) => c.finished)) {
+      if (this.cars.every((c) => c.finished || c.retired)) {
         this.finished = true;
         this.running = false;
         this.addEvent('system', 'Checkered flag. Race finished.');
@@ -517,7 +563,7 @@ export class Race {
           c.z,
           c.heading,
           c.speed,
-          c.steer,
+          c.wheelSteer,
           c.progress,
           c.lap,
           c.finished ? 1 : 0,
@@ -528,19 +574,24 @@ export class Race {
           ['neutral', 'deploy', 'harvest'].indexOf(c.intent?.power || 'neutral'),
           ['center', 'left', 'right'].indexOf(c.intent?.line || 'center'),
           ['balanced', 'attack', 'cautious', 'recover'].indexOf(c.intent?.pace || 'balanced'),
+          c.retired ? 1 : 0,
         ].map((v) => +v.toFixed(4)),
       ),
     });
   }
   ranking() {
     return [...this.cars].sort((a, b) =>
-      a.finished && b.finished
-        ? a.finishTime - b.finishTime
-        : a.finished
-          ? -1
-          : b.finished
-            ? 1
-            : b.progress - a.progress,
+      a.retired !== b.retired
+        ? a.retired
+          ? 1
+          : -1
+        : a.finished && b.finished
+          ? a.finishTime - b.finishTime
+          : a.finished
+            ? -1
+            : b.finished
+              ? 1
+              : b.progress - a.progress,
     );
   }
 }

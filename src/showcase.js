@@ -23,3 +23,18 @@ export const REEL_SHOTS = [
   { driver: 1, mode: 'follow', angle: 0.55, height: -0.4 },
   { driver: 'leader', mode: 'follow', angle: 0, height: 0 },
 ];
+
+// Give a recorded incident a short onboard shot; the camera never changes the race.
+export function filmShot(record, time, shotIndex) {
+  const event = record.events?.find(
+    (e) =>
+      e.time <= time &&
+      time - e.time < 3.2 &&
+      (e.text.startsWith('Curb strike') || e.text.startsWith('Mechanical failure')),
+  );
+  if (event) {
+    const driver = record.settings?.drivers.findIndex((c) => c.id === event.id) ?? -1;
+    if (driver >= 0) return { driver, mode: 'follow', angle: -0.5, height: 0.7 };
+  }
+  return REEL_SHOTS[shotIndex];
+}

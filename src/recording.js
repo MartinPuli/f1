@@ -1,3 +1,4 @@
+import { cleanDecisionLog } from './telemetry.js';
 import { cleanSettings } from './race-config.js';
 export const GENERATOR_VERSION = 2;
 // Copy only replay data: the live Race object also holds the session credential.
@@ -13,6 +14,8 @@ export function recordRace(race, id, name, created) {
     progress: c.progress,
     offTrack: c.offTrack,
     collisions: c.collisions,
+    retired: !!c.retired,
+    retirement: c.retirement,
   }));
   return {
     id,
@@ -27,6 +30,9 @@ export function recordRace(race, id, name, created) {
     startDelay: race.startDuration,
     finished: race.finished,
     decisions: race.decisions,
+    decisionLog: cleanDecisionLog(race.decisionLog),
+    incidents: !!race.incidents,
+    events: race.events.filter((e) => !e.text.includes('Ready.')).map((e) => ({ ...e })),
     drivers,
     frames: race.frames.map((f) => ({ t: f.t, cars: f.cars.map((c) => [...c]) })),
   };
@@ -59,9 +65,12 @@ export function applyReplay(race, recording, time) {
       heading: p[2] + Math.atan2(Math.sin(q[2] - p[2]), Math.cos(q[2] - p[2])) * f,
       speed: mix(3),
       steer: mix(4),
+      wheelSteer: mix(4),
       progress: mix(5),
       lap: p[6],
       finished: !!p[7],
+      retired: !!p[15],
+      retirement: recording.drivers.find((d) => d.id === car.id)?.retirement,
       distance: mix(8),
       energy: p.length > 9 ? mix(9) : 1,
       tires: p.length > 9 ? mix(10) : 1,
@@ -75,6 +84,7 @@ export function applyReplay(race, recording, time) {
             }
           : null,
       finishTime: recording.drivers.find((d) => d.id === car.id)?.finishTime,
+      lapTimes: recording.drivers.find((d) => d.id === car.id)?.lapTimes.slice(0, p[6]) || [],
     });
   });
 }

@@ -29,7 +29,7 @@ The existing OpenAI Sites deployment uses a separate adapter with platform ident
 
 Open **Drivers**, select a car, and edit its name, number, prompt, or model. **Race rules** applies to everyone; **Reset grid** restores the starter lineup. [Jev driving defaults](docs/JEV.md) explains the request and decision rules. The shared race prompt applies to all ten drivers, but each receives only its own observations. Connecting TypeSafe checks the model catalog without starting inference. Different aliases may resolve to the same model; results retain the returned version when TypeSafe supplies it.
 
-Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **Space** or **P** plays and pauses, **Esc** closes a window or pauses the race, **1–9** and **0** and the left/right arrows select drivers, **C** changes the camera, and **F** recenters it. **R** opens Results, **N** opens race setup, and **?** shows the shortcut sheet. Shortcuts leave text fields alone; you can disable them in the sheet, which is also available through settings. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
+Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **Space** or **P** plays and pauses, **Esc** closes a window or pauses the race, **1–9** and **0** and the left/right arrows select drivers, **C** changes the camera, and **F** recenters it. **M** toggles film sound. **R** opens Results, **N** opens race setup, and **?** shows the shortcut sheet. Shortcuts leave text fields alone; you can disable them in the sheet, which is also available through settings. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
 
 Autosaves need both 30 simulation seconds of new progress and 60 seconds since the previous autosave. Pausing and finishing also queue a save. The queue keeps the newest pending snapshot per race and spaces writes at least 15 seconds apart; opening a dialog without changing the race doesn't save it again. They include standings, prompts, models, and replay frames. Replays don't call TypeSafe. If storage fails, Results shows the error and lets you retry or download JSON. Closing the page can lose progress since the last completed save.
 
@@ -81,3 +81,11 @@ MIT licensed. The JV racing mark is original; this project has no affiliation wi
 Run a race, then choose **Results → Watch film**. The camera sequence uses the recorded race positions, starting lights, and a winner card. It loops without new inference calls or archive writes. A Jev recording shows **JEV · TypeSafe**; a local race shows **Race replay**. The film doesn't substitute local decisions for Jev decisions.
 
 Use a screen recorder at 1920 × 1080 to capture a loop. **Space** pauses; **Esc** returns to your race. **Results → My races → Open recording** loads a downloaded JEVRACE JSON file without uploading it. Prompts, resolved models, and results remain in the recording; credentials do not.
+
+## Race broadcast
+
+The timing tower shows gaps from recorded leader crossings, plus completed lap times and DNF status. The lower-left Jev panel counts completed decisions, plots the last twelve seconds, and shows the selected driver's last returned lane, pace and battery choice. Its request log stores no headers, keys or raw request bodies. Older recordings without that log show no fabricated activity.
+
+**Watch film** adds a winner reveal and synthesized engine, start-light, contact and finish sounds. Sound follows the recorded speed and incident timestamps; mute with **M**. Saved frames retain the wheel steering angle and retired cars.
+
+Enable **Race incidents** to run the optional scenario: a curb strike near traffic and one mechanical failure as the leader starts lap two. These are injected conditions, not mistakes attributed to Jev. The retired car coasts toward the runoff area, stays visible, and appears as DNF. The event log identifies the faults separately from returned model choices.
