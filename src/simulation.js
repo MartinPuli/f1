@@ -1,3 +1,5 @@
+import { cleanResponse, decisionObservation } from './telemetry.js';
+import { updateMechanical, startSpin } from './mechanics.js';
 import { raceIncidents } from './incidents.js';
 import { resolveContact, updateResources } from './physics.js';
 import { driveControls, validIntent, roadReading } from './driving.js';
@@ -96,6 +98,13 @@ export function createCars(track, count = DRIVERS.length) {
       energy: 1,
       tires: 1,
       damage: 0,
+      suspensionDamage: 0,
+      wingDamage: 0,
+      engineTemp: 90,
+      coolingLeak: false,
+      spinTime: 0,
+      spinCooldown: 0,
+      spins: 0,
       boost: 0,
       tow: 0,
       overtakes: 0,
@@ -171,6 +180,10 @@ export function observe(car, cars, track, time, laps = 3) {
     battery: +(car.energy ?? 1).toFixed(3),
     tire_grip: +(car.tires ?? 1).toFixed(3),
     damage: +(car.damage ?? 0).toFixed(3),
+    engine_temp_c: +(car.engineTemp ?? 90).toFixed(1),
+    suspension_damage: +(car.suspensionDamage ?? 0).toFixed(2),
+    cooling_leak: !!car.coolingLeak,
+    spinning: car.spinTime > 0,
     off_track: road.distance > track.width / 2,
     style: car.style,
     elapsed_seconds: +time.toFixed(1),
@@ -222,7 +235,7 @@ export function demoDecision(observation, car) {
 }
 
 export function integrate(car, dt, track) {
-  if (car.finished) return;
+  if (car.finished && !car.cooldown) return;
   const road = track.nearest(car.x, car.z),
     off = road.distance > track.width / 2;
   if (off && !car.off) car.offTrack++;
@@ -240,7 +253,10 @@ export function integrate(car, dt, track) {
     0.007 * car.speed * car.speed * (1 - (car.tow || 0) * 0.32) +
     (off ? car.speed * 1.1 : car.speed * 0.035);
   const engine =
-    (10 + car.boost) * (car.intent?.power === 'harvest' ? 0.8 : 1) * (1 - car.damage * 0.22);
+    (10 + car.boost) *
+    (car.intent?.power === 'harvest' ? 0.8 : 1) *
+    (1 - car.damage * 0.22) *
+    (car.engineTemp > 115 ? 0.75 : 1);
   const traction = (off ? 4 : 9.5 + Math.min(car.speed * 0.3, 8)) * (0.8 + car.tires * 0.2);
   const lateralLoad = Math.min(
     0.8,
@@ -257,13 +273,37 @@ export function integrate(car, dt, track) {
     limit =
       (off
         ? 6
-        : 18 * (car.gripLoss > 0 ? 0.55 : 1) * (0.8 + car.tires * 0.2) * (1 - car.damage * 0.2)) /
-      Math.max(car.speed, 3);
+        : 18 *
+          (car.gripLoss > 0 ? 0.55 : 1) *
+          (0.8 + car.tires * 0.2) *
+          (1 - car.damage * 0.2) *
+          (1 - (car.wingDamage || 0) * 0.2) *
+          (1 - (car.suspensionDamage || 0) * 0.35)) / Math.max(car.speed, 3);
+  const spinning = car.spinTime > 0;
   car.heading += (clamp(yaw, -limit, limit) + (car.impactYaw || 0)) * dt;
-  car.impactYaw = (car.impactYaw || 0) * Math.exp(-4 * dt);
+  car.impactYaw = (car.impactYaw || 0) * Math.exp(-(spinning ? 0.65 : 4) * dt);
+  car.spinCooldown = Math.max(0, (car.spinCooldown || 0) - dt);
   car.sideSpeed = (car.sideSpeed || 0) * Math.exp(-(off ? 1.8 : 5) * dt);
-  car.x += (Math.sin(car.heading) * car.speed + Math.cos(car.heading) * car.sideSpeed) * dt;
-  car.z += (Math.cos(car.heading) * car.speed - Math.sin(car.heading) * car.sideSpeed) * dt;
+  if (spinning) {
+    car.spinTime = Math.max(0, car.spinTime - dt);
+    const friction = Math.exp(-(off ? 1.6 : 0.85) * dt);
+    car.spinVX *= friction;
+    car.spinVZ *= friction;
+    car.x += car.spinVX * dt;
+    car.z += car.spinVZ * dt;
+    car.speed = Math.hypot(car.spinVX, car.spinVZ);
+    if (!car.spinTime) {
+      car.speed = Math.max(
+        0,
+        car.spinVX * Math.sin(car.heading) + car.spinVZ * Math.cos(car.heading),
+      );
+      car.sideSpeed = car.spinVX * Math.cos(car.heading) - car.spinVZ * Math.sin(car.heading);
+      car.impactYaw = 0;
+    }
+  } else {
+    car.x += (Math.sin(car.heading) * car.speed + Math.cos(car.heading) * car.sideSpeed) * dt;
+    car.z += (Math.cos(car.heading) * car.speed - Math.sin(car.heading) * car.sideSpeed) * dt;
+  }
   const now = track.nearest(car.x, car.z);
   let delta = now.s - car.lastS;
   if (delta > track.length / 2) delta -= track.length;
@@ -373,6 +413,9 @@ export class Race {
         ms: Math.round(performance.now() - requestedAt),
         answers: body.decisions.map((d, i) => ({
           id: active[i].id,
+          ...(d.response ? { response: cleanResponse(d.response) } : {}),
+          ...(d.model ? { model: d.model } : {}),
+          observation: decisionObservation(states[i]),
           line: d.line,
           pace: d.pace,
           power: d.power || 'neutral',
@@ -487,6 +530,17 @@ export class Race {
           );
           Object.assign(car, controls);
         }
+        if (car.finished) {
+          // Continue a slow in-lap so finishers do not pile up on the line.
+          const controls = driveControls(
+            observe(car, this.cars, this.track, this.time, this.limit),
+            { line: 'center', pace: 'cautious', power: 'neutral' },
+            car.laneOffset,
+          );
+          Object.assign(car, controls);
+          car.throttle = car.speed < 10 ? 0.4 : 0;
+          car.brake = car.speed > 12 ? 0.25 : 0;
+        }
         if (car.retired) {
           // An engine failure still leaves steering: coast toward the nearest
           // runoff area before stopping, without moving the car by teleport.
@@ -500,11 +554,21 @@ export class Race {
           car.throttle = 0;
           car.brake = road.distance > 7 ? 0.45 : 0.04;
         }
+        if (car.spinTime > 0) {
+          car.throttle = 0;
+          car.brake = 0.4;
+        }
         if (car.brakeFault > 0) {
           car.throttle = 0;
           car.brake = 1;
         }
+        const classifiedProgress = car.progress;
         integrate(car, 0.025, this.track);
+        if (car.finished) {
+          car.progress = classifiedProgress;
+          continue;
+        }
+        updateMechanical(car, 0.025, (message) => this.addEvent(car.id, message));
         if (car.retired) continue;
         const lap = Math.min(this.limit, Math.max(0, Math.floor(car.progress / this.track.length)));
         if (lap > car.lap) {
@@ -519,7 +583,8 @@ export class Race {
         if (car.lap >= this.limit && !car.finished) {
           car.finished = true;
           car.finishTime = this.time;
-          car.speed = 0;
+          car.cooldown = true;
+          car.pendingIntent = null;
           car.action = 'Finished';
           this.addEvent(car.id, `${car.name} crossed the finish line.`);
         }
@@ -529,7 +594,12 @@ export class Race {
           const a = this.cars[i],
             b = this.cars[j];
           const hit = resolveContact(a, b);
-          if (hit?.counted) this.addEvent(a.id, `Contact between ${a.name} and ${b.name}.`);
+          if (hit?.counted) {
+            this.addEvent(a.id, `Contact between ${a.name} and ${b.name}.`);
+            for (const car of [a, b])
+              if (Math.abs(car.impactYaw) > 1.1 && startSpin(car, car.impactYaw))
+                this.addEvent(car.id, `Spin · ${car.short} · contact`);
+          }
         }
       if (this.time - this.lastLog > 1) {
         this.lastLog = this.time;
@@ -575,6 +645,11 @@ export class Race {
           ['center', 'left', 'right'].indexOf(c.intent?.line || 'center'),
           ['balanced', 'attack', 'cautious', 'recover'].indexOf(c.intent?.pace || 'balanced'),
           c.retired ? 1 : 0,
+          c.engineTemp ?? 90,
+          c.suspensionDamage ?? 0,
+          c.wingDamage ?? 0,
+          c.spinTime ?? 0,
+          c.coolingLeak ? 1 : 0,
         ].map((v) => +v.toFixed(4)),
       ),
     });

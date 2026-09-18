@@ -22,7 +22,12 @@ test('per-driver models and prompts are routed independently and resolved versio
         model: 'jev-1.13.0',
         answers: {
           power: { choice: 'neutral', confidence: 0.9 },
-          line: { choice: 'center', confidence: 0.9 },
+          line: {
+            choice: 'center',
+            confidence: 0.9,
+            probabilities: { center: 0.9, left: 0.06, right: 0.04 },
+            private: 'drop-me',
+          },
           pace: { choice: 'balanced', confidence: 0.8 },
         },
       }),
@@ -51,7 +56,14 @@ test('per-driver models and prompts are routed independently and resolved versio
     assert.deepEqual(Object.keys(calls[0].questions).sort(), ['line', 'pace', 'power']);
     assert.ok(JSON.parse(calls[0].state).road.speed_limit_mps > 0);
     assert.ok(!calls[0].state.includes('seed'));
-    assert.equal((await result.json()).decisions[0].model, 'jev-1.13.0');
+    const decision = (await result.json()).decisions[0];
+    assert.equal(decision.model, 'jev-1.13.0');
+    assert.deepEqual(decision.response.line.probabilities, {
+      center: 0.9,
+      left: 0.06,
+      right: 0.04,
+    });
+    assert.equal(decision.response.line.private, undefined);
   } finally {
     globalThis.fetch = old;
   }

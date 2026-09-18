@@ -65,7 +65,7 @@ test('controlled faults produce contact and one DNF without trapping the other c
     const replay = new Race(seed);
     applyReplay(replay, cleanRecord(record), record.duration);
     assert.equal(replay.cars.filter((c) => c.retired).length, 1);
-    assert.equal(record.drivers.at(-1).retirement, 'Mechanical failure');
+    assert.equal(record.drivers.at(-1).retirement, 'Engine overheating');
   }
 });
 test('synthetic soundtrack has finite stereo samples, audible effects and no clipping', () => {
@@ -82,4 +82,34 @@ test('synthetic soundtrack has finite stereo samples, audible effects and no cli
     peak = Math.max(peak, Math.abs(sample));
   }
   assert.ok(peak > 0.05 && peak < 1);
+});
+
+test('selected driver response metadata stays causal and preserves probabilities', () => {
+  const log = [
+    {
+      t: 1,
+      ms: 123,
+      answers: [
+        {
+          ...answer,
+          response: {
+            line: {
+              choice: 'left',
+              confidence: 0.8,
+              probabilities: { left: 0.8, center: 0.1, right: 0.1 },
+            },
+          },
+        },
+      ],
+    },
+    { t: 2, ms: 300, answers: [{ ...answer, id: 'lewis' }] },
+  ];
+  const activity = decisionActivity(log, 2, 'max');
+  assert.equal(activity.selectedBatch.ms, 123);
+  assert.equal(activity.history.length, 1);
+  assert.equal(decisionActivity(log, 0, 'max').selected, null);
+  assert.equal(cleanDecisionLog(log)[0].answers[0].response.line.probabilities.left, 0.8);
+  assert.equal(validDecisionLog(log), true);
+  log[0].answers[0].response.line.probabilities.left = 1.1;
+  assert.equal(validDecisionLog(log), false);
 });

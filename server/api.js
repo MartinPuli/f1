@@ -1,3 +1,4 @@
+import { cleanResponse } from '../src/telemetry.js';
 import { archiveApi, boundedJson, communityApi } from './archive.js';
 import { LINES, PACES, POWERS, validIntent, roadReading } from '../src/driving.js';
 import { DRIVER_IDS, defaultSettings, validSettings, validModel } from '../src/race-config.js';
@@ -134,7 +135,7 @@ export async function api(request, env = {}) {
                 type: 'choice',
                 instructions: {
                   question:
-                    'Which pace advances the driver strategy given tire grip and local traffic? Attack to pass or close a gap; the controller still brakes for corners. Balanced conserves grip. Cautious gives extra margin for damage or tight traffic. Recover only when off track or facing away.',
+                    'Which pace advances the driver strategy given tire grip and local traffic? Attack to pass or close a gap; the controller still brakes for corners. Balanced conserves grip. Cautious gives extra margin for damage, rising engine temperature or tight traffic. Recover only when off track or facing away.',
                   rules,
                   race: settings.prompt,
                   driver: driver.prompt,
@@ -154,6 +155,7 @@ export async function api(request, env = {}) {
           throw new Error('Invalid decision');
         return {
           ...intent,
+          response: cleanResponse(data.answers),
           confidence:
             Number.isFinite(line.confidence) &&
             Number.isFinite(pace.confidence) &&
@@ -206,7 +208,11 @@ export function cleanObservation(s) {
     position: number(s.position, 1, 10, 1),
     battery: number(s.battery, 0, 1, 1),
     tire_grip: number(s.tire_grip, 0.35, 1, 1),
-    damage: number(s.damage, 0, 0.7),
+    damage: number(s.damage, 0, 1),
+    engine_temp_c: number(s.engine_temp_c, 60, 160, 90),
+    suspension_damage: number(s.suspension_damage, 0, 1),
+    spinning: s.spinning === true,
+    cooling_leak: s.cooling_leak === true,
     off_track: s.off_track === true,
     elapsed_seconds: number(s.elapsed_seconds, 0, 501),
     memory: (Array.isArray(s.memory) ? s.memory : []).slice(-8).map((m) => ({

@@ -9,6 +9,7 @@ const axes = (c) => [
   { x: Math.cos(c.heading), z: -Math.sin(c.heading) },
 ];
 const velocity = (c) => {
+  if (c.spinTime > 0) return { x: c.spinVX, z: c.spinVZ };
   const [f, r] = axes(c);
   return {
     x: f.x * c.speed + r.x * (c.sideSpeed || 0),
@@ -16,6 +17,10 @@ const velocity = (c) => {
   };
 };
 function setVelocity(c, v) {
+  if (c.spinTime > 0) {
+    c.spinVX = v.x;
+    c.spinVZ = v.z;
+  }
   const [f, r] = axes(c);
   c.speed = Math.max(0, dot(v, f));
   c.sideSpeed = clamp(dot(v, r), -12, 12);
@@ -68,8 +73,24 @@ export function resolveContact(a, b) {
     [b, 1],
   ]) {
     const side = dot(axes(car)[1], n);
-    car.impactYaw = clamp((car.impactYaw || 0) + sign * side * closing * 0.055, -0.8, 0.8);
-    car.damage = clamp((car.damage || 0) + Math.max(0, closing - 1.5) * 0.012, 0, 0.7);
+    const other = car === a ? b : a;
+    const forward = axes(car)[0];
+    // Offset contact puts torque into the chassis. Nose-to-tail contact has little yaw.
+    const lever = clamp(
+      ((other.x - car.x) * forward.x + (other.z - car.z) * forward.z) / 2,
+      -2.8,
+      2.8,
+    );
+    const torque = sign * side * closing * (0.04 + Math.abs(lever) * 0.055) * (lever < 0 ? -1 : 1);
+    car.impactYaw = clamp((car.impactYaw || 0) + torque, -3.8, 3.8);
+    const severity = Math.max(0, closing - 3);
+    car.suspensionDamage = clamp(
+      (car.suspensionDamage || 0) + severity * Math.abs(side) * 0.025,
+      0,
+      1,
+    );
+    car.wingDamage = clamp((car.wingDamage || 0) + severity * (1 - Math.abs(side)) * 0.018, 0, 1);
+    car.damage = clamp((car.damage || 0) + severity * 0.012, 0, 1);
   }
   const counted = closing > 0.7 && a.contactCooldown <= 0 && b.contactCooldown <= 0;
   if (counted) {

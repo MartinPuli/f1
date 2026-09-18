@@ -1,3 +1,4 @@
+import { clearChaseCamera } from './camera.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
@@ -598,7 +599,19 @@ export class RaceScene {
     label.scale.set(1.2, 1.2, 1);
     label.position.set(0, 3.1, 0);
     root.add(label);
-    root.userData = { body, wheels, label, rearLight };
+    const smoke = new THREE.Group();
+    const smokeMaterial = new THREE.MeshBasicMaterial({
+      color: '#d9e0df',
+      transparent: true,
+      opacity: 0.38,
+      depthWrite: false,
+    });
+    for (let i = 0; i < 6; i++) {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.32, 7, 5), smokeMaterial);
+      smoke.add(puff);
+    }
+    root.add(smoke);
+    root.userData = { body, wheels, label, rearLight, smoke };
     return root;
   }
   resize() {
@@ -680,7 +693,15 @@ export class RaceScene {
       mesh.userData.body.position.y = this.reducedMotion
         ? 0
         : Math.sin(c.distance * 3) * Math.min(c.speed * 0.0015, 0.028);
+      mesh.userData.smoke.visible =
+        c.engineTemp > 115 || (c.retired && c.retirement === 'Engine overheating');
+      mesh.userData.smoke.children.forEach((puff, j) => {
+        const phase = (this.race.time * 0.7 + j / 6) % 1;
+        puff.position.set(Math.sin(j * 2 + phase) * 0.35, 1 + phase * 2.5, -0.8 - phase * 1.2);
+        puff.scale.setScalar(0.4 + phase * 1.6);
+      });
       mesh.userData.wheels.forEach((w) => {
+        w.pivot.rotation.z = w.front ? (c.suspensionDamage || 0) * 0.28 : 0;
         w.pivot.rotation.y = w.front ? (c.wheelSteer ?? c.steer) * 0.42 : 0;
         w.rolling.rotation.x = c.distance / 0.52;
       });
@@ -725,19 +746,19 @@ export class RaceScene {
         (this.reducedMotion ? 0 : Math.min(car.speed * 0.17, 5));
       this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, fov, this.cameraReady ? ease : 1);
       this.camera.updateProjectionMatrix();
+      const safe = clearChaseCamera(
+        this.camera.position,
+        this.lookTarget,
+        this.race.cars,
+        this.selected,
+      );
+      this.camera.position.y = safe.y;
       this.camera.lookAt(this.lookTarget);
       this.cameraReady = true;
     } else if (this.mode === 'orbit') this.controls.update();
     this.carMeshes.forEach((mesh, i) => {
       const distance = mesh.position.distanceTo(this.camera.position);
-      const other = this.race.cars[i];
-      const behind =
-        (other.x - car.x) * Math.sin(car.heading) + (other.z - car.z) * Math.cos(car.heading) < -2;
-      // Keep a following car from filling the lens between the camera and its subject.
-      mesh.visible =
-        this.mode !== 'follow' ||
-        i === this.selected ||
-        (!other.finished && distance > 5.5 && !(behind && distance < 14));
+      mesh.visible = true;
       mesh.userData.label.visible =
         this.mode !== 'follow' || (i !== this.selected && distance > 16 && distance < 100);
     });

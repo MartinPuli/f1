@@ -30,7 +30,12 @@ export function filmShot(record, time, shotIndex) {
     (e) =>
       e.time <= time &&
       time - e.time < 3.2 &&
-      (e.text.startsWith('Curb strike') || e.text.startsWith('Mechanical failure')),
+      (e.text.startsWith('Curb strike') ||
+        e.text.startsWith('Mechanical failure') ||
+        e.text.startsWith('Spin ·') ||
+        e.text.startsWith('Cooling leak') ||
+        e.text.startsWith('Engine overheating') ||
+        e.text.startsWith('Suspension failure')),
   );
   if (event) {
     const driver = record.settings?.drivers.findIndex((c) => c.id === event.id) ?? -1;

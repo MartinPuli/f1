@@ -1,3 +1,4 @@
+import { FAILURE_REASONS } from './mechanics.js';
 import { cleanDecisionLog, validDecisionLog } from './telemetry.js';
 import { validSettings, cleanSettings, validModel, DRIVER_IDS } from './race-config.js';
 export function validRecord(r) {
@@ -45,7 +46,7 @@ export function validRecord(r) {
     (!r.settings || r.settings.drivers.length === r.drivers.length) &&
     r.drivers.every(
       (d) =>
-        (d.retirement == null || d.retirement === 'Mechanical failure') &&
+        (d.retirement == null || FAILURE_REASONS.includes(d.retirement)) &&
         (d.retired === undefined || typeof d.retired === 'boolean') &&
         (d.resolvedModel == null || validModel(d.resolvedModel)) &&
         typeof d.name === 'string' &&
@@ -73,7 +74,7 @@ export function validRecord(r) {
         f.cars.every(
           (c) =>
             Array.isArray(c) &&
-            [9, 15, 16].includes(c.length) &&
+            [9, 15, 16, 21].includes(c.length) &&
             c.length === r.frames[0].cars[0].length &&
             c.every(Number.isFinite),
         ),

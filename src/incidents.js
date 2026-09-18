@@ -1,3 +1,4 @@
+import { startSpin } from './mechanics.js';
 // Optional race-control scenario. These faults are injected by the simulation,
 // not presented as choices made by Jev. Their consequences use normal physics.
 export function raceIncidents(race) {
@@ -19,6 +20,8 @@ export function raceIncidents(race) {
       const [a, b] = pair;
       const lateral = (b.x - a.x) * Math.cos(a.heading) - (b.z - a.z) * Math.sin(a.heading);
       a.gripLoss = 1.1;
+      if (startSpin(a, (lateral < 0 ? -1 : 1) * 3.2))
+        race.addEvent(a.id, `Spin · ${a.short} · curb strike`);
       if (Math.abs(lateral) > 1) a.sideSpeed = Math.sign(lateral) * 5;
       else {
         const front = a.progress > b.progress ? a : b;
@@ -31,14 +34,8 @@ export function raceIncidents(race) {
   if (!race.incidentFlags.failure && active.some((car) => car.lap >= 1)) {
     const car = active.find((c) => c.id === 'carlos') || active.at(-1);
     if (!car) return;
-    car.retired = true;
-    car.retirement = 'Mechanical failure';
-    car.action = 'Mechanical failure';
-    car.pendingIntent = null;
-    car.intent = null;
-    car.throttle = 0;
-    car.brake = 0.35;
+    car.coolingLeak = true;
     race.incidentFlags.failure = true;
-    race.addEvent(car.id, `Mechanical failure · ${car.short}`);
+    race.addEvent(car.id, `Cooling leak · ${car.short}`);
   }
 }

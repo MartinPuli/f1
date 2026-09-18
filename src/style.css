@@ -2681,3 +2681,429 @@ textarea,
 .winner-confetti i {
   animation: none;
 }
+
+/* Pit wall: driver decisions left, race classification right. */
+.lap-widget {
+  top: 84px;
+  right: 24px;
+  padding: 10px 16px;
+}
+.timing-tower {
+  left: auto;
+  right: 24px;
+  top: 174px;
+  width: 238px;
+}
+.timing-tower::before,
+.timing-tower::after {
+  display: none;
+}
+.showcase-active .lap-widget {
+  top: 24px;
+}
+.showcase-active .timing-tower {
+  top: 112px;
+}
+.onboard-strip {
+  display: none;
+}
+#jev-activity {
+  width: 344px;
+  left: 24px;
+  bottom: 24px;
+  padding: 22px;
+  border-radius: 28px;
+  max-height: calc(100dvh - 112px);
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.showcase-active #jev-activity {
+  bottom: 24px;
+  max-height: calc(100dvh - 116px);
+}
+.activity-heading strong {
+  font-size: 25px;
+}
+.activity-heading strong small {
+  margin-left: 6px;
+  font: 9px var(--data);
+  letter-spacing: 1.3px;
+  color: var(--muted);
+}
+.activity-heading > span {
+  font-size: 9px;
+}
+.decision-driver {
+  gap: 10px;
+  margin: 22px 0;
+}
+#decision-number {
+  width: 38px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  font: 600 27px var(--display);
+  border-radius: 13px;
+}
+#decision-name {
+  font-size: 17px;
+}
+#decision-model {
+  display: block;
+  font: 9px var(--data);
+  color: var(--muted);
+  margin-top: 4px;
+}
+#decision-confidence {
+  white-space: pre-line;
+  text-align: right;
+  font-size: 9px;
+  line-height: 1.6;
+}
+.response-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+}
+#decision-age {
+  font: 9px var(--data);
+  padding-top: 2px;
+}
+#decision-values {
+  display: grid;
+  gap: 0;
+  margin: 8px 0;
+}
+.choice-row {
+  display: grid;
+  grid-template-columns: 94px 1fr;
+  align-items: center;
+  gap: 18px;
+  min-height: 68px;
+  border-bottom: 1px solid #dce8eb;
+  padding: 7px 0;
+}
+.choice-row:last-child {
+  border-bottom: 0;
+}
+.choice-row small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.choice-row strong {
+  display: block;
+  font: 600 23px var(--display);
+  text-transform: capitalize;
+  line-height: 1.15;
+}
+#decision-values .choice-probabilities span {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 6px;
+  margin: 2px 0;
+  background: #eaf1f2;
+  border-radius: 4px;
+  font: 9px var(--data);
+  text-transform: none;
+  overflow: hidden;
+  text-align: left;
+}
+.choice-probabilities i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #b7d4cf;
+}
+.choice-probabilities .chosen i {
+  background: #7dbbad;
+}
+.choice-probabilities b,
+.choice-probabilities em {
+  z-index: 1;
+  font-weight: 400;
+  font-style: normal;
+}
+#decision-values .choice-probabilities .probability-missing {
+  background: none;
+  color: var(--muted);
+  font: 10px var(--body);
+  padding: 0;
+}
+.decision-context {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+  padding: 14px 0;
+}
+.car-condition {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #e2efeb;
+  font-size: 11px;
+  color: #326659;
+}
+.car-condition.warning {
+  background: #f8e6d5;
+  color: #814823;
+}
+.chart-heading {
+  margin-top: 20px;
+}
+#activity-chart {
+  height: 35px;
+  margin-top: 5px;
+}
+#decision-history {
+  list-style: none;
+  padding: 8px 0 0;
+  margin: 6px 0 0;
+  border-top: 1px solid var(--line);
+}
+#decision-history li {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 11px;
+}
+#decision-history time {
+  font: 9px var(--data);
+  color: var(--muted);
+}
+#decision-history b {
+  color: #91a5ad;
+  padding: 0 2px;
+}
+.response-detail {
+  margin-top: 8px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.response-detail pre {
+  max-height: 160px;
+  overflow: auto;
+  font: 10px/1.5 var(--data);
+  white-space: pre-wrap;
+  color: var(--ink);
+}
+#reel-winner {
+  width: 374px;
+  min-width: 0;
+  padding: 25px 26px 18px;
+  bottom: 10%;
+  border: 1px solid #fff;
+  border-radius: 30px;
+  text-align: left;
+  box-shadow: 0 18px 50px #29465430;
+}
+.winner-ribbon {
+  position: absolute;
+  top: -8px;
+  left: 26px;
+  width: 82px;
+  height: 16px;
+  border-radius: 4px;
+  transform: rotate(-4deg);
+  background: conic-gradient(#294654 25%, #fff 0 50%, #294654 0 75%, #fff 0) 0 0 / 16px 16px;
+  box-shadow: 0 2px 5px #29465415;
+}
+.winner-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+.winner-trophy {
+  color: #a16c23;
+}
+.winner-trophy svg {
+  width: 23px;
+  height: 23px;
+}
+#reel-winner .winner-heading small {
+  font: 10px var(--data);
+  letter-spacing: 1.6px;
+}
+#winner-number {
+  margin-left: auto;
+  color: var(--winner-color);
+  font: 600 32px var(--display);
+}
+#reel-winner #winner-name {
+  font: 600 38px/1.05 var(--display);
+  letter-spacing: -0.6px;
+}
+.winner-detail {
+  margin: 10px 0 17px;
+  font-size: 12px;
+}
+#winner-podium {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+#winner-podium > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+#winner-podium b {
+  font: 600 17px var(--display);
+  width: 13px;
+  color: var(--muted);
+}
+#winner-podium i {
+  width: 5px;
+  height: 13px;
+  border-radius: 3px;
+}
+#winner-podium small {
+  margin-left: auto;
+  font: 10px var(--data);
+  color: var(--muted);
+}
+@media (max-width: 1000px) and (min-width: 721px) {
+  #jev-activity {
+    width: 280px;
+    padding: 14px;
+  }
+  .timing-tower {
+    width: 206px;
+  }
+  #reel-winner {
+    bottom: 22px;
+    width: 330px;
+  }
+}
+@media (max-width: 720px) {
+  .lap-widget,
+  .showcase-active .lap-widget {
+    top: 72px;
+    right: 12px;
+  }
+  .timing-tower,
+  .showcase-active .timing-tower {
+    top: 148px;
+    right: 12px;
+    left: auto;
+    width: 174px;
+    max-height: 274px;
+    overflow-y: auto;
+  }
+  .timing-row {
+    height: 25px;
+    padding-inline: 9px;
+  }
+  .timing-driver small {
+    display: none;
+  }
+  #jev-activity,
+  .showcase-active #jev-activity {
+    width: calc(100% - 24px);
+    left: 12px;
+    bottom: 110px;
+    max-height: 260px;
+    padding: 12px 14px;
+    border-radius: 22px;
+  }
+  .showcase-active #jev-activity {
+    bottom: 16px;
+  }
+  .activity-heading strong {
+    font-size: 21px;
+  }
+  .decision-driver {
+    margin: 8px 0;
+  }
+  #decision-number {
+    height: 30px;
+    width: 30px;
+    font-size: 22px;
+  }
+  #decision-name {
+    font-size: 15px;
+  }
+  #decision-values {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .choice-row {
+    display: block;
+    min-height: 0;
+    border: 0;
+    padding: 2px 0;
+  }
+  .choice-row strong {
+    font-size: 20px;
+  }
+  .choice-probabilities {
+    margin-top: 5px;
+  }
+  .decision-context,
+  #decision-history {
+    display: none;
+  }
+  .chart-heading {
+    margin-top: 10px;
+  }
+  #activity-chart {
+    height: 22px;
+  }
+  #reel-winner {
+    bottom: 285px;
+    width: min(330px, calc(100% - 24px));
+    padding: 22px;
+  }
+  #reel-winner #winner-name {
+    font-size: 30px;
+  }
+  .showcase-active #stage-message:not(:empty) {
+    bottom: 285px;
+    width: max-content;
+    max-width: 90%;
+  }
+}
+@media (max-height: 560px) and (min-width: 721px) {
+  #jev-activity,
+  .showcase-active #jev-activity {
+    width: 272px;
+    bottom: 16px;
+    max-height: calc(100dvh - 98px);
+  }
+  #decision-history,
+  .decision-context {
+    display: none;
+  }
+  .choice-row {
+    min-height: 45px;
+  }
+  .timing-tower,
+  .showcase-active .timing-tower {
+    top: 106px;
+    max-height: calc(100dvh - 145px);
+    overflow-y: auto;
+  }
+  .lap-widget,
+  .showcase-active .lap-widget {
+    top: 24px;
+  }
+}
+
+#decision-values.choices-only .choice-row {
+  grid-template-columns: 1fr;
+}
+#decision-values.choices-only .choice-row > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+#decision-values.choices-only .choice-probabilities {
+  display: none;
+}

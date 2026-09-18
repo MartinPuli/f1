@@ -75,6 +75,11 @@ export function applyReplay(race, recording, time) {
       energy: p.length > 9 ? mix(9) : 1,
       tires: p.length > 9 ? mix(10) : 1,
       damage: p.length > 9 ? mix(11) : 0,
+      engineTemp: p.length > 16 ? mix(16) : null,
+      suspensionDamage: p.length > 16 ? mix(17) : null,
+      wingDamage: p.length > 16 ? mix(18) : null,
+      spinTime: p.length > 16 ? p[19] : 0,
+      coolingLeak: p.length > 16 ? !!p[20] : false,
       intent:
         p.length > 9
           ? {
