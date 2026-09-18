@@ -1558,3 +1558,48 @@ textarea:hover {
     bottom: 170px;
   }
 }
+
+/* The shortcut sheet stays reachable from settings when character shortcuts are off. */
+kbd {
+  font: 12px var(--data);
+  display: inline-block;
+  padding: 5px 7px;
+  min-width: 27px;
+  text-align: center;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  color: var(--ink);
+}
+.shortcut-list {
+  margin: 0;
+}
+.shortcut-list > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.shortcut-list dt {
+  font-size: 14px;
+}
+.shortcut-list dd {
+  margin: 0;
+  white-space: nowrap;
+}
+dialog .shortcut-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: 13px;
+}
+dialog .shortcut-toggle input {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--accent);
+}

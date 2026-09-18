@@ -29,7 +29,7 @@ The existing OpenAI Sites deployment uses a separate adapter with platform ident
 
 Open **Grid** to edit a driver's model and prompt. The shared race prompt applies to all five drivers, but each receives only its own observations. Connecting TypeSafe checks the model catalog without starting inference. Different aliases may resolve to the same model; results retain the returned version when TypeSafe supplies it.
 
-Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **1–5** selects a driver and **C** changes the camera. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
+Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **Space** or **P** plays and pauses, **Esc** closes a window or pauses the race, **1–5** and the left/right arrows select drivers, **C** changes the camera, and **F** recenters it. **R** opens Results, **N** opens race setup, and **?** shows the shortcut sheet. Shortcuts leave text fields alone; you can disable them in the sheet, which is also available through settings. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
 
 Results save every 15 simulation seconds, on pause, and at the finish. They include standings, prompts, models, and replay frames. Replays don't call TypeSafe. If storage fails, Results shows the error and lets you retry or download JSON. Closing the page can lose progress since the last completed save.
 

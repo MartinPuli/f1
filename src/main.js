@@ -93,7 +93,8 @@ $('#app').innerHTML = `
 <div class="setup-options"><div><span class="field-label" id="driver-mode-label">Drivers</span><div class="mode-choices" role="group" aria-labelledby="driver-mode-label"><button type="button" data-mode="demo" class="mode-choice active" aria-pressed="true">Demo</button><button type="button" data-mode="jev" class="mode-choice" aria-pressed="false">Jev</button></div></div><div><label for="race-laps">Laps</label><select id="race-laps">${[1, 2, 3, 4, 5].map((n) => `<option ${n === 3 ? 'selected' : ''} value="${n}">${n}</option>`).join('')}</select></div></div>
 <div id="setup-key-field" hidden><label for="setup-key">TypeSafe API key</label><input type="password" id="setup-key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512" placeholder="Paste your key"/><button type="button" id="connect-setup" class="connection-button">Connect TypeSafe</button><p id="setup-connection" class="field-note">Session only · never saved</p><details class="api-usage"><summary>API usage</summary><p>Up to 20 requests per simulation second. Keys are never stored with recordings.</p></details></div></section><section id="grid-panel" hidden><div class="grid-editor-tabs" role="group" aria-label="Edit driver">${DRIVERS.map((d, i) => `<button type="button" data-grid-driver="${i}" style="--pilot:${d.color}" aria-label="Configure ${d.name}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${d.number}</button>`).join('')}</div><div class="grid-driver-heading"><h3 id="grid-driver-name"></h3><span id="grid-driver-style"></span></div><label for="driver-model">Model</label><select id="driver-model"></select><label for="driver-prompt">Driver prompt</label><textarea id="driver-prompt" rows="4" maxlength="1000" spellcheck="false"></textarea><details class="race-prompt-details"><summary>Race prompt</summary><label class="sr-only" for="race-prompt">Shared race prompt</label><textarea id="race-prompt" rows="3" maxlength="2000" spellcheck="false"></textarea></details><div class="grid-editor-footer"><span id="grid-mode-note">Prompts run in Jev mode.</span><button type="button" id="reset-prompts">Reset grid</button></div></section><p id="setup-error" class="error" role="alert"></p><button type="submit" class="primary-button wide"><span>Start race</span>${icon('Play')}</button></form></dialog>
 <dialog id="results-dialog" aria-labelledby="results-title"><button class="dialog-close icon-button" data-close aria-label="Close results">${icon('X')}</button><h2 id="results-title">Results</h2><div class="result-tabs" role="group" aria-label="Results view"><button class="active" data-results="current" aria-pressed="true">This race</button><button data-results="saved" aria-pressed="false">Saved races</button></div><section id="current-results"><div class="results-heading"><div><h3 id="results-race-name"></h3><p id="results-status"></p></div><button id="export" class="icon-button" aria-label="Download race recording" title="Download race recording">${icon('Download')}</button></div><div class="results-table-wrap"><table><thead><tr><th>POS</th><th>DRIVER</th><th>LAPS</th><th>BEST LAP</th><th>TOTAL</th></tr></thead><tbody id="results-body"></tbody></table></div><div class="results-footer"><span id="results-mode"></span></div><details id="saved-config" class="saved-config"><summary>Grid configuration</summary><div id="saved-config-body"></div></details><div class="result-actions"><button id="save-race" class="secondary-button" hidden>${icon('RotateCcw')} Retry save</button><button id="watch-current" class="secondary-button">${icon('Film')} Watch replay</button></div><p id="save-status" class="field-note" role="status"></p></section><section id="saved-results" hidden><p id="archive-scope" class="field-note" hidden>Saved for this browser for up to 90 days. Download recordings to keep a copy.</p><div id="archive-list"></div><p id="archive-error" class="error" role="alert"></p><button id="refresh-archive" class="secondary-button">${icon('RotateCcw')} Refresh</button></section></dialog>
-<dialog id="key-dialog" aria-labelledby="key-title"><button class="dialog-close icon-button" data-close aria-label="Close API settings">${icon('X')}</button><h2 id="key-title">TypeSafe connection</h2><label for="api-key">TypeSafe API key</label><input type="password" id="api-key" placeholder="Paste your key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512"/><p id="key-status" class="field-note"></p><p class="field-note">Kept in memory. Sent through this server to TypeSafe over HTTPS; never saved.</p><button id="save-key" class="primary-button">${icon('Check')} Connect</button><button id="clear-key" class="secondary-button">Clear key</button><a class="source-link" href="https://github.com/MartinPuli/f1" target="_blank" rel="noopener">${icon('Github')} Source code</a></dialog>
+<dialog id="key-dialog" aria-labelledby="key-title"><button class="dialog-close icon-button" data-close aria-label="Close API settings">${icon('X')}</button><h2 id="key-title">TypeSafe connection</h2><label for="api-key">TypeSafe API key</label><input type="password" id="api-key" placeholder="Paste your key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512"/><p id="key-status" class="field-note"></p><p class="field-note">Kept in memory. Sent through this server to TypeSafe over HTTPS; never saved.</p><button id="save-key" class="primary-button">${icon('Check')} Connect</button><button id="clear-key" class="secondary-button">Clear key</button><button id="show-shortcuts" class="source-link" type="button">Keyboard shortcuts <kbd>?</kbd></button><a class="source-link" href="https://github.com/MartinPuli/f1" target="_blank" rel="noopener">${icon('Github')} Source code</a></dialog>
+<dialog id="shortcuts-dialog" aria-labelledby="shortcuts-title"><button class="dialog-close icon-button" data-close aria-label="Close keyboard shortcuts">${icon('X')}</button><h2 id="shortcuts-title">Keyboard shortcuts</h2><dl class="shortcut-list"><div><dt>Close window / pause</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Play / pause</dt><dd><kbd>Space</kbd> <kbd>P</kbd></dd></div><div><dt>Follow driver</dt><dd><kbd>1</kbd>–<kbd>5</kbd></dd></div><div><dt>Previous / next driver</dt><dd><kbd>←</kbd> <kbd>→</kbd></dd></div><div><dt>Change camera / recenter</dt><dd><kbd>C</kbd> <kbd>F</kbd></dd></div><div><dt>Results / new race</dt><dd><kbd>R</kbd> <kbd>N</kbd></dd></div><div><dt>Keyboard shortcuts</dt><dd><kbd>?</kbd></dd></div></dl><label class="shortcut-toggle"><input id="enable-shortcuts" type="checkbox" checked/> Enable race shortcuts</label></dialog>
 <dialog id="rename-dialog" aria-labelledby="rename-title"><button class="dialog-close icon-button" data-close aria-label="Close rename dialog">${icon('X')}</button><h2 id="rename-title">Rename race</h2><form id="rename-form"><label for="new-name">Race name</label><input id="new-name" maxlength="60" required/><button class="primary-button" type="submit">${icon('Check')} Save name</button></form></dialog>`;
 sessionReady.then((session) => {
   $('#archive-scope').hidden = session.archive !== 'browser';
@@ -146,21 +147,58 @@ $$('[data-speed]').forEach(
       });
     }),
 );
+// Leave text editing, browser shortcuts, and native button activation alone.
 window.addEventListener('keydown', (e) => {
-  if (
-    document.querySelector('dialog[open]') ||
-    e.target.closest('input,textarea,select') ||
-    e.altKey ||
-    e.ctrlKey ||
-    e.metaKey
-  )
+  if (e.defaultPrevented || e.repeat || e.isComposing || e.altKey || e.ctrlKey || e.metaKey) return;
+  const modal = document.querySelector('dialog[open]');
+  if (modal) return; // A modal handles Escape natively, including while an input has focus.
+  if (e.target.closest('input,textarea,select,[contenteditable]:not([contenteditable="false"])'))
     return;
-  if (/^[1-5]$/.test(e.key)) selectDriver(Number(e.key) - 1);
-  if (e.key.toLowerCase() === 'c') {
-    const modes = ['follow', 'orbit', 'top'];
-    setCamera(modes[(modes.indexOf(scene?.mode) + 1) % 3]);
+  if (e.key === 'Escape') {
+    e.preventDefault();
+    if (race.running || replay?.playing) pause();
+    return;
+  }
+  if (!$('#enable-shortcuts').checked) return;
+  const key = e.key.toLowerCase();
+  if (key === ' ' && e.target.closest('button,a,summary,[role="button"]')) return;
+  let action;
+  if (/^[1-5]$/.test(key)) action = () => selectDriver(Number(key) - 1);
+  else if (key === 'arrowleft' || key === 'arrowright')
+    action = () =>
+      selectDriver(
+        ((scene?.selected ?? 4) + (key === 'arrowleft' ? -1 : 1) + DRIVERS.length) % DRIVERS.length,
+      );
+  else if (key === ' ' || key === 'p') action = () => $('#start').click();
+  else if (key === 'c')
+    action = () => {
+      const modes = ['follow', 'orbit', 'top'];
+      setCamera(modes[(modes.indexOf(scene?.mode) + 1) % modes.length]);
+    };
+  else if (key === 'f') action = () => setCamera('follow');
+  else if (key === 'r') action = () => $('#results').click();
+  else if (key === 'n') action = () => $('#new-race').click();
+  else if (key === '?') action = () => openModal('#shortcuts-dialog');
+  if (action) {
+    e.preventDefault();
+    action();
   }
 });
+$('#show-shortcuts').onclick = () => {
+  $('#key-dialog').close();
+  openModal('#shortcuts-dialog');
+};
+for (const [selector, shortcut, title] of [
+  ['#start', 'Space P', 'Play / pause (Space or P)'],
+  ['#new-race', 'N', 'New race (N)'],
+  ['#results', 'R', 'Results (R)'],
+  ['[data-camera="follow"]', 'F', 'Follow driver · reset camera (F)'],
+  ['#show-shortcuts', 'Shift+/', 'Keyboard shortcuts (?)'],
+]) {
+  $(selector).setAttribute('aria-keyshortcuts', shortcut);
+  $(selector).title = title;
+}
+$$('[data-pilot]').forEach((button, i) => button.setAttribute('aria-keyshortcuts', String(i + 1)));
 function pause() {
   if (replay) replay.playing = false;
   else {
