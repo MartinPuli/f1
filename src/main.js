@@ -1012,7 +1012,7 @@ function frame(now) {
       saveRace();
     }
   }
-  scene?.render();
+  scene?.render(!!replay);
   if (now - lastUi > 150) {
     updateUi();
     lastUi = now;

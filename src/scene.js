@@ -1,3 +1,4 @@
+import { renderPose } from './motion.js';
 import { clearChaseCamera } from './camera.js';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -676,12 +677,19 @@ export class RaceScene {
     this.selected = THREE.MathUtils.clamp(index, 0, this.race.cars.length - 1);
     this.setCamera('follow');
   }
-  render() {
+  render(isReplay = false) {
     const now = performance.now(),
       dt = Math.min((now - this.lastFrame) / 1000, 0.05);
     this.lastFrame = now;
     const ease = 1 - Math.exp(-8 * dt);
-    this.race.cars.forEach((c, i) => {
+    const cars = this.race.cars.map((car, i) =>
+      renderPose(
+        car,
+        isReplay || !this.race.running ? null : this.race.previousPoses?.[i],
+        this.race.accumulator / 0.025,
+      ),
+    );
+    cars.forEach((c, i) => {
       const mesh = this.carMeshes[i];
       mesh.position.set(c.x, 0.25, c.z);
       mesh.rotation.y = c.heading;
@@ -690,9 +698,7 @@ export class RaceScene {
         -c.steer * Math.min(c.speed / 25, 1) * 0.13,
         ease,
       );
-      mesh.userData.body.position.y = this.reducedMotion
-        ? 0
-        : Math.sin(c.distance * 3) * Math.min(c.speed * 0.0015, 0.028);
+      mesh.userData.body.position.y = 0;
       mesh.userData.smoke.visible =
         c.engineTemp > 115 || (c.retired && c.retirement === 'Engine overheating');
       mesh.userData.smoke.children.forEach((puff, j) => {
@@ -711,7 +717,7 @@ export class RaceScene {
       mesh.userData.label.scale.setScalar(this.mode === 'follow' ? 1 : 1.6);
       mesh.userData.label.scale.multiply(new THREE.Vector3(1.2, 1.2, 1));
     });
-    const car = this.race.cars[this.selected];
+    const car = cars[this.selected];
     if (this.mode === 'follow') {
       if (!this.cameraReady) {
         this.followHeading = car.heading;
@@ -734,25 +740,20 @@ export class RaceScene {
         1.0,
         car.z + Math.cos(this.followHeading) * Math.max(0, Math.cos(this.orbitAngle)) * 6,
       );
-      if (!this.cameraReady || this.reducedMotion) {
-        this.camera.position.copy(desired);
-        this.lookTarget.copy(look);
-      } else {
-        this.camera.position.lerp(desired, 1 - Math.exp(-12 * dt));
-        this.lookTarget.lerp(look, 1 - Math.exp(-10 * dt));
-      }
+      // Camera and aim share the car's rendered position. Smoothing them at
+      // different rates makes the car drift and shake inside its own shot.
+      const safe = clearChaseCamera(desired, look, cars, this.selected);
+      desired.y =
+        !this.cameraReady || this.reducedMotion
+          ? safe.y
+          : THREE.MathUtils.lerp(this.camera.position.y, safe.y, 1 - Math.exp(-5 * dt));
+      this.camera.position.copy(desired);
+      this.lookTarget.copy(look);
       const fov =
         (this.camera.aspect < 0.8 ? 66 : 61) +
         (this.reducedMotion ? 0 : Math.min(car.speed * 0.17, 5));
       this.camera.fov = THREE.MathUtils.lerp(this.camera.fov, fov, this.cameraReady ? ease : 1);
       this.camera.updateProjectionMatrix();
-      const safe = clearChaseCamera(
-        this.camera.position,
-        this.lookTarget,
-        this.race.cars,
-        this.selected,
-      );
-      this.camera.position.y = safe.y;
       this.camera.lookAt(this.lookTarget);
       this.cameraReady = true;
     } else if (this.mode === 'orbit') this.controls.update();

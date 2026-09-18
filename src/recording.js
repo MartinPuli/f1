@@ -1,3 +1,4 @@
+import { replayCoordinate } from './motion.js';
 import { cleanDecisionLog } from './telemetry.js';
 import { cleanSettings } from './race-config.js';
 export const GENERATOR_VERSION = 2;
@@ -60,9 +61,9 @@ export function applyReplay(race, recording, time) {
       q = b.cars[i];
     const mix = (j) => p[j] + (q[j] - p[j]) * f;
     Object.assign(car, {
-      x: mix(0),
-      z: mix(1),
-      heading: p[2] + Math.atan2(Math.sin(q[2] - p[2]), Math.cos(q[2] - p[2])) * f,
+      x: replayCoordinate(frames, lo, i, 0, f),
+      z: replayCoordinate(frames, lo, i, 1, f),
+      heading: replayCoordinate(frames, lo, i, 2, f),
       speed: mix(3),
       steer: mix(4),
       wheelSteer: mix(4),

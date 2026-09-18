@@ -348,6 +348,7 @@ export class Race {
     this.events = [];
     this.incidentFlags = { contact: false, failure: false };
     this.accumulator = 0;
+    this.previousPoses = null;
     this.lastLog = 0;
     this.frames = [];
     this.lastFrame = -1;
@@ -525,6 +526,13 @@ export class Race {
         this.addEvent('system', 'Lights out.');
         continue;
       }
+      this.previousPoses = this.cars.map(({ x, z, heading, distance, wheelSteer }) => ({
+        x,
+        z,
+        heading,
+        distance,
+        wheelSteer,
+      }));
       this.time += 0.025;
       raceIncidents(this);
       for (const car of this.cars) {

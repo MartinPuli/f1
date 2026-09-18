@@ -31,7 +31,7 @@
   --panel: #eaf0f4;
   --ink: #192c3c;
   --muted: #60717e;
-  --accent: #c74030;
+  --accent: #bc4436;
   --line: #d9e1e7;
   --body: Barlow, sans-serif;
   --display: 'Barlow Condensed', sans-serif;
@@ -2037,13 +2037,13 @@ textarea {
   }
 }
 
-/* Painted pit-wall panels: neutral surfaces, cobalt controls, clear driver colors. */
+/* Painted pit-wall panels: neutral surfaces, logo-orange controls, clear driver colors. */
 :root {
   --paper: #f5f5ef;
   --panel: #e9ece8;
   --ink: #252b28;
   --muted: #606b65;
-  --accent: #244fc4;
+  --accent: #bc4436;
   --line: #d6dcd4;
   --radius: 16px;
   --shadow: 0 8px 24px #2026201a, 0 2px 0 #ffffffb3 inset;
@@ -2156,7 +2156,7 @@ textarea {
   border-radius: 22px;
 }
 .primary-button {
-  box-shadow: 0 3px 0 #17368f;
+  box-shadow: 0 3px 0 #833326;
 }
 .secondary-button {
   background: #eceee8;
@@ -2439,7 +2439,7 @@ textarea,
   overflow: visible;
 }
 #activity-chart rect {
-  fill: #4164ad;
+  fill: var(--accent);
 }
 .chart-grid {
   fill: none;
@@ -2818,7 +2818,7 @@ textarea,
   justify-content: space-between;
   padding: 2px 6px;
   margin: 2px 0;
-  background: #e3e8ef;
+  background: #eee6df;
   border-radius: 4px;
   font: 9px var(--data);
   text-transform: none;
@@ -2828,10 +2828,10 @@ textarea,
 .choice-probabilities i {
   position: absolute;
   inset: 0 auto 0 0;
-  background: #c1cce0;
+  background: #dfd0c3;
 }
 .choice-probabilities .chosen i {
-  background: #a1b6de;
+  background: #e6ad98;
 }
 .choice-probabilities b,
 .choice-probabilities em {
@@ -3151,7 +3151,7 @@ textarea,
   text-shadow: none;
 }
 .timing-row.selected {
-  background: #e3e9f2;
+  background: #f5e4d9;
   box-shadow: inset 3px 0 var(--pilot);
 }
 .timing-row:last-child {
@@ -3169,7 +3169,7 @@ textarea,
 }
 .choice-probabilities .chosen b,
 .choice-probabilities .chosen em {
-  color: #1b2c45;
+  color: #412d25;
 }
 
 .api-activity {
@@ -3205,7 +3205,7 @@ textarea,
   opacity: 0.7;
 }
 #request-line {
-  stroke: #244fc4;
+  stroke: var(--accent);
   stroke-width: 1.6;
   stroke-linejoin: round;
 }
@@ -3231,7 +3231,7 @@ textarea,
   margin-right: 5px;
   width: 11px;
   height: 2px;
-  background: #244fc4;
+  background: var(--accent);
 }
 .reply-key::before {
   height: 6px;
