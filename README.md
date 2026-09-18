@@ -1,4 +1,4 @@
-# JEV Prix 🏁
+# JEVRACE 🏁
 
 **Unknown tracks. Unexpected champions.** Five independent drivers discover a procedural circuit as they race. A full-screen Three.js spectator experiment with Formula-inspired cars, warm colors, orbitable chase cameras, saved races, and interactive replays.
 
@@ -13,15 +13,19 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. Give your race a name, pick 1–5 laps, generate a circuit or enter a seed, and start. Free demo mode runs without any account or key. For real Jev decisions, select **Race with Jev** and enter your own [TypeSafe API key](https://docs.typesafe.ai/introduction). Each visitor supplies their own key; there is no shared server key or silent demo fallback.
+Open `http://localhost:5173`. Give your race a name, pick 1–5 laps, generate a circuit or enter a seed, and start. Free demo mode runs without any account or key. For real Jev decisions, select **Jev** and enter your own [TypeSafe API key](https://docs.typesafe.ai/introduction). Connect verifies the key with TypeSafe’s model catalog before starting a race. Each visitor supplies their own key; there is no shared server key or silent demo fallback.
 
 Jev is a paid upstream service. The simulation requests decisions every 0.25 simulation seconds for up to five active cars (up to 20 upstream requests per simulation second). Time freezes while a batch is in flight. Errors pause the race. Pausing stops future batches; an already submitted batch can finish. The key stays in JavaScript memory until cleared or the page closes. It travels through the same-origin server to TypeSafe and is excluded from recordings, exports, logs, and persistence.
+
+The hosted app uses a same-origin content policy, HTTPS-only key forwarding, fixed TypeSafe endpoints with redirects disabled, and sanitized upstream errors. Model and decision responses are not cached. The key is never written to browser storage; clearing it also invalidates a pending connection. The app does not persist or log credentials, though the hosting service and TypeSafe necessarily process authenticated requests.
 
 Local race recordings are stored on disk in the ignored `.races/` directory, so they survive reloads and server restarts. The development server binds to loopback by default and uses one local archive; it is not a multi-user production server. Do not expose the development server to the internet.
 
 ## What you can do
 
 - Name and rename races; choose 1–5 laps and demo or Jev mode.
+- In **Grid**, select a TypeSafe model and edit the prompt for each driver, plus a shared race prompt. These settings affect Jev mode; demo uses local policies. Model choices load from TypeSafe when connected. Aliases can resolve to the same model version; see the [TypeSafe model catalog](https://docs.typesafe.ai/models).
+- Results retain the selected models, resolved versions when returned, and exact prompts alongside telemetry. Earlier recordings remain playable with their original default grid.
 - Generate circuits from a **32-bit seed space (4,294,967,296 seed values)**. These are generated on demand, not a catalog of billions of separately tested tracks. Reusing a seed reproduces the circuit under the same generator version.
 - Follow any driver, drag to orbit them, or switch to an orbiting circuit view or an aerial view. Keys **1–5** select drivers; **C** changes the view; double-click the circuit or click the chase camera button to recenter.
 - Save progress automatically every 15 simulation seconds, on pause and at the finish. The Results modal shows standings and the latest 50 archived races.

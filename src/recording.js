@@ -1,7 +1,8 @@
+import { cleanSettings } from './race-config.js';
 export const GENERATOR_VERSION = 2;
 export function recordRace(race, id, name, created) {
-  const drivers = race.ranking().map(c => ({id:c.id,name:c.name,color:c.color,lapTimes:[...c.lapTimes],finishTime:c.finishTime,progress:c.progress,offTrack:c.offTrack,collisions:c.collisions}));
-  return {id,name,created,generator:GENERATOR_VERSION,seed:race.seed,mode:race.mode,laps:race.limit,duration:race.time,finished:race.finished,decisions:race.decisions,drivers,frames:race.frames.map(f=>({t:f.t,cars:f.cars.map(c=>[...c])}))};
+  const drivers = race.ranking().map(c => ({id:c.id,name:c.name,color:c.color,resolvedModel:c.resolvedModel||null,lapTimes:[...c.lapTimes],finishTime:c.finishTime,progress:c.progress,offTrack:c.offTrack,collisions:c.collisions}));
+  return {id,name,created,settings:cleanSettings(race.settings),generator:GENERATOR_VERSION,seed:race.seed,mode:race.mode,laps:race.limit,duration:race.time,finished:race.finished,decisions:race.decisions,drivers,frames:race.frames.map(f=>({t:f.t,cars:f.cars.map(c=>[...c])}))};
 }
 export function applyReplay(race, recording, time) {
   const frames=recording.frames; if(!frames.length)return;

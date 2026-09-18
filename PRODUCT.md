@@ -1,3 +1,3 @@
-# JEV Prix product context
+# JEVRACE product context
 
 English-language, open-source spectator racing experiment requested by the user. Five independent Jev agents race on unknown procedural circuits. No full circuit or seed in driver observations. Demo mode must be clearly identified and free; live Jev uses each visitor's own session key. Users create named races, choose seeded tracks and laps, follow drivers, orbit cameras, view results, and revisit durable interactive recordings. Keep one scene with modal workflows. Hosted archives use Sites identity plus D1/R2; local development uses disk storage. Public repository requested; preserve existing hosted audience unless separately changed.

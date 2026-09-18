@@ -56,7 +56,7 @@ export class RaceScene {
   for(let x=0;x<12;x++)for(let z=0;z<3;z++)this.box(x-5.5,.29,z*.6,.99,.04,.59,(x+z)%2?'#fff8dd':'#49526a',finish,.01);
   this.box(-7.65,3.8,.3,1,7.6,1,PALETTE.coral,finish,.35);this.box(7.65,3.8,.3,1,7.6,1,PALETTE.coral,finish,.35);this.box(0,7.6,.3,17.7,2.4,1.25,PALETTE.coral,finish,.55);
   this.box(0,7.62,-.4,13.8,1.75,.1,'#fff4d6',finish,.3);this.box(0,7.62,1,13.8,1.75,.1,'#fff4d6',finish,.3);
-  const sign=this.text('JEV   PRIX','#d95845',1024,160);sign.scale.set(12.5,1.45,1);sign.position.set(0,7.6,1.08);finish.add(sign);const reverse=sign.clone();reverse.position.z=-.48;reverse.rotation.y=Math.PI;finish.add(reverse);
+  const sign=this.text('JEVRACE','#d95845',1024,160);sign.scale.set(12.5,1.45,1);sign.position.set(0,7.6,1.08);finish.add(sign);const reverse=sign.clone();reverse.position.z=-.48;reverse.rotation.y=Math.PI;finish.add(reverse);
   for(const side of [-1,1])for(let j=0;j<3;j++){this.sphere(side*(8.8+j*.8),9.5+j*.8,.3,1.25,['#ffd252','#8ecde8','#b79eec'][j],finish,[1,1.2,1]);const string=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(side*8,5,.3),new THREE.Vector3(side*(8.8+j*.8),9.5+j*.8,.3)]),new THREE.LineBasicMaterial({color:'#ddd6b3'}));finish.add(string);}
  }
  buildStands(){const bounds=new THREE.Box3().setFromPoints(this.race.track.samples);const z=bounds.max.z+17;

@@ -1,37 +1,9 @@
-# JEV Prix — pit board system
+# JEVRACE — race paddock
 
-The racing scene is the main surface. Interface chrome should read like lightweight timing equipment, not a promotional game menu. The single visual signature is the real circuit silhouette; every other element is a control or race datum.
+Single full-screen racing scene, warm ivory panels, coral-red primary actions, midnight timing details, sky-blue circuit preview, and the existing bright driver liveries. Restore the friendly character of the earlier interface without its slogans or explanatory blocks.
 
-## Tokens
+Tokens: ivory #fffaf0, midnight #243748, muted #63746f, racing red #bc4436, sky #d7ebed, rule #e2dfd1. Barlow for readable controls, Barlow Condensed italic for the JEVRACE wordmark and large race numbers. One bespoke logo joins angle brackets with a checkered-flag motif, referencing typed decisions without copying TypeSafe's mark.
 
-- Paper: #f8fafb — modal and control surfaces.
-- Panel: #edf2f5 — circuit inset and grouped controls.
-- Ink: #24364b — primary text.
-- Muted: #63748a — secondary data.
-- Team blue: #315f96 — one primary action and selected states.
-- Rule: #dbe3eb — field borders and separators.
+The setup modal has two views: Circuit and Grid. Circuit contains the track, name, laps, driver mode and session connection. Grid has five driver selectors with model and editable strategy prompt. The saved result includes the exact grid configuration. Keys never enter saved configuration.
 
-Driver liveries and the existing 3D world retain their own colors. Interface shadows derive from Ink with low opacity. Corners: 6 px controls, 12 px dialogs. Spacing: 4 / 8 / 12 / 16 / 24 / 32 px.
-
-Type: Barlow regular for text, medium for labels, semibold for actions; Barlow Condensed semibold for the wordmark and racing numerals; system monospace for times and seeds. No rounded display lettering, text strokes or decorative uppercase slogans.
-
-## Layout
-
-The setup dialog uses a compact vertical arrangement, with the circuit preview doing the framing instead of a headline and explanatory paragraph.
-
-```
-New race                         ×
-┌────────────────────────────────┐
-│       circuit silhouette       │
-│ 348 m        Seed [42]    ⤨     │
-└────────────────────────────────┘
-Name [Sunshine Grand Prix       ]
-Drivers [Demo | Jev]    Laps [3 ]
-[             Start race        ]
-```
-
-Results use one table and one replay action. Saved races use compact rows. API text appears only where a user chooses paid Jev mode or edits a key. Errors remain actionable. Autosave has a short status; manual retry appears only on failure.
-
-## Critique before implementation
-
-The previous cream/terracotta palette, thick rounded font, repeated slogans and separate rounded cards all competed with the circuit. Remove them. Avoid replacing them with a dark esports template: use cool timing-screen surfaces, livery colors only where they identify a driver, and one restrained blue action. No new feature or onboarding layer is needed.
+Keep one primary start action. No slogans, permanent technical instructions or repeated labels. Security/usage details stay beside the session connection where they affect the user's choice.

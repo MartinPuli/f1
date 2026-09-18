@@ -1,3 +1,4 @@
+import { defaultSettings } from './race-config.js';
 import { CatmullRomCurve3, Vector3 } from 'three';
 
 export const DRIVERS = [
@@ -70,7 +71,7 @@ export function integrate(car,dt,track){
  [0,10,20,30,42].forEach(d=>car.seen.add(Math.floor(wrap((now.s+d)/track.length)*90)));
 }
 export class Race {
- constructor(seed=42){this.seed=seed;this.mode='demo';this.limit=3;this.generation=0;this.reset(seed);}
+ constructor(seed=42){this.seed=seed;this.mode='demo';this.settings=defaultSettings();this.limit=3;this.generation=0;this.reset(seed);}
  reset(seed=this.seed){this.generation++;this.seed=seed;this.track=makeTrack(seed);this.cars=createCars(this.track);this.time=0;this.running=false;this.waiting=false;this.finished=false;this.error='';this.nextDecision=0;this.decisions=0;this.events=[];this.accumulator=0;this.lastLog=0;this.frames=[];this.lastFrame=-1;this.captureFrame();this.addEvent('system','Ready. Drivers have not seen the circuit.');}
  addEvent(id,text){this.events.unshift({id,text,time:this.time});this.events=this.events.slice(0,40);}
  async decide(){
@@ -78,12 +79,12 @@ export class Race {
  if(this.mode==='demo'){active.forEach((c,i)=>this.apply(c,demoDecision(states[i],c),states[i]));return;}
  const generation=this.generation;this.waiting=true;
  try{
-  const response=await fetch('/api/decide',{method:'POST',headers:{'Content-Type':'application/json',...(this.apiKey?{Authorization:`Bearer ${this.apiKey}`}:{})},body:JSON.stringify({states}),signal:AbortSignal.timeout(25000)});
+  const response=await fetch('/api/decide',{method:'POST',headers:{'Content-Type':'application/json',...(this.apiKey?{Authorization:`Bearer ${this.apiKey}`}:{})},body:JSON.stringify({states,driverIds:active.map(c=>c.id),settings:this.settings}),signal:AbortSignal.timeout(25000)});
   const body=await response.json();if(!response.ok)throw new Error(body.error||'Jev could not respond.');
   if(generation!==this.generation)return;
   if(!Array.isArray(body.decisions)||body.decisions.length!==active.length)throw new Error('Incomplete Jev response.');
   body.decisions.forEach((d,i)=>{if(!ACTIONS[d.choice])throw new Error('Jev returned an invalid action.');});
-  body.decisions.forEach((d,i)=>this.apply(active[i],{...ACTIONS[d.choice],confidence:d.confidence,label:d.choice.replaceAll('_',' ')},states[i]));
+  body.decisions.forEach((d,i)=>{active[i].resolvedModel=d.model||this.settings.drivers.find(p=>p.id===active[i].id).model;this.apply(active[i],{...ACTIONS[d.choice],confidence:d.confidence,label:d.choice.replaceAll('_',' ')},states[i]);});
  }catch(e){if(generation===this.generation){this.error=e.name==='TimeoutError'?'Jev timed out. The race is paused; you can retry.':e.message;this.running=false;this.nextDecision=this.time;this.addEvent('system',this.error);}}
  finally{if(generation===this.generation)this.waiting=false;}
  }
