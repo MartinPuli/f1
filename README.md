@@ -78,7 +78,7 @@ MIT licensed. The JV racing mark is original; this project has no affiliation wi
 
 ## Recording a race film
 
-Run a race, then choose **Results → Watch film**. The camera sequence uses the recorded race positions, starting lights, and a winner card. It loops without new inference calls or archive writes. A Jev recording shows **JEV · TypeSafe**; a local race shows **Race replay**. The film doesn't substitute local decisions for Jev decisions.
+Run a race, then choose **Results → Watch film**. The camera sequence uses the recorded race positions, starting lights, and a winner card. It loops without new inference calls or archive writes. Jev recordings show the recorded request activity and driver choices in the lower-left panel. The film doesn't substitute local decisions for Jev decisions.
 
 Use a screen recorder at 1920 × 1080 to capture a loop. **Space** pauses; **Esc** returns to your race. **Results → My races → Open recording** loads a downloaded JEVRACE JSON file without uploading it. Prompts, resolved models, and results remain in the recording; credentials do not.
 
