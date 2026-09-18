@@ -12,7 +12,7 @@ const json = (body, status = 200) =>
     },
   });
 const rules =
-  'You drive a race car on an unknown closed circuit. Choose one action for the next 0.25 simulation seconds. You only know the supplied local observation. Right is positive to your right; forward is positive ahead. Road points are centerline samples in car-relative meters. Positive heading_error means turn right. Negative means left. Steering is normalized [-1,1] times 0.42 radians, wheelbase 3.1 m. Grip allows at most 18 m/s² lateral acceleration. Use your recent observations. Do not assume knowledge of unseen track.';
+  'You drive a race car on an unknown closed circuit. Choose one action for the next 0.5 simulation seconds. You only know the supplied local observation. Right is positive to your right; forward is positive ahead. Road points are centerline samples in car-relative meters. Positive heading_error means turn right. Negative means left. Steering is normalized [-1,1] times 0.42 radians, wheelbase 3.1 m. Grip allows at most 18 m/s² lateral acceleration. Use your recent observations. Do not assume knowledge of unseen track.';
 const criteria = {
   push_left: 'Accelerate, gentle left steering (-0.30).',
   push_straight: 'Accelerate, straight steering.',
@@ -59,10 +59,10 @@ export async function api(request, env = {}) {
       const response = await fetch('https://api.typesafe.ai/v1/models', {
         headers: { Authorization: `Bearer ${key}` },
         redirect: 'error',
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.any([request.signal, AbortSignal.timeout(10000)]),
       });
       if (!response.ok) return upstreamError(response.status);
-      const data = await response.json(),
+      const data = await boundedJson(response, 256000),
         list = Array.isArray(data) ? data : data.models;
       if (!Array.isArray(list))
         return json({ error: 'TypeSafe returned an invalid model list.' }, 502);
@@ -103,6 +103,8 @@ export async function api(request, env = {}) {
         !s.visible_road.every((p) => p && Number.isFinite(p.right) && Number.isFinite(p.forward))
       )
         return json({ error: 'Invalid observation.' }, 400);
+    const controller = new AbortController();
+    const signal = AbortSignal.any([request.signal, controller.signal, AbortSignal.timeout(12000)]);
     const decisions = await Promise.all(
       states.map(async (state, i) => {
         const driver = settings.drivers.find((d) => d.id === ids[i]);
@@ -110,10 +112,10 @@ export async function api(request, env = {}) {
           method: 'POST',
           redirect: 'error',
           headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(20000),
+          signal,
           body: JSON.stringify({
             model: driver.model,
-            state: JSON.stringify(state),
+            state: JSON.stringify(cleanObservation(state)),
             questions: {
               drive: {
                 type: 'choice',
@@ -124,7 +126,7 @@ export async function api(request, env = {}) {
           }),
         });
         if (!response.ok) throw new UpstreamFailure(response.status);
-        const data = await response.json(),
+        const data = await boundedJson(response, 256000),
           a = data.answers?.drive;
         if (!a || !Object.hasOwn(ACTIONS, a.choice)) throw new Error('Invalid decision');
         return {
@@ -133,7 +135,10 @@ export async function api(request, env = {}) {
           model: validModel(data.model) ? data.model : driver.model,
         };
       }),
-    );
+    ).catch((error) => {
+      controller.abort();
+      throw error;
+    });
     return json({ decisions });
   } catch (e) {
     if (e instanceof UpstreamFailure) return upstreamError(e.status);
@@ -147,4 +152,35 @@ export async function api(request, env = {}) {
       502,
     );
   }
+}
+
+// Drop extra fields and bound the observation sent to the paid endpoint.
+export function cleanObservation(s) {
+  const number = (v, min, max, fallback = 0) =>
+    Number.isFinite(v) ? Math.max(min, Math.min(max, v)) : fallback;
+  return {
+    speed_mps: number(s.speed_mps, 0, 60),
+    heading_error: number(s.heading_error, -Math.PI, Math.PI),
+    road_width_m: number(s.road_width_m, 1, 30, 10),
+    lateral_offset_m: number(s.lateral_offset_m, -500, 500),
+    visible_road: s.visible_road.map((p) => ({
+      distance: number(p.distance, 0, 42),
+      right: number(p.right, -500, 500),
+      forward: number(p.forward, -500, 500),
+    })),
+    nearby_cars: (Array.isArray(s.nearby_cars) ? s.nearby_cars : []).slice(0, 4).map((p) => ({
+      right: number(p?.right, -42, 42),
+      forward: number(p?.forward, -42, 42),
+      speed_mps: number(p?.speed_mps, 0, 60),
+    })),
+    lap: number(s.lap, 1, 5, 1),
+    off_track: s.off_track === true,
+    elapsed_seconds: number(s.elapsed_seconds, 0, 501),
+    memory: (Array.isArray(s.memory) ? s.memory : []).slice(-8).map((m) => ({
+      speed: number(m?.speed, 0, 60),
+      heading_error: number(m?.heading_error, -Math.PI, Math.PI),
+      off_track: m?.off_track === true,
+      action: typeof m?.action === 'string' ? m.action.slice(0, 40) : '',
+    })),
+  };
 }

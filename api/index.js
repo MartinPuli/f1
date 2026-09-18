@@ -2,20 +2,24 @@ import { neon } from '@neondatabase/serverless';
 import { postgresArchive } from '../server/postgres-archive.js';
 import { createVercelHandler } from '../server/vercel.js';
 
+let handler;
 export default {
   async fetch(request) {
-    // Construct lazily: an unset environment should return 503, not crash module startup.
-    let store;
-    if (process.env.DATABASE_URL) {
-      try {
-        const sql = neon(process.env.DATABASE_URL, {
-          fetchOptions: { signal: AbortSignal.timeout(10000) },
-        });
-        store = postgresArchive((text, params) => sql.query(text, params));
-      } catch {
-        /* The handler reports an incomplete setup without exposing the database URL. */
+    if (!handler) {
+      let store;
+      if (process.env.DATABASE_URL) {
+        try {
+          const sql = neon(process.env.DATABASE_URL);
+          // Give each query its own deadline; don't reuse an expired signal across warm requests.
+          store = postgresArchive((text, params) =>
+            sql.query(text, params, { fetchOptions: { signal: AbortSignal.timeout(5000) } }),
+          );
+        } catch {
+          /* Missing settings return a plain 503 from the handler. */
+        }
       }
+      handler = createVercelHandler({ env: process.env, store });
     }
-    return createVercelHandler({ env: process.env, store })(request);
+    return handler(request);
   },
 };

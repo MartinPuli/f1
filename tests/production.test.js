@@ -75,7 +75,7 @@ test('Postgres saves are scoped, quota checked, and rate counters reset across w
 test('Vercel requires a signed session, ignores forged host identity, and fails closed', async () => {
   const owners = [],
     store = {
-      allow: async () => true,
+      admit: async () => ({ allowed: true, blocked: [] }),
       list: async (owner) => {
         owners.push(owner);
         return [];
@@ -122,7 +122,7 @@ test('Vercel requires a signed session, ignores forged host identity, and fails 
   const broken = createVercelHandler({
     env: { APP_ORIGIN: origin, SESSION_SECRET: secret },
     store: {
-      allow: async () => {
+      admit: async () => {
         throw new Error('secret-db-url');
       },
     },

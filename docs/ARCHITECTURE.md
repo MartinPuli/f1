@@ -4,7 +4,7 @@ JEVRACE has one browser scene. The interface opens dialogs over it for race setu
 
 ## A decision batch
 
-`Race.tick()` advances a fixed 25 ms physics step. Every quarter-second of simulation time, Jev mode pauses advancement and requests decisions for the active cars. `observe()` gives each driver local road samples, nearby cars, and its own memory. It doesn't include a seed, full track, or another driver's prompt.
+`Race.tick()` advances a fixed 25 ms physics step. Every half-second of simulation time, Jev mode pauses advancement and requests decisions for the active cars. The browser also spaces batches by at least two real seconds and honors server cooldowns. Demo decisions remain local and run every quarter-second. `observe()` gives each driver local road samples, nearby cars, and its own memory. It doesn't include a seed, full track, or another driver's prompt.
 
 `server/api.js` validates the batch, matches each driver ID to its configured model and prompt, then calls TypeSafe. It accepts only known action names. The response includes the resolved model when available. A generation counter stops an old network response from changing a reset race, while service errors pause the run instead of silently using demo driving.
 
@@ -26,7 +26,7 @@ The shared API receives storage and owner adapters. Vercel never accepts the Sit
 
 Frames contain a timestamp and five arrays in stable driver order: x, z, heading, speed, steering, progress, lap, finished flag, and distance. `applyReplay()` uses binary search for the surrounding frames and interpolates position and heading. Generator version 2 identifies the seeded circuit implementation; retain old generators before changing its geometry.
 
-The UI serializes saves through a queue. This prevents a slower, older save from overwriting a finish. Postgres additionally locks saves per owner while checking quotas. Metadata excludes frames, which keeps the saved-race list small.
+The UI serializes saves through `src/save-queue.js`, replaces pending snapshots with newer ones, and skips unchanged snapshots. A session starts only when the user needs an API feature; a returning signed cookie needs no database query to bootstrap. This prevents a slower, older save from overwriting a finish. Postgres additionally locks saves per owner while checking quotas. Metadata excludes frames, which keeps the saved-race list small.
 
 ## Maintaining the project
 

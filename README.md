@@ -31,7 +31,7 @@ Open **Grid** to edit a driver's model and prompt. The shared race prompt applie
 
 Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **Space** or **P** plays and pauses, **Esc** closes a window or pauses the race, **1–5** and the left/right arrows select drivers, **C** changes the camera, and **F** recenters it. **R** opens Results, **N** opens race setup, and **?** shows the shortcut sheet. Shortcuts leave text fields alone; you can disable them in the sheet, which is also available through settings. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
 
-Results save every 15 simulation seconds, on pause, and at the finish. They include standings, prompts, models, and replay frames. Replays don't call TypeSafe. If storage fails, Results shows the error and lets you retry or download JSON. Closing the page can lose progress since the last completed save.
+Autosaves need both 30 simulation seconds of new progress and 60 seconds since the previous autosave. Pausing and finishing also queue a save. The queue keeps the newest pending snapshot per race and spaces writes at least 15 seconds apart; opening a dialog without changing the race doesn't save it again. They include standings, prompts, models, and replay frames. Replays don't call TypeSafe. If storage fails, Results shows the error and lets you retry or download JSON. Closing the page can lose progress since the last completed save.
 
 ## API keys and costs
 
@@ -39,7 +39,7 @@ The browser keeps the key in memory until you clear it or leave the page. Reques
 
 Don't put secrets in driver prompts or race names, because the archive deliberately stores those fields. The interface blocks the currently connected key when it detects it there. Keep request-body logging, session replay tools, and third-party scripts away from the connection flow. [SECURITY.md](SECURITY.md) describes the boundaries and remaining risks.
 
-Jev makes up to **20 upstream calls per simulation second**: five drivers, four decisions each second. The race freezes while a batch runs, and service errors pause it. A batch already sent may still complete after you pause or clear the key. Use TypeSafe's account controls to limit spending; JEVRACE doesn't enforce a dollar budget.
+Jev makes up to **10 upstream calls per simulation second**: five drivers, two decisions each second. The browser starts at most one batch every two real seconds, including at 4× playback. The race freezes while a batch runs, and service errors pause it. A batch already sent may still complete after you pause or clear the key. Use TypeSafe's account controls to limit spending; JEVRACE doesn't enforce a dollar budget.
 
 ## Work on the code
 
@@ -66,6 +66,6 @@ See [architecture notes](docs/ARCHITECTURE.md) for the request path, recording f
 
 This is a spectator experiment, not a competitive leaderboard. Visitors control the client and can submit invented race data to their own archives. Drivers see five local road samples up to 42 meters ahead, nearby cars, and their own recent observations; they never receive the circuit seed or the full track. A race times out after 100 simulation seconds per lap.
 
-Vercel limits each browser archive to 50 races and 50 MB of JSON. Rate limits use shared Postgres counters rather than function memory. They reduce repeated requests but don't stop distributed abuse; configure Vercel's firewall and spending alerts before sharing a deployment widely.
+Vercel limits each browser archive to 50 races and 50 MB of JSON. Shared Postgres counters cap requests by browser, IP, and project, including daily and monthly budgets. One database statement checks all applicable counters; short rejection caches reduce repeat queries in warm functions. These limits don't prevent function invocation charges or protect static bandwidth. Configure the free Vercel bot rules and API firewall rule in [the deployment guide](docs/VERCEL.md) before sharing the URL.
 
 MIT licensed. The JV racing mark is original; this project has no affiliation with Formula 1, its teams, or its drivers. Font licenses live beside the self-hosted fonts in `public/fonts/`.

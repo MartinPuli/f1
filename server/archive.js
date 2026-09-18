@@ -4,28 +4,44 @@ const json = (data, status = 200) =>
     status,
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });
-export async function boundedJson(request, max = 3500000) {
+export async function boundedJson(request, max = 3500000, timeoutMs = 5000) {
   const reader = request.body?.getReader();
   if (!reader) throw new Error('Missing request body.');
-  let length = 0,
-    parts = [];
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    length += value.length;
-    if (length > max) {
-      await reader.cancel();
-      throw new Error('Recording is too large.');
+  let timer;
+  const read = async () => {
+    let length = 0;
+    const parts = [];
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      length += value.length;
+      if (length > max) {
+        await reader.cancel();
+        throw new Error('Request is too large.');
+      }
+      parts.push(value);
     }
-    parts.push(value);
+    const raw = new Uint8Array(length);
+    let offset = 0;
+    for (const part of parts) {
+      raw.set(part, offset);
+      offset += part.length;
+    }
+    return JSON.parse(new TextDecoder().decode(raw));
+  };
+  try {
+    return await Promise.race([
+      read(),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error('Request body timed out.'));
+          reader.cancel().catch(() => {});
+        }, timeoutMs);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
   }
-  const raw = new Uint8Array(length);
-  let offset = 0;
-  for (const p of parts) {
-    raw.set(p, offset);
-    offset += p.length;
-  }
-  return JSON.parse(new TextDecoder().decode(raw));
 }
 export function validRecord(r) {
   return (

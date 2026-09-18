@@ -1,5 +1,7 @@
 import { timingSafeEqual } from 'node:crypto';
 import { api } from './api.js';
+import { boundedJson } from './archive.js';
+import { policiesFor, rejectionCache } from './traffic.js';
 import { secureResponse } from './security.js';
 import { readSession, issueSession, rateIdentity } from './session.js';
 
@@ -19,15 +21,22 @@ export function normalizeVercelRequest(request) {
 
 // Inject the store in tests; production uses Postgres, never a function's temporary disk.
 export function createVercelHandler({ env, store }) {
+  const denied = rejectionCache();
+  const active = new Set();
+  let circuitUntil = 0;
   return async (request) => {
     request = normalizeVercelRequest(request);
-    let cookie;
+    let cookie, activeOwner;
     const finish = (result) => {
       const response = secureResponse(result);
+      if (result.status === 429 && !response.headers.has('Retry-After'))
+        response.headers.set('Retry-After', '60');
       if (cookie) response.headers.set('Set-Cookie', cookie);
       return response;
     };
     try {
+      if (Date.now() < circuitUntil)
+        return finish(json({ error: 'Service is cooling down. Try again shortly.' }, 503));
       if (
         !env.SESSION_SECRET ||
         Buffer.byteLength(env.SESSION_SECRET) < 32 ||
@@ -52,6 +61,10 @@ export function createVercelHandler({ env, store }) {
         await store.prune();
         return finish(json({ cleaned: true }));
       }
+      if (env.API_PAUSED === '1')
+        return finish(
+          json({ error: 'Online racing is temporarily paused. Demo mode still works.' }, 503),
+        );
       if (
         allowed.protocol !== 'https:' ||
         allowed.origin !== env.APP_ORIGIN ||
@@ -68,23 +81,101 @@ export function createVercelHandler({ env, store }) {
       if (!/^\/api\/(status|models|decide|races(?:\/[a-f0-9-]{36})?)$/.test(path))
         return finish(json({ error: 'Not found.' }, 404));
 
-      // Vercel overwrites x-forwarded-for at its edge. Don't run this adapter behind an untrusted proxy.
-      const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
-      if (!(await store.allow('ip:' + rateIdentity(ip, env.SESSION_SECRET), 1200, 60)))
-        return finish(json({ error: 'Too many requests. Wait a minute and retry.' }, 429));
+      const methods =
+        path === '/api/status' || path === '/api/models'
+          ? ['GET']
+          : path === '/api/decide'
+            ? ['POST']
+            : path === '/api/races'
+              ? ['GET', 'POST']
+              : ['GET', 'DELETE'];
+      if (!methods.includes(request.method))
+        return finish(json({ error: 'Method not allowed.' }, 405));
+      if (request.headers.has('content-encoding'))
+        return finish(json({ error: 'Encoded request bodies are not supported.' }, 415));
+      const maximum = path === '/api/decide' ? 30000 : 3500000;
+      const size = request.headers.get('content-length');
+      if (size && (!/^\d+$/.test(size) || Number(size) > maximum))
+        return finish(json({ error: 'Request is too large.' }, 413));
+      if (
+        request.method === 'POST' &&
+        request.headers.get('content-type')?.split(';')[0] !== 'application/json'
+      )
+        return finish(json({ error: 'Send JSON.' }, 415));
       let owner = readSession(request.headers.get('cookie'), env.SESSION_SECRET);
-      if (!owner) {
-        if (path !== '/api/status' || request.method !== 'GET')
-          return finish(json({ error: 'Reload the page to start a browser session.' }, 401));
-        ({ owner, cookie } = issueSession(env.SESSION_SECRET));
-      }
-      const group =
-        path === '/api/decide' ? 'drive' : path === '/api/models' ? 'connect' : 'archive';
-      const limit = group === 'drive' ? 600 : group === 'connect' ? 12 : 120;
-      if (!(await store.allow(`${owner}:${group}`, limit, 60)))
-        return finish(json({ error: 'Too many requests. Wait a minute and retry.' }, 429));
-      if (path === '/api/status')
+      if (!owner && path !== '/api/status')
+        return finish(json({ error: 'Reload the page to start a browser session.' }, 401));
+      // A returning page only needs to verify its signature; it doesn't need a database read.
+      if (owner && path === '/api/status')
         return finish(json({ byok: true, archive: 'browser', retentionDays: 90 }));
+      if (
+        (path === '/api/decide' || path === '/api/models') &&
+        !/^Bearer [^\s]{1,512}$/i.test(request.headers.get('authorization') || '')
+      )
+        return finish(json({ error: 'Add your TypeSafe API key.' }, 401));
+      const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+      const group = !owner
+        ? 'session'
+        : path === '/api/decide'
+          ? 'drive'
+          : path === '/api/models'
+            ? 'connect'
+            : ['POST', 'DELETE'].includes(request.method)
+              ? 'write'
+              : 'read';
+      if (group === 'drive' && (active.has(owner) || active.size >= 8))
+        return finish(json({ error: 'A decision is already running. Wait and resume.' }, 429));
+      if (group === 'drive') {
+        activeOwner = owner;
+        active.add(owner);
+      }
+      let bytes = 0;
+      if (request.method === 'POST') {
+        let body;
+        try {
+          body = JSON.stringify(await boundedJson(request, maximum));
+        } catch {
+          return finish(json({ error: 'Invalid, oversized, or slow request body.' }, 400));
+        }
+        bytes = path === '/api/races' ? new TextEncoder().encode(body).length : 0;
+        request = new Request(request.url, {
+          method: request.method,
+          headers: request.headers,
+          body,
+          signal: request.signal,
+        });
+      }
+      const policies = policiesFor({
+        owner,
+        ip: rateIdentity(ip, env.SESSION_SECRET),
+        group,
+        bytes,
+      });
+      const cachedWait = denied.get(policies);
+      if (cachedWait) {
+        const result = finish(
+          json({ error: 'Usage limit reached. Wait before trying again.' }, 429),
+        );
+        result.headers.set('Retry-After', String(cachedWait));
+        return result;
+      }
+      const admission = await store.admit(policies);
+      if (!admission.allowed) {
+        denied.set(admission.blocked);
+        const retry = Math.max(
+          1,
+          ...admission.blocked.map((p) => Math.ceil(p.end - Date.now() / 1000)),
+        );
+        const result = finish(
+          json({ error: 'Usage limit reached. Try again later; Demo mode still works.' }, 429),
+        );
+        result.headers.set('Retry-After', String(retry));
+        return result;
+      }
+      if (!owner) {
+        ({ owner, cookie } = issueSession(env.SESSION_SECRET));
+        return finish(json({ byok: true, archive: 'browser', retentionDays: 90 }));
+      }
 
       // Ignore Sites identity headers on Vercel. Only our signed cookie selects the archive owner.
       const headers = new Headers(request.headers);
@@ -93,10 +184,13 @@ export function createVercelHandler({ env, store }) {
         await api(new Request(request, { headers }), { ARCHIVE: store, ARCHIVE_OWNER: owner }),
       );
     } catch {
+      circuitUntil = Date.now() + 10000;
       // Driver errors can contain SQL values. Keep them out of responses and platform logs.
       return finish(
         json({ error: 'Service unavailable. Try again or download your recording.' }, 503),
       );
+    } finally {
+      if (activeOwner) active.delete(activeOwner);
     }
   };
 }

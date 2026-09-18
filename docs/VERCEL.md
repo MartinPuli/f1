@@ -61,7 +61,27 @@ Check these response headers in browser developer tools: `Content-Security-Polic
 
 ## Before you share the URL
 
-Enable Vercel firewall rules for `/api/*` and set usage alerts on both Vercel and Neon. The app allows 1,200 requests per IP per minute, then applies per-browser limits: 600 decision batches, 12 connection checks, or 120 archive/status requests per minute. A batch can contain five paid TypeSafe calls. Users behind one shared IP also share that first limit.
+In **Project → Firewall → Rules**, enable the free **Bot Protection** managed ruleset and **AI Bots** blocking. Bot Protection challenges clients that don't behave like browsers; AI Bots blocks known AI crawlers. Neither guarantees that every automated client will be caught. Don't enable paid BotID Deep Analysis for this setup.
+
+Add a rate-limit rule matching paths that start with `/api`, counting by IP: **120 requests per 60 seconds**, with **Deny** when exceeded. Include the bare `/api` rewrite destination. This cuts rejected API traffic before a function runs; the code's own limits run inside the function. A cron request once a day stays below this threshold. Review firewall events after testing a normal race and adjust only when legitimate shared-IP traffic needs more room. [Vercel documents the free bot rules](https://vercel.com/docs/bot-management) and [rate-limit rule availability](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting).
+
+Set usage alerts on Vercel and Neon. During an attack, enable **Attack Challenge Mode** in Vercel's Firewall. To stop online work entirely, set the server variable `API_PAUSED=1` and redeploy; the demo and downloads remain local, while cron cleanup remains authorized separately. Remove the variable and redeploy to resume. Platform bandwidth, invocation charges, and provider limits still apply.
+
+The server uses these fixed-window budgets:
+
+| Scope                        | Budget                                          |
+| ---------------------------- | ----------------------------------------------- |
+| Project API admissions       | 300/minute, 12,000/day, 250,000/calendar month  |
+| IP                           | 120/minute, 3,000/day                           |
+| New browser sessions         | 20/IP/hour, 300/project/day                     |
+| Decisions per browser        | 45 batches/minute, 900/day, 1/second            |
+| Decisions across the project | 12 batches/10 seconds                           |
+| Model catalog per browser    | 6/minute, 50/day                                |
+| Archive writes per browser   | 6/minute, 100/day                               |
+| Archive reads per browser    | 30/minute, 400/day                              |
+| Uploaded recording JSON      | 10 MB/browser/day, 50 MB/project/calendar month |
+
+UTC defines day and month boundaries. These conservative defaults live in `server/traffic.js`; they aren't promises about a provider's free allowance. An attacker can exhaust a global budget and pause online features until it resets. Users behind one IP share its limits. Upload budgets count every accepted snapshot's JSON bytes, including overwrites, rather than just stored data. Existing signed-session status checks skip the database; invalid requests fail before admission. A rejected admission may consume other counters, but it can't create new visitor rows after global exhaustion. The API returns `Retry-After`; the client waits and doesn't automatically replay a failed paid batch.
 
 Keep body/header logging off for these endpoints. A visitor must trust the operator of a BYOK website: the server sees the credential while forwarding it. If you add analytics, don't record input fields, prompts, request bodies, or headers.
 
@@ -69,7 +89,7 @@ The archive uses browser identity, with no sign-in or recovery. If you need cros
 
 ## Troubleshooting
 
-**503 on `/api/status`:** check the server variables, confirm the SQL ran, and redeploy. The app hides database exception text because it can contain connection details or user data.
+**503 on `/api/status`:** check whether `API_PAUSED` is enabled; otherwise check the server variables, confirm the SQL ran, and redeploy. The app hides database exception text because it can contain connection details or user data.
 
 **403:** the request origin doesn't match `APP_ORIGIN`, or a mutation came from another site. Use your canonical URL.
 
@@ -77,7 +97,7 @@ The archive uses browser identity, with no sign-in or recovery. If you need cros
 
 **409 while saving:** the browser archive reached 50 races or 50 MB. Delete an old race, then retry the save.
 
-**429:** wait a minute before resuming. If TypeSafe sent the limit, inspect your TypeSafe account separately.
+**429:** respect the response's `Retry-After` delay; daily and monthly budgets can take longer than a minute to reset. If TypeSafe sent the limit, inspect your TypeSafe account separately.
 
 ## References
 

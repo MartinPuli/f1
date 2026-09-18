@@ -16,13 +16,23 @@ An HMAC-signed, Secure, HttpOnly, SameSite=Strict cookie carries a random archiv
 
 POST and DELETE require the configured same-origin Origin header. Cross-site fetches and unexpected hosts fail before any upstream request. All SQL uses separate parameters. Recording validation bounds incoming JSON at 3.5 MB and strips unexpected properties; a database function serializes saves for each owner before checking the 50-race and 50 MB quotas.
 
-Rate counters live in Postgres. The IP counter uses an HMAC instead of retaining the raw address, and only trusts Vercel's edge-supplied forwarded header. Cookie rotation can't bypass that IP counter, although distributed clients can use multiple addresses. Configure the platform firewall for broader abuse control.
+Rate counters live in Postgres. The IP counter uses an HMAC instead of retaining the raw address, and only trusts Vercel's edge-supplied forwarded header. Cookie rotation can't bypass that IP counter, although distributed clients can use multiple addresses. Project-wide limits also apply across addresses. These are admission budgets, not identity verification; an attacker can exhaust them and temporarily deny online features to everyone. The local demo remains available. Configure the platform firewall to reject traffic before it reaches functions.
+
+## Work and traffic budgets
+
+`server/traffic.js` defines the Vercel limits; [the deployment guide](docs/VERCEL.md) lists their values. A single Postgres statement increments bounded counters, including byte costs for uploads. Rejected requests can consume other counters in the same statement; the limiter deliberately doesn't refund work already attempted. Global limits gate creation of per-visitor counters to bound growth from rotating IPs. Failed admissions never reach TypeSafe or archive queries.
+
+A warm function allows one concurrent decision per browser and eight overall. A shared 12-batch/10-second counter also applies across function instances. The local concurrency guard isn't a distributed lock. Timeouts bound each upstream batch to 12 seconds; a failed driver aborts the remaining requests, though TypeSafe may already have accepted and billed them. Bodies have a five-second read deadline, with 30 KB for Vercel decisions, 3.5 MB for recordings, and 256 KB for upstream JSON.
+
+Negative quota caches last at most 60 seconds. Database errors trigger a ten-second pause within the affected warm function. Neither guard replaces the platform firewall: a cold function still runs, and distributed rejected requests can still query Postgres. Setting `API_PAUSED=1` and redeploying disables online features while leaving authenticated cleanup available.
+
+These controls apply to the Vercel adapter. Local Vite is for development; the separate Sites adapter doesn't use the Postgres traffic budgets. Don't present a Sites deployment as having Vercel's firewall settings.
 
 ## What storage contains
 
 Names, prompts, selected and resolved models, timing, and replay telemetry. Don't put credentials or private data in prompts. The application can catch the connected key in common input flows, but it can't recognize every secret someone types into arbitrary text.
 
-The daily maintenance job deletes recordings after 90 days without an update and counters older than one day. Database backups can retain earlier data according to the provider's retention policy. Losing the browser cookie loses access; the app has no account recovery.
+The daily maintenance job deletes recordings after 90 days without an update and expired short-window counters. It retains the active calendar-month counters until the month ends. Database backups can retain earlier data according to the provider's retention policy. Losing the browser cookie loses access; the app has no account recovery.
 
 ## Operating the service
 

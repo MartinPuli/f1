@@ -287,6 +287,8 @@ export class Race {
     this.finished = false;
     this.error = '';
     this.nextDecision = 0;
+    this.networkNotBefore = 0;
+    this.retryNotBefore = 0;
     this.decisions = 0;
     this.events = [];
     this.accumulator = 0;
@@ -309,6 +311,7 @@ export class Race {
     }
     const generation = this.generation;
     this.waiting = true;
+    this.networkNotBefore = Date.now() + 2000;
     try {
       const response = await fetch('/api/decide', {
         method: 'POST',
@@ -324,7 +327,13 @@ export class Race {
         signal: AbortSignal.timeout(25000),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error || 'Jev could not respond.');
+      if (!response.ok) {
+        if (response.status === 429 || response.status === 503)
+          this.retryNotBefore =
+            Date.now() +
+            Math.max(10, Math.min(86400, Number(response.headers.get('Retry-After')) || 60)) * 1000;
+        throw new Error(body.error || 'Jev could not respond.');
+      }
       if (generation !== this.generation) return;
       if (!Array.isArray(body.decisions) || body.decisions.length !== active.length)
         throw new Error('Incomplete Jev response.');
@@ -373,10 +382,18 @@ export class Race {
   }
   tick(realDelta, speed = 1) {
     if (!this.running || this.waiting || this.finished) return;
+    if (this.mode === 'jev' && Date.now() < this.retryNotBefore) {
+      this.running = false;
+      return;
+    }
     this.accumulator += Math.min(realDelta, 0.1) * speed;
     while (this.accumulator >= 0.025) {
       if (this.time >= this.nextDecision) {
-        this.nextDecision = this.time + 0.25;
+        if (this.mode === 'jev' && Date.now() < this.networkNotBefore) {
+          this.accumulator = 0;
+          return;
+        }
+        this.nextDecision = this.time + (this.mode === 'jev' ? 0.5 : 0.25);
         this.decide();
         if (this.waiting) {
           this.accumulator = 0;
