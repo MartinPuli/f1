@@ -1,6 +1,6 @@
 # APEX / UNKNOWN
 
-A Three.js racing experiment: five agents explore a procedurally generated circuit with a 42 m observation horizon. Spanish UI, free / overhead / chase cameras, an immersive full-screen circuit, a separate results tab, three-lap timing and JSON export.
+A Three.js racing experiment: five agents explore a procedurally generated circuit with a 42 m observation horizon. Spanish UI, a sunny original kart world, default behind-kart camera, free / overhead cameras, an immersive full-screen circuit, a separate results tab, three-lap timing and JSON export.
 
 ## Run locally
 
@@ -30,3 +30,5 @@ npm run build
 Build outputs the browser app to `dist/client` and a Cloudflare-compatible worker to `dist/server/index.js`. The worker expects the static assets binding `ASSETS` and optional secret `TYPESAFE_API_KEY`. Hosting metadata is `.openai/hosting.json`. Keep server-key deployments owner-private; this demo endpoint has no public-user billing controls. For a public deployment, add authentication and per-user rate limits before exposing a shared server key.
 
 Tests cover deterministic circuits, partial observations, independent memory, complete three-lap demo races on multiple seeds, pause/reset, steering and off-track behavior, request validation and failed-Jev handling. Live TypeSafe performance requires a real account/key and is not covered by local tests.
+
+Driver buttons select any kart and switch to chase view. Keyboard: 1–5 select drivers; C cycles cameras. Camera smoothing is frame-rate independent; reduced-motion preference disables extra movement and speed-based field-of-view effects. Self-hosted Fredoka and Nunito fonts are distributed under the SIL Open Font License.

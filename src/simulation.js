@@ -1,11 +1,11 @@
 import { CatmullRomCurve3, Vector3 } from 'three';
 
 export const DRIVERS = [
-  { id: 'vex', name: 'VEX', number: '01', color: '#ceff5e', style: 'Agresivo', risk: 1.08 },
-  { id: 'nova', name: 'NOVA', number: '02', color: '#aa9cff', style: 'Adaptativo', risk: 1.00 },
-  { id: 'echo', name: 'ECHO', number: '03', color: '#54d8f2', style: 'Preciso', risk: .94 },
-  { id: 'kira', name: 'KIRA', number: '04', color: '#ff975b', style: 'Oportunista', risk: 1.04 },
-  { id: 'atlas', name: 'ATLAS', number: '05', color: '#f177b6', style: 'Conservador', risk: .88 },
+  { id: 'vex', name: 'VEX', number: '01', color: '#ff6859', style: 'Agresivo', risk: 1.08 },
+  { id: 'nova', name: 'NOVA', number: '02', color: '#9c82ed', style: 'Adaptativo', risk: 1.00 },
+  { id: 'echo', name: 'ECHO', number: '03', color: '#4cafe8', style: 'Preciso', risk: .94 },
+  { id: 'kira', name: 'KIRA', number: '04', color: '#f7bd43', style: 'Oportunista', risk: 1.04 },
+  { id: 'atlas', name: 'ATLAS', number: '05', color: '#45c5a4', style: 'Conservador', risk: .88 },
 ];
 export const ACTIONS = {
   push_left: { throttle: 1, brake: 0, steer: -.30 }, push_straight: { throttle: 1, brake: 0, steer: 0 }, push_right: { throttle: 1, brake: 0, steer: .30 },
