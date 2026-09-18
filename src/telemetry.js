@@ -53,7 +53,7 @@ export function decisionActivity(log, time, driverId) {
     selected = null,
     last = null;
   for (const batch of log) {
-    if (batch.t > time) break;
+    if (batch.t > time + 0.0005) break;
     count += batch.answers.length;
     batches++;
     last = batch;

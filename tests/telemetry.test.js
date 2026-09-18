@@ -20,6 +20,7 @@ test('request activity is causal, bounded and excludes credentials', () => {
   assert.equal(decisionActivity(log, -5, 'max').count, 0);
   assert.equal(decisionActivity(log, 0, 'max').count, 1);
   assert.equal(decisionActivity(log, 3, 'max').selected.line, 'right');
+  assert.equal(decisionActivity(log, 1.99999999999999, 'max').count, 2);
   assert.ok(!JSON.stringify(cleanDecisionLog(log)).includes('secret'));
   assert.equal(validDecisionLog([{ ...log[0], ms: Infinity }]), false);
   assert.equal(validDecisionLog([{ t: 2, answers: [{ ...answer, id: 'unknown' }] }]), false);
