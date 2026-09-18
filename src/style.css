@@ -3008,6 +3008,7 @@ textarea,
   }
   .timing-row {
     height: 25px;
+    gap: 4px;
     padding-inline: 9px;
   }
   .timing-driver small {
