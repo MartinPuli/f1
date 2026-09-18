@@ -2692,7 +2692,17 @@ textarea,
   left: auto;
   right: 24px;
   top: 174px;
-  width: 238px;
+  width: 250px;
+}
+.timing-header {
+  height: 32px;
+}
+.timing-row {
+  height: 40px;
+  gap: 10px;
+}
+.timing-driver {
+  gap: 3px;
 }
 .timing-tower::before,
 .timing-tower::after {
@@ -2708,10 +2718,10 @@ textarea,
   display: none;
 }
 #jev-activity {
-  width: 344px;
+  width: 308px;
   left: 24px;
   bottom: 24px;
-  padding: 22px;
+  padding: 18px;
   border-radius: 28px;
   max-height: calc(100dvh - 112px);
   overflow: auto;
@@ -2735,7 +2745,7 @@ textarea,
 }
 .decision-driver {
   gap: 10px;
-  margin: 22px 0;
+  margin: 18px 0;
 }
 #decision-number {
   width: 38px;
@@ -2746,7 +2756,7 @@ textarea,
   border-radius: 13px;
 }
 #decision-name {
-  font-size: 17px;
+  font-size: 15px;
 }
 #decision-model {
   display: block;
@@ -2781,7 +2791,7 @@ textarea,
   grid-template-columns: 94px 1fr;
   align-items: center;
   gap: 18px;
-  min-height: 68px;
+  min-height: 64px;
   border-bottom: 1px solid #dce8eb;
   padding: 7px 0;
 }
@@ -2794,7 +2804,7 @@ textarea,
 }
 .choice-row strong {
   display: block;
-  font: 600 23px var(--display);
+  font: 600 22px var(--display);
   text-transform: capitalize;
   line-height: 1.15;
 }
