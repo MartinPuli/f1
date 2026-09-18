@@ -21,6 +21,7 @@ test('per-driver models and prompts are routed independently and resolved versio
       JSON.stringify({
         model: 'jev-1.13.0',
         answers: {
+          power: { choice: 'neutral', confidence: 0.9 },
           line: { choice: 'center', confidence: 0.9 },
           pace: { choice: 'balanced', confidence: 0.8 },
         },
@@ -47,7 +48,7 @@ test('per-driver models and prompts are routed independently and resolved versio
     assert.equal(calls[0].questions.line.instructions.race, settings.prompt);
     assert.equal(calls[0].questions.pace.instructions.driver, 'Brake early.');
     assert.equal(calls[0].questions.pace.instructions.race, settings.prompt);
-    assert.deepEqual(Object.keys(calls[0].questions).sort(), ['line', 'pace']);
+    assert.deepEqual(Object.keys(calls[0].questions).sort(), ['line', 'pace', 'power']);
     assert.ok(JSON.parse(calls[0].state).road.speed_limit_mps > 0);
     assert.ok(!calls[0].state.includes('seed'));
     assert.equal((await result.json()).decisions[0].model, 'jev-1.13.0');
@@ -58,7 +59,11 @@ test('per-driver models and prompts are routed independently and resolved versio
 test('an invalid pace rejects the entire batch rather than applying partial decisions', async (t) => {
   t.mock.method(globalThis, 'fetch', async () =>
     Response.json({
-      answers: { line: { choice: 'center' }, pace: { choice: 'full-throttle-forever' } },
+      answers: {
+        power: { choice: 'neutral', confidence: 0.9 },
+        line: { choice: 'center' },
+        pace: { choice: 'full-throttle-forever' },
+      },
     }),
   );
   const race = new Race();

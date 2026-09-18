@@ -24,7 +24,7 @@ function fixture() {
   const race = new Race(77);
   race.apiKey = 'never-store-this';
   race.running = true;
-  for (let i = 0; i < 25; i++) race.tick(0.1);
+  for (let i = 0; i < 100; i++) race.tick(0.1);
   return recordRace(race, id, 'Test Grand Prix', Date.now());
 }
 test('recordings preserve replay positions and exclude API credentials', () => {
@@ -84,6 +84,7 @@ test('Jev uses only visitor keys and passes isolated observations to the upstrea
     return new Response(
       JSON.stringify({
         answers: {
+          power: { choice: 'neutral', confidence: 0.9 },
           line: { choice: 'center', confidence: 0.8 },
           pace: { choice: 'balanced', confidence: 0.8 },
         },
@@ -108,9 +109,9 @@ test('Jev uses only visitor keys and passes isolated observations to the upstrea
     assert.equal((await api(make(), { TYPESAFE_API_KEY: 'server-key' })).status, 401);
     const response = await api(make('visitor-key'), { TYPESAFE_API_KEY: 'server-key' });
     assert.equal(response.status, 200);
-    assert.equal(requests.length, 5);
+    assert.equal(requests.length, 10);
     assert.ok(requests.every((r) => r.init.headers.Authorization === 'Bearer visitor-key'));
-    assert.equal((await response.json()).decisions.length, 5);
+    assert.equal((await response.json()).decisions.length, 10);
   } finally {
     globalThis.fetch = original;
   }

@@ -125,7 +125,7 @@ test('road readings depend on visible samples, not a seed or hidden geometry', (
   assert.ok(reading.speed_limit_mps > 0);
 });
 
-test('five Jev cars finish with mocked independent lane and pace targets', async (t) => {
+test('ten Jev cars finish with mocked independent lane and pace targets', async (t) => {
   let clock = 100000;
   t.mock.method(Date, 'now', () => clock);
   t.mock.method(globalThis, 'fetch', async (_url, init) => {

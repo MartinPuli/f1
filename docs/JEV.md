@@ -1,25 +1,28 @@
 # Jev driving defaults
 
-The starter grid uses `jev-latest`. Connect TypeSafe to load the models available to your account. Under **Drivers**, select a car to edit its prompt and model; **Race rules** applies to all five. Names and numbers are editable. **Reset grid** restores the starter lineup.
+The starter grid uses `jev-latest`. Connect TypeSafe to load the models available to your account. Under **Drivers**, select a car to edit its prompt and model; **Race rules** applies to all ten. Names and numbers are editable. **Reset grid** restores the starter lineup.
 
-Each active driver gets a separate request to `https://api.typesafe.ai/v1/systemone`. Its state contains five road samples up to 42 meters ahead, relative positions of nearby cars, speed, heading error, and its own eight recent observations. The backend bounds these fields, drops unknown data, and derives a brief road reading from the same samples. It never sends the seed, circuit map, or another driver's memory.
+Each active driver gets a separate request to `https://api.typesafe.ai/v1/systemone`. Its state contains five road samples up to 42 meters ahead, relative positions of nearby cars, speed, heading error, battery, tire grip, damage, race position, laps remaining, and its own eight recent observations. The road reading includes lane occupancy, closing speeds and slipstream strength. The backend bounds these fields, drops unknown data, and derives a brief road reading from the same samples. It never sends the seed, circuit map, or another driver's memory.
 
-Following TypeSafe's guidance on [atomic questions](https://docs.typesafe.ai/introduction), each request asks two independent [Choice questions](https://docs.typesafe.ai/primitives/choice):
+Following TypeSafe's guidance on [atomic questions](https://docs.typesafe.ai/introduction), each request asks three independent [Choice questions](https://docs.typesafe.ai/primitives/choice):
 
 - `line`: center, left, or right side of the road. These are lane targets, not steering directions.
 - `pace`: attack, balanced, cautious, or recover. Each driver prompt changes how it weighs traffic, bends, and passing opportunities.
+- `power`: deploy, neutral, or harvest. Battery charge limits the boost; harvesting trades acceleration for charge.
 
-Both questions receive the shared rules and that driver's prompt. The server validates both answers before returning a decision. It returns the lower of their confidence values, plus the resolved model version when supplied. These are JEVRACE's defaults; TypeSafe hasn't certified the prompts.
+All questions receive the shared rules and that driver's prompt. The server validates all answers before returning a decision. It returns the lowest of their confidence values, plus the resolved model version when supplied. These are JEVRACE's defaults; TypeSafe hasn't certified the prompts.
 
 ## What controls the car
 
-Jev chooses targets every half-second of simulation time. A common controller follows them at 40 Hz using only local observations. It interpolates a point on the visible road, shifts it toward the selected lane, and steers toward it. Wheel movement has a rate limit. The speed controller leaves grip for course corrections and calculates braking distance from the visible bends and nearby traffic.
+Jev receives new observations every half-second of simulation time when no request is already in flight. Cars continue on the previous answer while a request runs. A common controller follows them at 40 Hz using only local observations. It interpolates a point on the visible road, shifts it toward the selected lane, and steers toward it. Each driver takes 160–300 ms of simulation time to react to a new answer. Pedals and steering ramp toward their targets. The five red lights illuminate one per second, hold for a seeded interval, then go out together; each driver waits for its own reaction time before launching. Acceleration and braking share available tire grip with cornering. The speed controller leaves grip for course corrections and calculates braking distance from the visible bends and nearby traffic.
 
 Recovery overrides the lane target when a car goes off track or points away from the road. It keeps the car rolling slowly and turns back toward the center. There is no teleport, hidden map, or switch to a demo driver. This assistance means the experiment compares model lane and pace choices; it doesn't measure direct control of steering and pedals.
 
-The previous action set combined a fixed steering angle with acceleration or braking. Its tight-turn action could brake the car to a standstill, where steering couldn't turn it. Separating the targets lets the controller correct steering between model calls and maintain a low recovery speed.
+The defaults give every driver a separate plan: early attacks, corner exits, defense, battery saving, slipstream passes, or a final-lap push. These are preferences in the model prompt, not scripts that force a finishing order.
 
-Five drivers still cost up to five upstream calls per batch. Each call now contains two questions, which adds tokens. There is no application rate quota or artificial wall-clock delay between batches. The next batch starts when its simulation step is due and the previous one has completed. Provider rate responses still pause the race. Service errors pause the race; no local policy replaces missing Jev decisions.
+`src/physics.js` models oriented car bodies, low-restitution impulses, lateral sliding, impact damage, tire wear, battery deployment and recovery. A following car gets less drag in the slipstream. Damage reduces engine output and grip. The dimensions match the rendered cars; the forces and wear rates suit short races. This is a simplified open-wheel simulation, not an exact F1 vehicle or sporting-regulation model; it has no pit stops, tire compounds, flags or penalties.
+
+Ten drivers still cost up to ten upstream calls per batch. Each call now contains three questions, which adds tokens. There is no application rate quota or artificial wall-clock delay between batches. The next batch starts when its simulation step is due and the previous one has completed. Provider rate responses still pause the race. Service errors pause the race; no local policy replaces missing Jev decisions.
 
 ## Testing
 

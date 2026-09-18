@@ -164,6 +164,7 @@ export class RaceScene {
     return m;
   }
   build() {
+    this.selected = Math.min(this.selected, this.race.cars.length - 1);
     const geometries = new Set(),
       materials = new Set();
     this.world.traverse((o) => {

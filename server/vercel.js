@@ -112,7 +112,7 @@ export function createVercelHandler({ env, store }) {
         return finish(json({ error: 'Method not allowed.' }, 405));
       if (request.headers.has('content-encoding'))
         return finish(json({ error: 'Encoded request bodies are not supported.' }, 415));
-      const maximum = path.endsWith('/publish') ? 100 : path === '/api/decide' ? 30000 : 3500000;
+      const maximum = path.endsWith('/publish') ? 100 : path === '/api/decide' ? 60000 : 3500000;
       const size = request.headers.get('content-length');
       if (size && (!/^\d+$/.test(size) || Number(size) > maximum))
         return finish(json({ error: 'Request is too large.' }, 413));

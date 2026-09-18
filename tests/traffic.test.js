@@ -113,7 +113,13 @@ test('driving skips rate counters and rejects overlapping batches from the same 
     reads = 0;
   t.mock.method(globalThis, 'fetch', async () => {
     await new Promise((resolve) => (release = resolve));
-    return Response.json({ answers: { line: { choice: 'center' }, pace: { choice: 'balanced' } } });
+    return Response.json({
+      answers: {
+        power: { choice: 'neutral', confidence: 0.9 },
+        line: { choice: 'center' },
+        pace: { choice: 'balanced' },
+      },
+    });
   });
   const handler = createVercelHandler({
     env,
@@ -160,7 +166,7 @@ test('model observations discard arbitrary payloads and failed batches abort the
     memory: Array(100).fill({ action: 'x'.repeat(1000) }),
   });
   assert.equal(clean.injected, undefined);
-  assert.equal(clean.nearby_cars.length, 4);
+  assert.equal(clean.nearby_cars.length, 9);
   assert.equal(clean.memory.length, 8);
   assert.equal(clean.memory[0].action.length, 40);
   let calls = 0,
@@ -180,8 +186,8 @@ test('model observations discard arbitrary payloads and failed batches abort the
   });
   const result = await api(req('decide', post({ states }, { authorization: 'Bearer test' })));
   assert.equal(result.status, 429);
-  assert.equal(calls, 5);
-  assert.equal(cancelled, 4);
+  assert.equal(calls, 10);
+  assert.equal(cancelled, 9);
 });
 
 test('Jev has no artificial wall-clock cooldown but respects upstream rate responses', async (t) => {
@@ -190,12 +196,12 @@ test('Jev has no artificial wall-clock cooldown but respects upstream rate respo
   t.mock.method(Date, 'now', () => now);
   t.mock.method(globalThis, 'fetch', async () => {
     calls++;
-    return Response.json({ decisions: Array(5).fill({ line: 'center', pace: 'balanced' }) });
+    return Response.json({ decisions: Array(10).fill({ line: 'center', pace: 'balanced' }) });
   });
   const race = new Race();
   race.mode = 'jev';
   race.running = true;
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 160; i++) {
     race.tick(0.1, 4);
     await new Promise((r) => setImmediate(r));
   }

@@ -89,8 +89,8 @@ let race = new Race(42),
   pendingMode = 'demo';
 $('#app').innerHTML = `
 <header class="topbar"><a href="/" class="brand" aria-label="JEVRACE home"><img src="/logo-mark.svg" alt=""/><span>JEV<em>RACE</em></span></a><nav aria-label="Race actions"><button id="new-race" class="nav-button">${icon('Plus')} New race</button><button id="results" class="nav-button">${icon('Trophy')} Results</button></nav><div class="header-end"><button class="icon-button" data-film-launch aria-label="Watch race film" title="Watch race film">${icon('Film')}</button><span id="mode-caption" class="mode-caption">DEMO</span><button class="icon-button" id="configure" aria-label="Session API key" title="Session API key">${icon('Settings2')}</button></div></header>
-<div id="film-source" hidden></div><button id="exit-demo" class="reel-exit" hidden>Exit ${icon('X')}</button><div id="reel-lights" hidden aria-label="Starting lights">${Array.from({ length: 5 }, () => '<span></span>').join('')}</div><div id="reel-winner" hidden><small>WINNER</small><strong></strong></div><main><section id="race-view" aria-label="Race circuit"><div id="canvas-host"></div><aside class="timing-tower" aria-label="Live standings"><div class="timing-header"><span class="dot"></span><span id="live-status">ON THE GRID</span><span>GAP</span></div><div id="timing-rows"></div></aside><div class="onboard-strip"><span id="position-number"></span><span id="position-name"></span><small>ONBOARD</small></div><div class="lap-widget"><span>LAP</span><strong id="lap"></strong><span id="clock">00:00.00</span></div>
-<button class="track-label" id="rename-race" aria-label="Rename race"><span id="race-name"></span><small id="seed-label"></small>${icon('Pencil')}</button><div class="speed-widget"><strong id="selected-speed">0</strong><span>km/h</span></div><div id="stage-message" role="status"></div><div class="finish-banner" id="finish-overlay" hidden></div>
+<div id="film-source" hidden></div><button id="exit-demo" class="reel-exit" hidden>Exit ${icon('X')}</button><div id="reel-lights" hidden aria-label="Starting lights">${Array.from({ length: 5 }, () => '<span></span>').join('')}</div><div id="reel-winner" hidden><small>WINNER</small><strong></strong></div><main><section id="race-view" aria-label="Race circuit"><div id="canvas-host"></div><aside class="timing-tower" aria-label="Live standings"><div class="timing-header"><span>GAP</span></div><div id="timing-rows"></div></aside><div class="onboard-strip"><span id="position-number"></span><span id="position-name"></span><small>ONBOARD</small></div><div class="lap-widget"><span>LAP</span><strong id="lap"></strong><span id="clock">00:00.00</span></div>
+<button class="track-label" id="rename-race" aria-label="Rename race"><span id="race-name"></span><small id="seed-label"></small>${icon('Pencil')}</button><div class="speed-widget"><strong id="selected-speed">0</strong><span>km/h</span><div id="car-telemetry" hidden><small id="driver-tactic"></small><div class="car-resources"><label>ERS <meter id="car-energy" min="0" max="1" value="1"></meter></label><label>TIRES <meter id="car-tires" min="0" max="1" value="1"></meter></label></div></div></div><div id="stage-message" role="status"></div><div class="finish-banner" id="finish-overlay" hidden></div>
 <div class="driver-switcher" role="group" aria-label="Choose a driver to follow">${DRIVERS.map((d, i) => `<button class="pilot-button ${i === 4 ? 'active' : ''}" data-pilot="${i}" style="--pilot:${d.color}" aria-label="Follow ${d.name}" title="${d.name} · ${i + 1}" aria-pressed="${i === 4}"><span class="pilot-avatar"><b>${d.number}</b></span><span>${d.short}</span></button>`).join('')}</div>
 <div id="replay-bar" hidden><span>${icon('Film')} REPLAY</span><input id="replay-seek" type="range" min="0" step="0.1" value="0" aria-label="Replay position"/><output id="replay-time">00:00</output><button id="exit-replay" class="icon-button" aria-label="Exit replay">${icon('X')}</button></div>
 <div class="control-dock"><button id="start" class="primary-button">${icon('Play')} <span>Start race</span></button><span class="control-divider"></span><div class="speed-controls" role="group" aria-label="Playback speed"><button data-speed="1" class="active" aria-pressed="true">1×</button><button data-speed="2" aria-pressed="false">2×</button><button data-speed="4" aria-pressed="false">4×</button></div><span class="control-divider"></span><div class="camera-controls" role="group" aria-label="Camera view"><button data-camera="follow" class="active icon-button" title="Follow driver · reset camera" aria-label="Follow driver · reset camera" aria-pressed="true">${icon('Gauge')}</button><button data-camera="orbit" class="icon-button" title="Orbit circuit" aria-label="Orbit circuit" aria-pressed="false">${icon('Layers')}</button><button data-camera="top" class="icon-button" title="Aerial view" aria-label="Aerial view" aria-pressed="false">${icon('Focus')}</button></div></div></section></main>
@@ -98,11 +98,11 @@ $('#app').innerHTML = `
 <div class="track-preview"><svg id="track-preview" viewBox="-115 -115 230 230" role="img" aria-label="Generated circuit preview"></svg><div class="circuit-controls"><small id="track-length"></small><label for="race-seed">Seed</label><input id="race-seed" type="number" min="0" max="4294967295" step="1" required value="42"/><button type="button" id="randomize" class="icon-button" aria-label="Generate circuit" title="Generate circuit">${icon('Shuffle')}</button></div></div>
 <label for="race-title">Name</label><input id="race-title" required maxlength="60" value="Sunshine Grand Prix"/>
 <div class="setup-options"><div><span class="field-label" id="driver-mode-label">Drivers</span><div class="mode-choices" role="group" aria-labelledby="driver-mode-label"><button type="button" data-mode="demo" class="mode-choice active" aria-pressed="true">Demo</button><button type="button" data-mode="jev" class="mode-choice" aria-pressed="false">Jev</button></div></div><div><label for="race-laps">Laps</label><select id="race-laps">${[1, 2, 3, 4, 5].map((n) => `<option ${n === 3 ? 'selected' : ''} value="${n}">${n}</option>`).join('')}</select></div></div>
-<div id="setup-key-field" hidden><div id="connection-ready" class="connection-ready" hidden><span class="connection-check">${icon('Check')}</span><div><strong>TypeSafe connected</strong><small>This tab only</small></div><button type="button" id="change-setup-key">Change key</button></div><div id="connection-entry"><label for="setup-key">TypeSafe API key</label><div class="key-entry-row"><input type="password" id="setup-key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512" placeholder="Paste your key"/><button type="button" id="connect-setup" class="secondary-button">Connect</button></div><p id="setup-connection" class="field-note" role="status">Kept in memory for this tab.</p></div><details class="api-usage"><summary>Usage &amp; privacy</summary><p>Five drivers make up to 10 TypeSafe calls per simulation second. No app-imposed cooldown or driving quota; your TypeSafe account pays for usage. Reloading clears your key. Recordings never include it.</p></details></div></section><section id="grid-panel" hidden><div class="grid-editor-tabs" role="group" aria-label="Edit driver">${DRIVERS.map((d, i) => `<button type="button" data-grid-driver="${i}" style="--pilot:${d.color}" aria-label="Configure ${d.name}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${d.number}</button>`).join('')}</div><div class="grid-driver-heading"><h3 id="grid-driver-name"></h3><span id="grid-driver-style"></span></div><div class="driver-identity"><div><label for="driver-name">Name</label><input id="driver-name" maxlength="40" /></div><div><label for="driver-number">Number</label><input id="driver-number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" /></div></div><div class="driver-brain"><label for="driver-prompt">Driver prompt</label><textarea id="driver-prompt" rows="4" maxlength="1000" spellcheck="false" aria-describedby="driver-prompt-scope"></textarea><p id="driver-prompt-scope" class="field-note"></p><div class="model-field"><label for="driver-model">Model</label><select id="driver-model"></select></div><details class="race-prompt-details"><summary>Race rules <span>All drivers</span></summary><label class="sr-only" for="race-prompt">Shared race prompt</label><textarea id="race-prompt" rows="3" maxlength="2000" spellcheck="false"></textarea></details></div><div class="grid-editor-footer"><span id="grid-mode-note">Prompts run in Jev mode.</span><button type="button" id="reset-prompts">Reset grid</button></div></section><p id="setup-error" class="error" role="alert"></p></form><div class="setup-actions"><button type="submit" form="setup-form" class="primary-button"><span>Start race</span>${icon('Play')}</button></div></dialog>
+<div id="setup-key-field" hidden><div id="connection-ready" class="connection-ready" hidden><span class="connection-check">${icon('Check')}</span><div><strong>TypeSafe connected</strong><small>This tab only</small></div><button type="button" id="change-setup-key">Change key</button></div><div id="connection-entry"><label for="setup-key">TypeSafe API key</label><div class="key-entry-row"><input type="password" id="setup-key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512" placeholder="Paste your key"/><button type="button" id="connect-setup" class="secondary-button">Connect</button></div><p id="setup-connection" class="field-note" role="status">Kept in memory for this tab.</p></div><details class="api-usage"><summary>Usage &amp; privacy</summary><p>Ten drivers make up to 20 TypeSafe calls per simulation second. No app-imposed cooldown or driving quota; your TypeSafe account pays for usage. Reloading clears your key. Recordings never include it.</p></details></div></section><section id="grid-panel" hidden><div class="grid-editor-tabs" role="group" aria-label="Edit driver">${DRIVERS.map((d, i) => `<button type="button" data-grid-driver="${i}" style="--pilot:${d.color}" aria-label="Configure ${d.name}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${d.number}</button>`).join('')}</div><div class="grid-driver-heading"><h3 id="grid-driver-name"></h3><span id="grid-driver-style"></span></div><div class="driver-identity"><div><label for="driver-name">Name</label><input id="driver-name" maxlength="40" /></div><div><label for="driver-number">Number</label><input id="driver-number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" /></div></div><div class="driver-brain"><label for="driver-prompt">Driver prompt</label><textarea id="driver-prompt" rows="4" maxlength="1000" spellcheck="false" aria-describedby="driver-prompt-scope"></textarea><p id="driver-prompt-scope" class="field-note"></p><div class="model-field"><label for="driver-model">Model</label><select id="driver-model"></select></div><details class="race-prompt-details"><summary>Race rules <span>All drivers</span></summary><label class="sr-only" for="race-prompt">Shared race prompt</label><textarea id="race-prompt" rows="3" maxlength="2000" spellcheck="false"></textarea></details></div><div class="grid-editor-footer"><span id="grid-mode-note">Prompts run in Jev mode.</span><button type="button" id="reset-prompts">Reset grid</button></div></section><p id="setup-error" class="error" role="alert"></p></form><div class="setup-actions"><button type="submit" form="setup-form" class="primary-button"><span>Start race</span>${icon('Play')}</button></div></dialog>
 <dialog id="results-dialog" aria-labelledby="results-title"><button class="dialog-close icon-button" data-close aria-label="Close results">${icon('X')}</button><h2 id="results-title">Results</h2><div class="result-tabs" role="group" aria-label="Results view"><button class="active" data-results="current" aria-pressed="true">This race</button><button data-results="saved" aria-pressed="false">My races</button><button data-results="community" aria-pressed="false">Community</button></div><section id="current-results"><div class="results-heading"><div><h3 id="results-race-name"></h3><p id="results-status"></p></div><button id="export" class="icon-button" aria-label="Download race recording" title="Download race recording">${icon('Download')}</button></div><div class="results-table-wrap"><table><thead><tr><th>POS</th><th>DRIVER</th><th>LAPS</th><th>BEST LAP</th><th>TOTAL</th></tr></thead><tbody id="results-body"></tbody></table></div><div class="results-footer"><span id="results-mode"></span></div><details id="saved-config" class="saved-config"><summary>Race setup</summary><div id="saved-config-body"></div></details><div class="result-actions"><button id="share-current" class="secondary-button">Share race</button><button id="save-race" class="secondary-button" hidden>${icon('RotateCcw')} Retry save</button><button id="film-current" data-film-launch class="secondary-button">${icon('Film')} Watch film</button><button id="watch-current" class="secondary-button">${icon('Film')} Watch replay</button></div><p id="save-status" class="field-note" role="status"></p></section><section id="saved-results" hidden><p id="archive-scope" class="field-note" hidden>Saved for this browser for up to 90 days. Download recordings to keep a copy.</p><div id="archive-list"></div><p id="archive-error" class="error" role="alert"></p><button id="open-recording" class="secondary-button">Open recording</button><input type="file" id="recording-file" accept=".json,application/json" hidden/><button id="refresh-archive" class="secondary-button">${icon('RotateCcw')} Refresh</button></section><section id="community-results" hidden><p class="field-note">Shared by players · unverified results</p><div id="community-list"></div><p id="community-error" class="error" role="alert"></p><button id="refresh-community" class="secondary-button">Refresh</button></section></dialog>
 <dialog id="share-dialog" aria-labelledby="share-title"><button class="dialog-close icon-button" data-close aria-label="Close sharing">${icon('X')}</button><h2 id="share-title">Share race</h2><p id="share-name"></p><p class="field-note">Anyone can replay this race and read its driver names, models and prompts. You can remove it from Community in My races.</p><p id="share-error" class="error" role="alert"></p><button id="confirm-share" class="primary-button wide">Publish replay</button></dialog>
 <dialog id="key-dialog" aria-labelledby="key-title"><button class="dialog-close icon-button" data-close aria-label="Close API settings">${icon('X')}</button><h2 id="key-title">TypeSafe connection</h2><label for="api-key">TypeSafe API key</label><input type="password" id="api-key" placeholder="Paste your key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512"/><p id="key-status" class="field-note"></p><p class="field-note">Kept in memory. Sent through this server to TypeSafe over HTTPS; never saved.</p><button id="save-key" class="primary-button">${icon('Check')} Connect</button><button id="clear-key" class="secondary-button">Clear key</button><button id="show-shortcuts" class="source-link" type="button">Keyboard shortcuts <kbd>?</kbd></button><a class="source-link" href="https://github.com/MartinPuli/f1" target="_blank" rel="noopener">${icon('Github')} Source code</a></dialog>
-<dialog id="shortcuts-dialog" aria-labelledby="shortcuts-title"><button class="dialog-close icon-button" data-close aria-label="Close keyboard shortcuts">${icon('X')}</button><h2 id="shortcuts-title">Keyboard shortcuts</h2><dl class="shortcut-list"><div><dt>Close window / pause</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Play / pause</dt><dd><kbd>Space</kbd> <kbd>P</kbd></dd></div><div><dt>Follow driver</dt><dd><kbd>1</kbd>–<kbd>5</kbd></dd></div><div><dt>Previous / next driver</dt><dd><kbd>←</kbd> <kbd>→</kbd></dd></div><div><dt>Change camera / recenter</dt><dd><kbd>C</kbd> <kbd>F</kbd></dd></div><div><dt>Results / new race</dt><dd><kbd>R</kbd> <kbd>N</kbd></dd></div><div><dt>Keyboard shortcuts</dt><dd><kbd>?</kbd></dd></div></dl><label class="shortcut-toggle"><input id="enable-shortcuts" type="checkbox" checked/> Enable race shortcuts</label></dialog>
+<dialog id="shortcuts-dialog" aria-labelledby="shortcuts-title"><button class="dialog-close icon-button" data-close aria-label="Close keyboard shortcuts">${icon('X')}</button><h2 id="shortcuts-title">Keyboard shortcuts</h2><dl class="shortcut-list"><div><dt>Close window / pause</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Play / pause</dt><dd><kbd>Space</kbd> <kbd>P</kbd></dd></div><div><dt>Follow driver</dt><dd><kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd></dd></div><div><dt>Previous / next driver</dt><dd><kbd>←</kbd> <kbd>→</kbd></dd></div><div><dt>Change camera / recenter</dt><dd><kbd>C</kbd> <kbd>F</kbd></dd></div><div><dt>Results / new race</dt><dd><kbd>R</kbd> <kbd>N</kbd></dd></div><div><dt>Keyboard shortcuts</dt><dd><kbd>?</kbd></dd></div></dl><label class="shortcut-toggle"><input id="enable-shortcuts" type="checkbox" checked/> Enable race shortcuts</label></dialog>
 <dialog id="rename-dialog" aria-labelledby="rename-title"><button class="dialog-close icon-button" data-close aria-label="Close rename dialog">${icon('X')}</button><h2 id="rename-title">Rename race</h2><form id="rename-form"><label for="new-name">Race name</label><input id="new-name" maxlength="60" required/><button class="primary-button" type="submit">${icon('Check')} Save name</button></form></dialog>`;
 
 function refreshIcons() {
@@ -179,11 +179,12 @@ window.addEventListener('keydown', (e) => {
   const key = e.key.toLowerCase();
   if (key === ' ' && e.target.closest('button,a,summary,[role="button"]')) return;
   let action;
-  if (/^[1-5]$/.test(key)) action = () => selectDriver(Number(key) - 1);
+  if (/^[0-9]$/.test(key)) action = () => selectDriver(key === '0' ? 9 : Number(key) - 1);
   else if (key === 'arrowleft' || key === 'arrowright')
     action = () =>
       selectDriver(
-        ((scene?.selected ?? 4) + (key === 'arrowleft' ? -1 : 1) + DRIVERS.length) % DRIVERS.length,
+        ((scene?.selected ?? 4) + (key === 'arrowleft' ? -1 : 1) + race.cars.length) %
+          race.cars.length,
       );
   else if (key === ' ' || key === 'p') action = () => $('#start').click();
   else if (key === 'c')
@@ -214,7 +215,9 @@ for (const [selector, shortcut, title] of [
   $(selector).setAttribute('aria-keyshortcuts', shortcut);
   $(selector).title = title;
 }
-$$('[data-pilot]').forEach((button, i) => button.setAttribute('aria-keyshortcuts', String(i + 1)));
+$$('[data-pilot]').forEach((button, i) =>
+  button.setAttribute('aria-keyshortcuts', String((i + 1) % 10)),
+);
 function pause() {
   if (showcase) showcase.playing = false;
   if (replay) replay.playing = false;
@@ -575,7 +578,13 @@ function startReplay(record) {
   replay = { record, time: 0, playing: true };
   race = new Race(record.seed);
   race.limit = record.laps;
-  race.configure(record.settings || defaultSettings());
+  race.configure(
+    record.settings || {
+      ...defaultSettings(),
+      drivers: defaultSettings().drivers.slice(0, record.drivers.length),
+    },
+  );
+  $('#timing-rows').replaceChildren();
   raceName = record.name;
   if (scene) {
     scene.race = race;
@@ -593,6 +602,7 @@ $('#watch-current').onclick = () => startReplay(currentRecord());
 $('#exit-replay').onclick = () => {
   if (!live) return;
   ({ race, raceId, raceName, created, finishSaved, lastSaveAttempt } = live);
+  $('#timing-rows').replaceChildren();
   replay = null;
   live = null;
   if (scene) {
@@ -660,7 +670,7 @@ function renderTiming(ranking, selected) {
     row.children[3].textContent = car.finished
       ? 'FIN'
       : !race.time
-        ? 'GRID'
+        ? '—'
         : index === 0
           ? 'LEADER'
           : `+${Math.max(0, ranking[0].progress - car.progress).toFixed(0)} m`;
@@ -668,6 +678,8 @@ function renderTiming(ranking, selected) {
   });
   $$('.pilot-button').forEach((button, index) => {
     const car = race.cars[index];
+    button.hidden = !car;
+    if (!car) return;
     button.querySelector('b').textContent = car.number;
     button.lastElementChild.textContent = car.short;
     button.setAttribute('aria-label', `Follow ${car.name}`);
@@ -685,6 +697,22 @@ function updateUi() {
   renderTiming(ranking, car);
   $('#position-name').textContent = car.name;
   $('#selected-speed').textContent = Math.round(car.speed * 3.6);
+  $('#car-telemetry').hidden = !race.time || !car.intent;
+  $('#driver-tactic').textContent = car.finished
+    ? 'Checkered flag'
+    : car.intent?.power === 'deploy'
+      ? 'Deploying'
+      : car.intent?.power === 'harvest'
+        ? 'Recharging'
+        : car.intent?.pace === 'attack'
+          ? 'Pushing'
+          : car.intent?.pace === 'recover'
+            ? 'Recovering'
+            : 'Race pace';
+  $('#car-energy').value = car.energy ?? 1;
+  $('#car-tires').value = car.tires ?? 1;
+  $('#car-energy').setAttribute('aria-label', `Battery ${Math.round((car.energy ?? 1) * 100)}%`);
+  $('#car-tires').setAttribute('aria-label', `Tires ${Math.round((car.tires ?? 1) * 100)}%`);
   $('#clock').textContent = formatTime(race.time);
   $('#lap').innerHTML =
     `${String(Math.min(car.lap + 1, race.limit)).padStart(2, '0')} <em>/ ${String(race.limit).padStart(2, '0')}</em>`;
@@ -694,29 +722,14 @@ function updateUi() {
   $$('[data-film-launch]').forEach(
     (button) => (button.disabled = !(replay?.record.duration || race.time)),
   );
-  $('#live-status').textContent = showcase
-    ? !showcase.playing
-      ? 'PAUSED'
-      : race.time === 0
-        ? 'ON THE GRID'
-        : race.cars.every((c) => c.finished)
-          ? 'FINISHED'
-          : 'RACING'
-    : replay
-      ? replay.playing
-        ? 'REPLAYING'
-        : 'REPLAY PAUSED'
-      : race.finished
-        ? 'FINISHED'
-        : race.waiting
-          ? 'DECIDING'
-          : race.running
-            ? 'RACING'
-            : race.time
-              ? 'PAUSED'
-              : 'ON THE GRID';
-  $('#stage-message').textContent =
-    sceneError || race.error || (race.waiting ? 'Waiting for Jev…' : '');
+  if (!showcase) {
+    const lights = !replay && (race.running || race.startClock > 0) && race.phase === 'lights';
+    $('#reel-lights').hidden = !lights;
+    $$('#reel-lights span').forEach((light, i) =>
+      light.classList.toggle('lit', lights && i < Math.min(5, Math.floor(race.startClock) + 1)),
+    );
+  }
+  $('#stage-message').textContent = sceneError || race.error || '';
   const label = replay
     ? replay.playing
       ? 'Pause replay'
@@ -761,7 +774,7 @@ function frame(now) {
   if (replay) {
     if (showcase) {
       if (showcase.playing) showcase.elapsed += dt;
-      const view = reelFrame(showcase.elapsed, replay.record.duration);
+      const view = reelFrame(showcase.elapsed, replay.record.duration, replay.record.startDelay);
       replay.time = view.time;
       $('#reel-lights').hidden = !view.lights;
       $$('#reel-lights span').forEach((light, i) => light.classList.toggle('lit', i < view.lights));
@@ -818,6 +831,8 @@ document.addEventListener('visibilitychange', () => {
 $('#setup-dialog').showModal();
 window.jevSnapshot = () => ({
   time: race.time,
+  phase: race.phase,
+  startClock: race.startClock,
   mode: replay ? 'replay' : race.mode,
   running: race.running,
   finished: race.finished,
@@ -835,6 +850,10 @@ window.jevSnapshot = () => ({
     offTrack: c.offTrack,
     off: c.off,
     action: c.action,
+    collisions: c.collisions,
+    energy: c.energy,
+    damage: c.damage,
+    tires: c.tires,
   })),
 });
 if (document.modelContext?.registerTool) {

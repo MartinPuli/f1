@@ -21,7 +21,7 @@ test('driver observations contain only local road samples and independent memori
   assert.equal(a.seed, undefined);
   assert.equal(a.samples, undefined);
 });
-test('all five drivers finish three laps across three generated tracks', () => {
+test('all ten drivers finish three laps across three generated tracks', () => {
   for (const seed of [42, 108, 8912]) {
     const r = new Race(seed);
     r.running = true;

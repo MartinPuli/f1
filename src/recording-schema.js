@@ -1,4 +1,4 @@
-import { validSettings, cleanSettings, validModel } from './race-config.js';
+import { validSettings, cleanSettings, validModel, DRIVER_IDS } from './race-config.js';
 export function validRecord(r) {
   return (
     r &&
@@ -17,12 +17,17 @@ export function validRecord(r) {
     r.laps <= 5 &&
     Number.isFinite(r.duration) &&
     r.duration >= 0 &&
+    (r.startDelay === undefined ||
+      (Number.isFinite(r.startDelay) && r.startDelay >= 0 && r.startDelay <= 10)) &&
     r.duration <= 501 &&
     Number.isFinite(r.created) &&
     Number.isInteger(r.decisions) &&
     typeof r.finished === 'boolean' &&
     Array.isArray(r.drivers) &&
-    r.drivers.length === 5 &&
+    [5, 10].includes(r.drivers.length) &&
+    new Set(r.drivers.map((d) => d?.id)).size === r.drivers.length &&
+    r.drivers.every((d) => DRIVER_IDS.slice(0, r.drivers.length).includes(d?.id)) &&
+    (!r.settings || r.settings.drivers.length === r.drivers.length) &&
     r.drivers.every(
       (d) =>
         (d.resolvedModel == null || validModel(d.resolvedModel)) &&
@@ -47,8 +52,14 @@ export function validRecord(r) {
         f.t <= 501 &&
         (!i || f.t >= r.frames[i - 1].t) &&
         Array.isArray(f.cars) &&
-        f.cars.length === 5 &&
-        f.cars.every((c) => Array.isArray(c) && c.length === 9 && c.every(Number.isFinite)),
+        f.cars.length === r.drivers.length &&
+        f.cars.every(
+          (c) =>
+            Array.isArray(c) &&
+            [9, 15].includes(c.length) &&
+            c.length === r.frames[0].cars[0].length &&
+            c.every(Number.isFinite),
+        ),
     )
   );
 }
@@ -64,6 +75,7 @@ export function cleanRecord(r) {
     mode: r.mode,
     laps: r.laps,
     duration: r.duration,
+    ...(r.startDelay !== undefined ? { startDelay: r.startDelay } : {}),
     finished: r.finished,
     decisions: r.decisions,
     drivers: r.drivers.map((d) => ({

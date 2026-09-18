@@ -1,4 +1,5 @@
-import { driveControls, validIntent } from './driving.js';
+import { resolveContact, updateResources } from './physics.js';
+import { driveControls, validIntent, roadReading } from './driving.js';
 import { defaultSettings, cleanSettings, DRIVERS } from './race-config.js';
 import { CatmullRomCurve3, Vector3 } from 'three';
 
@@ -74,8 +75,8 @@ export function makeTrack(seed = 42) {
     },
   };
 }
-export function createCars(track) {
-  return DRIVERS.map((d, i) => {
+export function createCars(track, count = DRIVERS.length) {
+  return DRIVERS.slice(0, count).map((d, i) => {
     const s = 4 + Math.floor(i / 2) * -6,
       p = track.at(s),
       t = track.tangent(s),
@@ -88,10 +89,25 @@ export function createCars(track) {
       speed: 0,
       steer: 0,
       wheelSteer: 0,
-      laneOffset: 0,
+      laneOffset: offset,
+      sideSpeed: 0,
+      impactYaw: 0,
+      energy: 1,
+      tires: 1,
+      damage: 0,
+      boost: 0,
+      tow: 0,
+      overtakes: 0,
+      passLane: null,
+      passUntil: 0,
       intent: null,
+      pendingIntent: null,
+      reactionTime: 0.16 + ((((track.seed >>> 0) ^ ((i + 1) * 2654435761)) >>> 0) % 141) / 1000,
+      launchTime: null,
       throttle: 0,
       brake: 0,
+      pedalThrottle: 0,
+      pedalBrake: 0,
       progress: s - 4,
       lastS: wrap(s / track.length) * track.length,
       startS: s,
@@ -113,7 +129,7 @@ export function createCars(track) {
     };
   });
 }
-export function observe(car, cars, track, time) {
+export function observe(car, cars, track, time, laps = 3) {
   const road = track.nearest(car.x, car.z),
     sin = Math.sin(car.heading),
     cos = Math.cos(car.heading);
@@ -145,6 +161,11 @@ export function observe(car, cars, track, time) {
         };
       }),
     lap: car.lap + 1,
+    laps_remaining: Math.max(1, laps - car.lap),
+    position: [...cars].sort((a, b) => b.progress - a.progress).indexOf(car) + 1,
+    battery: +(car.energy ?? 1).toFixed(3),
+    tire_grip: +(car.tires ?? 1).toFixed(3),
+    damage: +(car.damage ?? 0).toFixed(3),
     off_track: road.distance > track.width / 2,
     style: car.style,
     elapsed_seconds: +time.toFixed(1),
@@ -152,39 +173,49 @@ export function observe(car, cars, track, time) {
   };
 }
 export function demoDecision(observation, car) {
-  const target = observation.visible_road[car.speed > 24 ? 2 : 1];
-  const steer = clamp(
-    Math.atan2(2 * 3.1 * target.right, target.right ** 2 + target.forward ** 2) / 0.42,
-    -1,
-    1,
+  const road = roadReading(observation);
+  const ahead = observation.nearby_cars
+    .filter((c) => c.forward > 0 && c.forward < 24 && Math.abs(c.right) < 3)
+    .sort((a, b) => a.forward - b.forward)[0];
+  const challenger = observation.nearby_cars.some(
+    (c) => c.forward < -1 && c.forward > -18 && c.speed_mps > car.speed,
   );
-  const curve = Math.max(
-    ...observation.visible_road.slice(1).map((p) => Math.abs(Math.atan2(p.right, p.forward))),
-  );
-  let desired = clamp(35 - curve * 30, 9, 35) * car.risk;
-  if (observation.off_track) desired = 7;
-  const obstacle = observation.nearby_cars.find(
-    (c) => c.forward > 0 && c.forward < 8 && Math.abs(c.right) < 2.2,
-  );
-  if (obstacle) desired = Math.min(desired, Math.max(6, obstacle.speed_mps - 2));
-  const throttle = car.speed < desired ? 1 : 0,
-    brake = car.speed > desired + 2 ? 0.65 : 0;
-  return {
-    throttle,
-    brake,
-    steer,
-    confidence: null,
-    label: observation.off_track
-      ? 'Recovering'
-      : brake
-        ? 'Braking'
-        : Math.abs(steer) > 0.25
-          ? 'Cornering'
-          : throttle
-            ? 'Accelerating'
-            : 'Holding',
-  };
+  const clear = ['left', 'right'].filter((lane) => road.lanes[lane].clear);
+  const late = ['oscar', 'franco'].includes(car.id);
+  const saver = ['carlos', 'alex'].includes(car.id);
+  let line = observation.elapsed_seconds < car.passUntil ? car.passLane : 'center';
+  if (ahead && clear.length && (car.speed >= ahead.speed_mps - 1 || ahead.forward < 12)) {
+    line =
+      clear[
+        (car.number.charCodeAt(0) + Math.floor(observation.elapsed_seconds / 7)) % clear.length
+      ];
+    car.passLane = line;
+    car.passUntil = observation.elapsed_seconds + 2.5;
+  } else if (car.id === 'fernando' && challenger && clear.length && line === 'center') {
+    line = clear[0];
+    car.passLane = line;
+    car.passUntil = observation.elapsed_seconds + 3;
+  }
+  const passing = line !== 'center' && ahead;
+  const push =
+    passing ||
+    (late ? observation.laps_remaining === 1 : ['max', 'lando', 'george'].includes(car.id));
+  const pace = observation.off_track
+    ? 'recover'
+    : road.bend === 'tight' && ['charles', 'franco'].includes(car.id)
+      ? 'cautious'
+      : push
+        ? 'attack'
+        : 'balanced';
+  const power =
+    car.energy > 0.15 && (passing || challenger || (late && observation.laps_remaining === 1))
+      ? 'deploy'
+      : ahead || saver || (late && observation.laps_remaining > 1)
+        ? 'harvest'
+        : 'neutral';
+  return { intent: { line, pace, power }, confidence: null, label: `${pace} · ${line} · ${power}` };
 }
+
 export function integrate(car, dt, track) {
   if (car.finished) return;
   const road = track.nearest(car.x, car.z),
@@ -192,16 +223,37 @@ export function integrate(car, dt, track) {
   if (off && !car.off) car.offTrack++;
   car.off = off;
   car.contactCooldown = Math.max(0, car.contactCooldown - dt);
-  const drag = 0.007 * car.speed * car.speed + (off ? car.speed * 1.1 : car.speed * 0.035);
-  car.speed = clamp(car.speed + (car.throttle * 10 - car.brake * 21 - drag) * dt, 0, 52);
+  car.pedalThrottle =
+    (car.pedalThrottle || 0) + clamp(car.throttle - (car.pedalThrottle || 0), -12 * dt, 6 * dt);
+  car.pedalBrake =
+    (car.pedalBrake || 0) + clamp(car.brake - (car.pedalBrake || 0), -12 * dt, 10 * dt);
+  if (car.pedalBrake > 0.01) car.pedalThrottle = 0;
+  updateResources(car, dt);
+  const drag =
+    0.007 * car.speed * car.speed * (1 - (car.tow || 0) * 0.32) +
+    (off ? car.speed * 1.1 : car.speed * 0.035);
+  const engine =
+    (10 + car.boost) * (car.intent?.power === 'harvest' ? 0.8 : 1) * (1 - car.damage * 0.22);
+  const traction = (off ? 4 : 9.5 + Math.min(car.speed * 0.3, 8)) * (0.8 + car.tires * 0.2);
+  const lateralLoad = Math.min(
+    0.8,
+    (Math.abs(Math.tan((car.wheelSteer || 0) * 0.42)) * car.speed ** 2) / (3.1 * 25),
+  );
+  const gripForAcceleration = traction * Math.sqrt(1 - lateralLoad ** 2);
+  const drive = Math.min(car.pedalThrottle * engine, gripForAcceleration);
+  const braking = Math.min(car.pedalBrake * 21, (off ? 5 : 21) * Math.sqrt(1 - lateralLoad ** 2));
+  car.speed = clamp(car.speed + (drive - braking - drag) * dt, 0, 52);
   // Bicycle steering with a lateral grip limit; leaving the tarmac costs traction.
   car.wheelSteer =
     (car.wheelSteer ?? 0) + clamp(car.steer - (car.wheelSteer ?? 0), -2.8 * dt, 2.8 * dt);
   const yaw = (car.speed / 3.1) * Math.tan(car.wheelSteer * 0.42),
-    limit = (off ? 6 : 18) / Math.max(car.speed, 3);
-  car.heading += clamp(yaw, -limit, limit) * dt;
-  car.x += Math.sin(car.heading) * car.speed * dt;
-  car.z += Math.cos(car.heading) * car.speed * dt;
+    limit =
+      (off ? 6 : 18 * (0.8 + car.tires * 0.2) * (1 - car.damage * 0.2)) / Math.max(car.speed, 3);
+  car.heading += (clamp(yaw, -limit, limit) + (car.impactYaw || 0)) * dt;
+  car.impactYaw = (car.impactYaw || 0) * Math.exp(-4 * dt);
+  car.sideSpeed = (car.sideSpeed || 0) * Math.exp(-(off ? 1.8 : 5) * dt);
+  car.x += (Math.sin(car.heading) * car.speed + Math.cos(car.heading) * car.sideSpeed) * dt;
+  car.z += (Math.cos(car.heading) * car.speed - Math.sin(car.heading) * car.sideSpeed) * dt;
   const now = track.nearest(car.x, car.z);
   let delta = now.s - car.lastS;
   if (delta > track.length / 2) delta -= track.length;
@@ -227,9 +279,12 @@ export class Race {
     this.generation++;
     this.seed = seed;
     this.track = makeTrack(seed);
-    this.cars = createCars(this.track);
+    this.cars = createCars(this.track, this.settings.drivers.length);
     this.configure(this.settings);
     this.time = 0;
+    this.startClock = 0;
+    this.startDuration = 5.5 + ((seed >>> 0) % 1000) / 1000;
+    this.phase = 'lights';
     this.running = false;
     this.waiting = false;
     this.finished = false;
@@ -247,6 +302,8 @@ export class Race {
   }
   configure(settings) {
     this.settings = cleanSettings(settings);
+    if (this.cars.length !== this.settings.drivers.length)
+      this.cars = createCars(this.track, this.settings.drivers.length);
     for (const car of this.cars) {
       const driver = this.settings.drivers.find((d) => d.id === car.id);
       car.name = driver.name;
@@ -260,7 +317,7 @@ export class Race {
   }
   async decide() {
     const active = this.cars.filter((c) => !c.finished),
-      states = active.map((c) => observe(c, this.cars, this.track, this.time));
+      states = active.map((c) => observe(c, this.cars, this.track, this.time, this.limit));
     if (this.mode === 'demo') {
       active.forEach((c, i) => this.apply(c, demoDecision(states[i], c), states[i]));
       return;
@@ -296,14 +353,15 @@ export class Race {
         if (!validIntent(d)) throw new Error('Jev returned an invalid driving target.');
       });
       body.decisions.forEach((d, i) => {
+        if (active[i].finished) return;
         active[i].resolvedModel =
           d.model || this.settings.drivers.find((p) => p.id === active[i].id).model;
         this.apply(
           active[i],
           {
-            intent: { line: d.line, pace: d.pace },
+            intent: { line: d.line, pace: d.pace, power: d.power || 'neutral' },
             confidence: d.confidence,
-            label: `${d.pace} · ${d.line}`,
+            label: `${d.pace} · ${d.line} · ${d.power || 'neutral'}`,
           },
           states[i],
         );
@@ -323,13 +381,19 @@ export class Race {
     }
   }
   apply(car, d, state) {
-    Object.assign(car, {
-      ...(d.intent
-        ? { intent: d.intent }
-        : { throttle: d.throttle, brake: d.brake, steer: d.steer }),
-      action: d.label,
-      confidence: d.confidence,
-    });
+    // Keep a received decision pending for this driver's reaction time. The
+    // first decision is ready on the grid; the launch has its own reaction delay.
+    if (d.intent) {
+      if (!car.intent) car.intent = d.intent;
+      else if (!car.pendingIntent)
+        car.pendingIntent = {
+          intent: d.intent,
+          at: this.time + car.reactionTime,
+          label: d.label,
+          confidence: d.confidence,
+        };
+    } else Object.assign(car, { throttle: d.throttle, brake: d.brake, steer: d.steer });
+    if (!car.pendingIntent) Object.assign(car, { action: d.label, confidence: d.confidence });
     car.memory.push({
       speed: state.speed_mps,
       heading_error: state.heading_error,
@@ -340,27 +404,56 @@ export class Race {
     this.decisions++;
   }
   tick(realDelta, speed = 1) {
-    if (!this.running || this.waiting || this.finished) return;
+    if (!this.running || this.finished) return;
     if (this.mode === 'jev' && Date.now() < this.retryNotBefore) {
       this.running = false;
       return;
     }
     this.accumulator += Math.min(realDelta, 0.1) * speed;
     while (this.accumulator >= 0.025) {
-      if (this.time >= this.nextDecision) {
+      if (this.time >= this.nextDecision && !this.waiting) {
         this.nextDecision = this.time + (this.mode === 'jev' ? 0.5 : 0.25);
         this.decide();
-        if (this.waiting) {
-          this.accumulator = 0;
-          break;
-        }
+      }
+      // Only the first grid decision holds the cars. Later requests run alongside
+      // physics, which follows each driver's last validated targets at 40 Hz.
+      if (
+        this.mode === 'jev' &&
+        this.startClock >= this.startDuration &&
+        this.cars.some((car) => !car.finished && !car.intent)
+      ) {
+        this.accumulator = 0;
+        break;
       }
       this.accumulator -= 0.025;
+      if (this.phase === 'lights') {
+        this.startClock += 0.025;
+        if (
+          this.startClock < this.startDuration ||
+          (this.mode === 'jev' && this.cars.some((car) => !car.intent))
+        )
+          continue;
+        this.phase = 'racing';
+        this.cars.forEach((car) => {
+          car.launchTime = car.reactionTime;
+        });
+        this.addEvent('system', 'Lights out.');
+        continue;
+      }
       this.time += 0.025;
       for (const car of this.cars) {
-        if (this.mode === 'jev' && car.intent && !car.finished) {
+        if (this.time < (car.launchTime ?? 0)) continue;
+        if (car.pendingIntent && this.time >= car.pendingIntent.at) {
+          Object.assign(car, {
+            intent: car.pendingIntent.intent,
+            action: car.pendingIntent.label,
+            confidence: car.pendingIntent.confidence,
+          });
+          car.pendingIntent = null;
+        }
+        if (car.intent && !car.finished) {
           const controls = driveControls(
-            observe(car, this.cars, this.track, this.time),
+            observe(car, this.cars, this.track, this.time, this.limit),
             car.intent,
             car.laneOffset,
           );
@@ -388,27 +481,9 @@ export class Race {
       for (let i = 0; i < this.cars.length; i++)
         for (let j = i + 1; j < this.cars.length; j++) {
           const a = this.cars[i],
-            b = this.cars[j],
-            dx = b.x - a.x,
-            dz = b.z - a.z,
-            d = Math.hypot(dx, dz);
-          if (d < 2.0 && !a.finished && !b.finished) {
-            const nx = d > 0.001 ? dx / d : 1,
-              nz = d > 0.001 ? dz / d : 0,
-              push = (2.0 - d) / 2;
-            a.x -= nx * push;
-            a.z -= nz * push;
-            b.x += nx * push;
-            b.z += nz * push;
-            if (a.contactCooldown === 0 && b.contactCooldown === 0) {
-              a.collisions++;
-              b.collisions++;
-              a.speed *= 0.7;
-              b.speed *= 0.7;
-              a.contactCooldown = b.contactCooldown = 1.5;
-              this.addEvent(a.id, `Contact between ${a.name} and ${b.name}.`);
-            }
-          }
+            b = this.cars[j];
+          const hit = resolveContact(a, b);
+          if (hit?.counted) this.addEvent(a.id, `Contact between ${a.name} and ${b.name}.`);
         }
       if (this.time - this.lastLog > 1) {
         this.lastLog = this.time;
@@ -417,7 +492,7 @@ export class Race {
           if (car.history.length > 80) car.history.shift();
         }
       }
-      if (this.time - this.lastFrame >= 0.1) this.captureFrame();
+      if (this.time - this.lastFrame >= (this.cars.length > 5 ? 0.2 : 0.1)) this.captureFrame();
       if (this.cars.every((c) => c.finished)) {
         this.finished = true;
         this.running = false;
@@ -447,6 +522,12 @@ export class Race {
           c.lap,
           c.finished ? 1 : 0,
           c.distance,
+          c.energy,
+          c.tires,
+          c.damage,
+          ['neutral', 'deploy', 'harvest'].indexOf(c.intent?.power || 'neutral'),
+          ['center', 'left', 'right'].indexOf(c.intent?.line || 'center'),
+          ['balanced', 'attack', 'cautious', 'recover'].indexOf(c.intent?.pace || 'balanced'),
         ].map((v) => +v.toFixed(4)),
       ),
     });

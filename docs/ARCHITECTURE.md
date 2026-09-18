@@ -4,7 +4,7 @@ JEVRACE has one browser scene. The interface opens dialogs over it for race setu
 
 ## A decision batch
 
-`Race.tick()` advances a fixed 25 ms physics step. Every half-second of simulation time, Jev mode pauses advancement and requests decisions for the active cars. There is no artificial gap between batches; the client still honors provider cooldown responses. Driving bypasses application rate counters. Demo decisions remain local and run every quarter-second. `observe()` gives each driver local road samples, nearby cars, and its own memory. It doesn't include a seed, full track, or another driver's prompt.
+`Race.tick()` advances a fixed 25 ms physics step. Every half-second of simulation time, Jev mode requests decisions for the active cars. Only the first response holds the grid. Later requests run alongside physics, with at most one batch in flight; the controller follows the last validated target until its replacement arrives. There is no artificial gap between batches; the client still honors provider cooldown responses. Driving bypasses application rate counters. Demo decisions remain local and run every quarter-second. `observe()` gives each driver local road samples, nearby cars, and its own memory. It doesn't include a seed, full track, or another driver's prompt.
 
 `server/api.js` validates the batch, matches each driver ID to its configured model and prompt, then calls TypeSafe. It accepts only known action names. The response includes the resolved model when available. A generation counter stops an old network response from changing a reset race, while service errors pause the run instead of silently using demo driving.
 
@@ -24,7 +24,9 @@ The shared API receives storage and owner adapters. Vercel never accepts the Sit
 
 `recordRace()` copies an explicit set of fields instead of serializing the live Race object, which contains the API key. `cleanRecord()` applies a second allowlist before persistence. It stores grid configuration with the recording, so a replay doesn't depend on current editor values.
 
-Frames contain a timestamp and five arrays in stable driver order: x, z, heading, speed, steering, progress, lap, finished flag, and distance. `applyReplay()` uses binary search for the surrounding frames and interpolates position and heading. Generator version 2 identifies the seeded circuit implementation; retain old generators before changing its geometry.
+A start-delay field retains the light sequence duration for films. Reaction delays and pending decisions live in `Race`; only physical motion and current telemetry enter replay frames.
+
+New frames contain a timestamp and ten arrays in stable driver order: x, z, heading, speed, steering, progress, lap, finished flag, distance, battery, tire condition, damage, and numeric codes for power, lane, and pace. Ten-car races capture at 5 Hz to keep longer recordings within the 3.5 MB upload bound. Earlier five-car recordings with nine-value arrays still play; they keep their original grid and prompts. `applyReplay()` uses binary search for the surrounding frames and interpolates position and heading. Generator version 2 identifies the seeded circuit implementation; retain old generators before changing its geometry.
 
 The UI serializes saves through `src/save-queue.js`, replaces pending snapshots with newer ones, and skips unchanged snapshots. A session starts only when the user needs an API feature; a returning signed cookie needs no database query to bootstrap. This prevents a slower, older save from overwriting a finish. Postgres additionally locks saves per owner while checking quotas. Metadata excludes frames, which keeps the saved-race list small.
 

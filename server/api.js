@@ -1,5 +1,5 @@
 import { archiveApi, boundedJson, communityApi } from './archive.js';
-import { LINES, PACES, validIntent, roadReading } from '../src/driving.js';
+import { LINES, PACES, POWERS, validIntent, roadReading } from '../src/driving.js';
 import { DRIVER_IDS, defaultSettings, validSettings, validModel } from '../src/race-config.js';
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -67,8 +67,8 @@ export async function api(request, env = {}) {
     } catch {
       return json({ error: 'Invalid or oversized request.' }, 400);
     }
-    if (!Array.isArray(body?.states) || body.states.length < 1 || body.states.length > 5)
-      return json({ error: 'Provide 1 to 5 observations.' }, 400);
+    if (!Array.isArray(body?.states) || body.states.length < 1 || body.states.length > 10)
+      return json({ error: 'Provide 1 to 10 observations.' }, 400);
     const states = body.states,
       settings = body.settings ?? defaultSettings(),
       ids = body.driverIds ?? DRIVER_IDS.slice(0, states.length);
@@ -77,7 +77,7 @@ export async function api(request, env = {}) {
       !Array.isArray(ids) ||
       ids.length !== states.length ||
       new Set(ids).size !== ids.length ||
-      !ids.every((id) => DRIVER_IDS.includes(id))
+      !ids.every((id) => settings.drivers.some((driver) => driver.id === id))
     )
       return json({ error: 'Invalid grid configuration.' }, 400);
     if (key.length >= 12 && JSON.stringify(settings).includes(key))
@@ -108,11 +108,22 @@ export async function api(request, env = {}) {
               road: roadReading(cleanObservation(state)),
             }),
             questions: {
+              power: {
+                type: 'choice',
+                instructions: {
+                  question:
+                    'Spend, preserve, or recharge battery now? Deploy to finish a pass, defend from a closing rival, or push on the final lap. Harvest when blocked or saving for later. Follow this driver strategy and the actual battery level.',
+                  rules,
+                  race: settings.prompt,
+                  driver: driver.prompt,
+                },
+                criteria: POWERS,
+              },
               line: {
                 type: 'choice',
                 instructions: {
                   question:
-                    'Which road lane should the car follow? Choose center unless passing a nearby car on a clear side. Choose center when recovering.',
+                    'Which lane advances this driver strategy? Use road.lanes and closing speeds to pass a slower car on a clear side. Defend early if the driver wants it; hold your lane alongside another car. Choose center for recovery or a deliberate slipstream tow.',
                   rules,
                   race: settings.prompt,
                   driver: driver.prompt,
@@ -123,7 +134,7 @@ export async function api(request, env = {}) {
                 type: 'choice',
                 instructions: {
                   question:
-                    'Which pace fits the visible bend, traffic, and driver strategy? Attack on clear road, balanced for ordinary bends, cautious for tight bends or close traffic, recover when off track or facing away.',
+                    'Which pace advances the driver strategy given tire grip and local traffic? Attack to pass or close a gap; the controller still brakes for corners. Balanced conserves grip. Cautious gives extra margin for damage or tight traffic. Recover only when off track or facing away.',
                   rules,
                   race: settings.prompt,
                   driver: driver.prompt,
@@ -136,14 +147,18 @@ export async function api(request, env = {}) {
         if (!response.ok) throw new UpstreamFailure(response.status);
         const data = await boundedJson(response, 256000);
         const line = data.answers?.line,
-          pace = data.answers?.pace;
-        const intent = { line: line?.choice, pace: pace?.choice };
-        if (!validIntent(intent)) throw new Error('Invalid decision');
+          pace = data.answers?.pace,
+          power = data.answers?.power;
+        const intent = { line: line?.choice, pace: pace?.choice, power: power?.choice };
+        if (!validIntent(intent) || !Object.hasOwn(POWERS, intent.power))
+          throw new Error('Invalid decision');
         return {
           ...intent,
           confidence:
-            Number.isFinite(line.confidence) && Number.isFinite(pace.confidence)
-              ? Math.min(line.confidence, pace.confidence)
+            Number.isFinite(line.confidence) &&
+            Number.isFinite(pace.confidence) &&
+            Number.isFinite(power.confidence)
+              ? Math.min(line.confidence, pace.confidence, power.confidence)
               : null,
           model: validModel(data.model) ? data.model : driver.model,
         };
@@ -181,12 +196,17 @@ export function cleanObservation(s) {
       right: number(p.right, -500, 500),
       forward: number(p.forward, -500, 500),
     })),
-    nearby_cars: (Array.isArray(s.nearby_cars) ? s.nearby_cars : []).slice(0, 4).map((p) => ({
+    nearby_cars: (Array.isArray(s.nearby_cars) ? s.nearby_cars : []).slice(0, 9).map((p) => ({
       right: number(p?.right, -42, 42),
       forward: number(p?.forward, -42, 42),
       speed_mps: number(p?.speed_mps, 0, 60),
     })),
     lap: number(s.lap, 1, 5, 1),
+    laps_remaining: number(s.laps_remaining, 1, 5, 1),
+    position: number(s.position, 1, 10, 1),
+    battery: number(s.battery, 0, 1, 1),
+    tire_grip: number(s.tire_grip, 0.35, 1, 1),
+    damage: number(s.damage, 0, 0.7),
     off_track: s.off_track === true,
     elapsed_seconds: number(s.elapsed_seconds, 0, 501),
     memory: (Array.isArray(s.memory) ? s.memory : []).slice(-8).map((m) => ({

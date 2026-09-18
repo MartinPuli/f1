@@ -24,6 +24,7 @@ export function recordRace(race, id, name, created) {
     mode: race.mode,
     laps: race.limit,
     duration: race.time,
+    startDelay: race.startDuration,
     finished: race.finished,
     decisions: race.decisions,
     drivers,
@@ -62,6 +63,17 @@ export function applyReplay(race, recording, time) {
       lap: p[6],
       finished: !!p[7],
       distance: mix(8),
+      energy: p.length > 9 ? mix(9) : 1,
+      tires: p.length > 9 ? mix(10) : 1,
+      damage: p.length > 9 ? mix(11) : 0,
+      intent:
+        p.length > 9
+          ? {
+              power: ['neutral', 'deploy', 'harvest'][p[12]],
+              line: ['center', 'left', 'right'][p[13]],
+              pace: ['balanced', 'attack', 'cautious', 'recover'][p[14]],
+            }
+          : null,
       finishTime: recording.drivers.find((d) => d.id === car.id)?.finishTime,
     });
   });
