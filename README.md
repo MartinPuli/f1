@@ -1,34 +1,56 @@
-# APEX / UNKNOWN
+# JEV Prix 🏁
 
-A Three.js racing experiment: five agents explore a procedurally generated circuit with a 42 m observation horizon. Spanish UI, a sunny original kart world, default behind-kart camera, free / overhead cameras, an immersive full-screen circuit, a separate results tab, three-lap timing and JSON export.
+**Unknown tracks. Unexpected champions.** Five independent drivers discover a procedural circuit as they race. A full-screen Three.js spectator experiment with Formula-inspired cars, warm colors, orbitable chase cameras, saved races, and interactive replays.
 
-## Run locally
+Meet **Max JEVstappen, Lewis JEVmilton, Charles LeJEVclerc, Lando JEVrris, and Franco ColJEVpinto**. This is an original fan experiment, not affiliated with Formula 1, its teams, or the drivers.
+
+## Run your own races
+
+Requires Node.js 22 or newer.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Open the URL printed by Vite. The default demo is fully local and does not call any AI service. For real Jev decisions, copy `.env.example` to `.env`, set `TYPESAFE_API_KEY`, restart the server, then choose **Configurar Jev → Jev**. Alternatively enter a key in that dialog; it stays in page memory and is sent only to this app's same-origin server proxy. Never commit a key or put it in a `VITE_*` variable.
+Open `http://localhost:5173`. Give your race a name, pick 1–5 laps, generate a circuit or enter a seed, and start. Free demo mode runs without any account or key. For real Jev decisions, select **Race with Jev** and enter your own [TypeSafe API key](https://docs.typesafe.ai/introduction). Each visitor supplies their own key; there is no shared server key or silent demo fallback.
 
-## Experiment model
+Jev is a paid upstream service. The simulation requests decisions every 0.25 simulation seconds for up to five active cars (up to 20 upstream requests per simulation second). Time freezes while a batch is in flight. Errors pause the race. Pausing stops future batches; an already submitted batch can finish. The key stays in JavaScript memory until cleared or the page closes. It travels through the same-origin server to TypeSafe and is excluded from recordings, exports, logs, and persistence.
 
-- Five drivers have identical vehicle dynamics and independent recent-observation memory, with distinct declared driving styles. Demo profiles use a local pure-pursuit policy and different risk factors. They are not Jev results or machine learning training.
-- Each observation contains speed, heading error, lateral road offset, five relative centerline samples up to 42 m, nearby cars within 42 m, current lap and eight past observations. It contains no map, full curve, track seed or hidden future geometry.
-- The environment necessarily knows the track to render it and calculate physics; policies receive only `observe()` output. Demo steering uses these local observations; the proxy transmits only the supplied per-driver state to Jev in separate requests.
-- Jev chooses one of 11 combined pedal / steering actions every 0.25 simulated seconds using `jev-latest` and TypeSafe's Choice primitive. All five decisions use the same simulated instant; simulation time pauses until the complete batch arrives. Every batch may make five billable API calls. Errors pause the race without silently switching to demo.
-- Fixed 0.025 s integration, bicycle steering, lateral acceleration cap, grass drag, simplified circle collisions. Arcade physics, not a professional F1 simulator. Lap times are simulation time and API latency is excluded. Three laps or a 240 s simulation limit.
-- The first lap includes a standing start; later faster laps alone are not evidence of learning. Compare multiple seeds and rotate grid positions for a controlled benchmark.
+Local race recordings are stored on disk in the ignored `.races/` directory, so they survive reloads and server restarts. The development server binds to loopback by default and uses one local archive; it is not a multi-user production server. Do not expose the development server to the internet.
 
-## Validate and build
+## What you can do
+
+- Name and rename races; choose 1–5 laps and demo or Jev mode.
+- Generate circuits from a **32-bit seed space (4,294,967,296 seed values)**. These are generated on demand, not a catalog of billions of separately tested tracks. Reusing a seed reproduces the circuit under the same generator version.
+- Follow any driver, drag to orbit them, or switch to an orbiting circuit view or an aerial view. Keys **1–5** select drivers; **C** changes the view; double-click the circuit or click the chase camera button to recenter.
+- Save progress automatically every 15 simulation seconds, on pause and at the finish. The Results modal shows standings and the latest 50 archived races.
+- Replay saved telemetry with a scrubber, speed controls, and any camera. Replays make no Jev requests. Download a JSON recording from Results. These are interactive recordings, not video files.
+- Rename recordings and delete them with a two-click confirmation.
+
+## How the experiment works
+
+`src/simulation.js` implements a fixed-step bicycle model, limited lateral grip, collisions, off-track penalties, and lap timing. Each independent driver receives five nearby road samples (up to 42 m), nearby cars, speed, heading error, and its own recent observations. The whole circuit and its seed are never sent to Jev. Demo drivers use local steering policies; their results are not measurements of Jev performance. Each race has a simulation timeout of 100 seconds per configured lap, with unfinished cars ranked by distance.
+
+The procedural generator uses seeded radial harmonics with bounded amplitudes to create smooth closed circuits. Generator version 2 is embedded in recordings; keep older generator implementations when introducing future incompatible track changes.
+
+## Hosted persistence and deployment
+
+The included Cloudflare-compatible Worker serves the app and `/api/*`. On **OpenAI Sites**, `.openai/hosting.json` declares `DB` (D1) for race metadata and `BUCKET` (R2) for recordings. Sites provisions the bindings and applies generated `drizzle/` migrations. Race endpoints require the platform's trusted `oai-authenticated-user-id` header; every read, write, and delete is scoped to that identity. Never run this Worker behind a proxy that accepts that header directly from the public internet. Porting to another host requires trusted server-side authentication and provisioning D1/R2 or replacing the archive adapter.
+
+When deploying your own fork, replace the original `project_id` in `.openai/hosting.json` with your own Sites project registration. Do not deploy to the original project's ID. No API secrets are needed in the hosting manifest.
 
 ```sh
 npm test
 npm run build
+# After a schema change:
+npm run db:generate
 ```
 
-Build outputs the browser app to `dist/client` and a Cloudflare-compatible worker to `dist/server/index.js`. The worker expects the static assets binding `ASSETS` and optional secret `TYPESAFE_API_KEY`. Hosting metadata is `.openai/hosting.json`. Keep server-key deployments owner-private; this demo endpoint has no public-user billing controls. For a public deployment, add authentication and per-user rate limits before exposing a shared server key.
+Build output: `dist/client/` assets, `dist/server/index.js` Worker, `dist/.openai/hosting.json`, and `dist/drizzle/` migrations. Local mode uses `server/local-archive.js`; hosted mode uses prepared D1 statements and R2 in `server/archive.js`.
 
-Tests cover deterministic circuits, partial observations, independent memory, complete three-lap demo races on multiple seeds, pause/reset, steering and off-track behavior, request validation and failed-Jev handling. Live TypeSafe performance requires a real account/key and is not covered by local tests.
+Recordings are user-scoped and unlisted. They are spectator experiment data, not an authoritative competitive leaderboard. Autosave failures are shown in Results; download the recording to keep a copy if storage is unavailable. A crash or closing the tab can lose progress since the last successful save.
 
-Driver buttons select any kart and switch to chase view. Keyboard: 1–5 select drivers; C cycles cameras. Camera smoothing is frame-rate independent; reduced-motion preference disables extra movement and speed-based field-of-view effects. Self-hosted Fredoka and Nunito fonts are distributed under the SIL Open Font License.
+## License
+
+MIT. Self-hosted Fredoka and Nunito fonts retain their SIL Open Font License files in `public/fonts/`.
