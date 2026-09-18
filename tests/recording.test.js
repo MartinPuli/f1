@@ -5,6 +5,21 @@ import { recordRace, applyReplay } from '../src/recording.js';
 import { api } from '../server/api.js';
 import { cleanRecord, validRecord } from '../server/archive.js';
 const id = '11111111-1111-4111-8111-111111111111';
+test('the replay endpoint includes finish flags when the rounded frame is after duration', () => {
+  const race = new Race(8912);
+  race.time = 23.624999999999726;
+  race.cars.forEach((car) => {
+    car.finished = true;
+    car.lap = 1;
+    car.finishTime = race.time;
+  });
+  race.captureFrame();
+  const record = recordRace(race, id, 'Finished race', Date.now());
+  const replay = new Race(record.seed);
+  assert.ok(record.frames.at(-1).t > record.duration);
+  applyReplay(replay, record, record.duration);
+  assert.ok(replay.cars.every((car) => car.finished && car.lap === 1));
+});
 function fixture() {
   const race = new Race(77);
   race.apiKey = 'never-store-this';

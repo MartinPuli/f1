@@ -35,7 +35,9 @@ export function applyReplay(race, recording, time) {
   if (!frames.length) return;
   const t = Math.max(0, Math.min(time, recording.duration));
   // Find surrounding frames without scanning the entire recording on every render.
-  let lo = 0,
+  // Frame timestamps are rounded to milliseconds; duration can retain a fraction
+  // just below the last timestamp. At the endpoint, use the final flags exactly.
+  let lo = t >= recording.duration ? frames.length - 1 : 0,
     hi = frames.length - 1;
   while (lo < hi) {
     const mid = Math.ceil((lo + hi) / 2);
