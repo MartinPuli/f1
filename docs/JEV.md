@@ -1,13 +1,26 @@
 # Jev driving defaults
 
-The starter grid uses `jev-latest`, which the interface labels **Jev · Default**. Connecting a TypeSafe key loads the account's model catalog. The five driver identities and their numbers are editable; they don't give a model access to more of the track.
+The starter grid uses `jev-latest`. Connect TypeSafe to load the models available to your account. Under **Drivers**, select a car to edit its prompt and model; **Race rules** applies to all five. Names and numbers are editable. **Reset grid** restores the starter lineup.
 
-The integration follows TypeSafe's [Choice primitive](https://docs.typesafe.ai/primitives/choice) and [HTTP quick start](https://docs.typesafe.ai/introduction/quickstart). Each active driver receives its own request with `state`, `model`, and a `questions.drive` entry. That entry has `type: "choice"`, instructions, and a map of allowed actions. `server/api.js` accepts only a known `answers.drive.choice`; TypeSafe also returns confidence and may return the resolved model version.
+Each active driver gets a separate request to `https://api.typesafe.ai/v1/systemone`. Its state contains five road samples up to 42 meters ahead, relative positions of nearby cars, speed, heading error, and its own eight recent observations. The backend bounds these fields, drops unknown data, and derives a brief road reading from the same samples. It never sends the seed, circuit map, or another driver's memory.
 
-The default question asks which action keeps the car on the visible road while making forward progress over the next half-second. Five road samples, relative car positions, speed, heading error, and eight recent observations form the state. The backend drops unknown fields and bounds every numeric input. It never supplies the circuit seed or full geometry.
+Following TypeSafe's guidance on [atomic questions](https://docs.typesafe.ai/introduction), each request asks two independent [Choice questions](https://docs.typesafe.ai/primitives/choice):
 
-There are eleven actions: accelerate, coast, or brake with left, straight, or right steering, plus a tight left or right turn. Each description states its steering and braking behavior. Shared instructions define the coordinate system and physics; the race prompt sets the objective, and each driver's prompt adjusts risk and overtaking preferences. These are JEVRACE defaults, not prompts supplied or certified by TypeSafe.
+- `line`: center, left, or right side of the road. These are lane targets, not steering directions.
+- `pace`: attack, balanced, cautious, or recover. Each driver prompt changes how it weighs traffic, bends, and passing opportunities.
 
-Open **New race → Grid** to change a name or number. **Jev settings** contains the model, driver prompt, and shared race prompt. **Reset grid** restores the complete starter configuration. Demo mode ignores model prompts and runs a local driving policy; Results hides its unused Jev configuration.
+Both questions receive the shared rules and that driver's prompt. The server validates both answers before returning a decision. It returns the lower of their confidence values, plus the resolved model version when supplied. These are JEVRACE's defaults; TypeSafe hasn't certified the prompts.
 
-Tests mock TypeSafe so development doesn't spend a visitor's credits. A real key and account are still required to check live inference quality; default prompts don't guarantee that every driver will finish.
+## What controls the car
+
+Jev chooses targets every half-second of simulation time. A common controller follows them at 40 Hz using only local observations. It interpolates a point on the visible road, shifts it toward the selected lane, and steers toward it. Wheel movement has a rate limit. The speed controller leaves grip for course corrections and calculates braking distance from the visible bends and nearby traffic.
+
+Recovery overrides the lane target when a car goes off track or points away from the road. It keeps the car rolling slowly and turns back toward the center. There is no teleport, hidden map, or switch to a demo driver. This assistance means the experiment compares model lane and pace choices; it doesn't measure direct control of steering and pedals.
+
+The previous action set combined a fixed steering angle with acceleration or braking. Its tight-turn action could brake the car to a standstill, where steering couldn't turn it. Separating the targets lets the controller correct steering between model calls and maintain a low recovery speed.
+
+Five drivers still cost up to five upstream calls per batch. Each call now contains two questions, which adds tokens. Batches start at least two wall-clock seconds apart, including at 4× playback. Service errors pause the race; no local policy replaces missing Jev decisions.
+
+## Testing
+
+The automated tests use mocked TypeSafe responses and spend no credits. They check isolated prompts, response validation, local-only observations, cornering, recovery from the grass, and replay persistence. Physics tests cover constant and changing lane/pace targets across seeded circuits. These tests don't establish live model quality; that needs a connected TypeSafe account.

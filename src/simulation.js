@@ -1,20 +1,8 @@
+import { driveControls, validIntent } from './driving.js';
 import { defaultSettings, cleanSettings, DRIVERS } from './race-config.js';
 import { CatmullRomCurve3, Vector3 } from 'three';
 
 export { DRIVERS } from './race-config.js';
-export const ACTIONS = {
-  push_left: { throttle: 1, brake: 0, steer: -0.3 },
-  push_straight: { throttle: 1, brake: 0, steer: 0 },
-  push_right: { throttle: 1, brake: 0, steer: 0.3 },
-  coast_left: { throttle: 0, brake: 0, steer: -0.38 },
-  coast_straight: { throttle: 0, brake: 0, steer: 0 },
-  coast_right: { throttle: 0, brake: 0, steer: 0.38 },
-  brake_left: { throttle: 0, brake: 0.8, steer: -0.5 },
-  brake_straight: { throttle: 0, brake: 0.8, steer: 0 },
-  brake_right: { throttle: 0, brake: 0.8, steer: 0.5 },
-  sharp_left: { throttle: 0.12, brake: 0.25, steer: -0.8 },
-  sharp_right: { throttle: 0.12, brake: 0.25, steer: 0.8 },
-};
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const wrap = (x) => ((x % 1) + 1) % 1;
 const angle = (a) => Math.atan2(Math.sin(a), Math.cos(a));
@@ -99,6 +87,9 @@ export function createCars(track) {
       heading: Math.atan2(t.x, t.z),
       speed: 0,
       steer: 0,
+      wheelSteer: 0,
+      laneOffset: 0,
+      intent: null,
       throttle: 0,
       brake: 0,
       progress: s - 4,
@@ -143,7 +134,7 @@ export function observe(car, cars, track, time) {
     lateral_offset_m: +road.offset.toFixed(2),
     visible_road: ahead,
     nearby_cars: cars
-      .filter((c) => c !== car && Math.hypot(c.x - car.x, c.z - car.z) < 42)
+      .filter((c) => c !== car && !c.finished && Math.hypot(c.x - car.x, c.z - car.z) < 42)
       .map((c) => {
         const dx = c.x - car.x,
           dz = c.z - car.z;
@@ -204,7 +195,9 @@ export function integrate(car, dt, track) {
   const drag = 0.007 * car.speed * car.speed + (off ? car.speed * 1.1 : car.speed * 0.035);
   car.speed = clamp(car.speed + (car.throttle * 10 - car.brake * 21 - drag) * dt, 0, 52);
   // Bicycle steering with a lateral grip limit; leaving the tarmac costs traction.
-  const yaw = (car.speed / 3.1) * Math.tan(car.steer * 0.42),
+  car.wheelSteer =
+    (car.wheelSteer ?? 0) + clamp(car.steer - (car.wheelSteer ?? 0), -2.8 * dt, 2.8 * dt);
+  const yaw = (car.speed / 3.1) * Math.tan(car.wheelSteer * 0.42),
     limit = (off ? 6 : 18) / Math.max(car.speed, 3);
   car.heading += clamp(yaw, -limit, limit) * dt;
   car.x += Math.sin(car.heading) * car.speed * dt;
@@ -302,14 +295,18 @@ export class Race {
       if (!Array.isArray(body.decisions) || body.decisions.length !== active.length)
         throw new Error('Incomplete Jev response.');
       body.decisions.forEach((d, i) => {
-        if (!ACTIONS[d.choice]) throw new Error('Jev returned an invalid action.');
+        if (!validIntent(d)) throw new Error('Jev returned an invalid driving target.');
       });
       body.decisions.forEach((d, i) => {
         active[i].resolvedModel =
           d.model || this.settings.drivers.find((p) => p.id === active[i].id).model;
         this.apply(
           active[i],
-          { ...ACTIONS[d.choice], confidence: d.confidence, label: d.choice.replaceAll('_', ' ') },
+          {
+            intent: { line: d.line, pace: d.pace },
+            confidence: d.confidence,
+            label: `${d.pace} · ${d.line}`,
+          },
           states[i],
         );
       });
@@ -329,9 +326,9 @@ export class Race {
   }
   apply(car, d, state) {
     Object.assign(car, {
-      throttle: d.throttle,
-      brake: d.brake,
-      steer: d.steer,
+      ...(d.intent
+        ? { intent: d.intent }
+        : { throttle: d.throttle, brake: d.brake, steer: d.steer }),
       action: d.label,
       confidence: d.confidence,
     });
@@ -367,6 +364,14 @@ export class Race {
       this.accumulator -= 0.025;
       this.time += 0.025;
       for (const car of this.cars) {
+        if (this.mode === 'jev' && car.intent && !car.finished) {
+          const controls = driveControls(
+            observe(car, this.cars, this.track, this.time),
+            car.intent,
+            car.laneOffset,
+          );
+          Object.assign(car, controls);
+        }
         integrate(car, 0.025, this.track);
         const lap = Math.min(this.limit, Math.max(0, Math.floor(car.progress / this.track.length)));
         if (lap > car.lap) {

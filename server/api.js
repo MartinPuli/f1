@@ -1,5 +1,5 @@
 import { archiveApi, boundedJson, communityApi } from './archive.js';
-import { ACTIONS } from '../src/simulation.js';
+import { LINES, PACES, validIntent, roadReading } from '../src/driving.js';
 import { DRIVER_IDS, defaultSettings, validSettings, validModel } from '../src/race-config.js';
 const json = (body, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -12,20 +12,7 @@ const json = (body, status = 200) =>
     },
   });
 const rules =
-  'You drive a race car on an unknown closed circuit. Choose one action for the next 0.5 simulation seconds. You only know the supplied local observation. Right is positive to your right; forward is positive ahead. Road points are centerline samples in car-relative meters. Positive heading_error means turn right. Negative means left. Steering is normalized [-1,1] times 0.42 radians, wheelbase 3.1 m. Grip allows at most 18 m/s² lateral acceleration. Use your recent observations. Do not assume knowledge of unseen track.';
-const criteria = {
-  push_left: 'Accelerate, gentle left steering (-0.30).',
-  push_straight: 'Accelerate, straight steering.',
-  push_right: 'Accelerate, gentle right steering (+0.30).',
-  coast_left: 'Coast, medium left steering (-0.38).',
-  coast_straight: 'Coast, steering centered.',
-  coast_right: 'Coast, medium right steering (+0.38).',
-  brake_left: 'Brake strongly and turn left (-0.50).',
-  brake_straight: 'Brake strongly, steering centered.',
-  brake_right: 'Brake strongly and turn right (+0.50).',
-  sharp_left: 'Slow tight left turn (-0.80).',
-  sharp_right: 'Slow tight right turn (+0.80).',
-};
+  'You race on an unknown circuit. Use only this local observation and your own memory. Choose a target for the next 0.5 simulation seconds. A shared controller follows the chosen lane and pace, with steering and grip limits. Left and right mean road lanes, not wheel direction. Recover when off track or facing away; the controller slowly returns to the center. No circuit map or other driver memory is available.';
 function upstreamError(status) {
   if (status === 401 || status === 403)
     return json({ error: 'TypeSafe rejected the key. Check your connection.' }, 401);
@@ -116,23 +103,48 @@ export async function api(request, env = {}) {
           signal,
           body: JSON.stringify({
             model: driver.model,
-            state: JSON.stringify(cleanObservation(state)),
+            state: JSON.stringify({
+              ...cleanObservation(state),
+              road: roadReading(cleanObservation(state)),
+            }),
             questions: {
-              drive: {
+              line: {
                 type: 'choice',
-                instructions: { rules, race: settings.prompt, driver: driver.prompt },
-                criteria,
+                instructions: {
+                  question:
+                    'Which road lane should the car follow? Choose center unless passing a nearby car on a clear side. Choose center when recovering.',
+                  rules,
+                  race: settings.prompt,
+                  driver: driver.prompt,
+                },
+                criteria: LINES,
+              },
+              pace: {
+                type: 'choice',
+                instructions: {
+                  question:
+                    'Which pace fits the visible bend, traffic, and driver strategy? Attack on clear road, balanced for ordinary bends, cautious for tight bends or close traffic, recover when off track or facing away.',
+                  rules,
+                  race: settings.prompt,
+                  driver: driver.prompt,
+                },
+                criteria: PACES,
               },
             },
           }),
         });
         if (!response.ok) throw new UpstreamFailure(response.status);
-        const data = await boundedJson(response, 256000),
-          a = data.answers?.drive;
-        if (!a || !Object.hasOwn(ACTIONS, a.choice)) throw new Error('Invalid decision');
+        const data = await boundedJson(response, 256000);
+        const line = data.answers?.line,
+          pace = data.answers?.pace;
+        const intent = { line: line?.choice, pace: pace?.choice };
+        if (!validIntent(intent)) throw new Error('Invalid decision');
         return {
-          choice: a.choice,
-          confidence: Number.isFinite(a.confidence) ? a.confidence : null,
+          ...intent,
+          confidence:
+            Number.isFinite(line.confidence) && Number.isFinite(pace.confidence)
+              ? Math.min(line.confidence, pace.confidence)
+              : null,
           model: validModel(data.model) ? data.model : driver.model,
         };
       }),

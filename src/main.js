@@ -25,6 +25,7 @@ import { Race, DRIVERS, makeTrack, formatTime } from './simulation.js';
 import { RaceScene } from './scene.js';
 import { recordRace, applyReplay } from './recording.js';
 import './style.css';
+let editingKey = false;
 const icons = {
   Flag,
   Focus,
@@ -90,11 +91,11 @@ $('#app').innerHTML = `
 <div class="driver-switcher" role="group" aria-label="Choose a driver to follow">${DRIVERS.map((d, i) => `<button class="pilot-button ${i === 4 ? 'active' : ''}" data-pilot="${i}" style="--pilot:${d.color}" aria-label="Follow ${d.name}" title="${d.name} · ${i + 1}" aria-pressed="${i === 4}"><span class="pilot-avatar"><b>${d.number}</b></span><span>${d.short}</span></button>`).join('')}</div>
 <div id="replay-bar" hidden><span>${icon('Film')} REPLAY</span><input id="replay-seek" type="range" min="0" step="0.1" value="0" aria-label="Replay position"/><output id="replay-time">00:00</output><button id="exit-replay" class="icon-button" aria-label="Exit replay">${icon('X')}</button></div>
 <div class="control-dock"><button id="start" class="primary-button">${icon('Play')} <span>Start race</span></button><span class="control-divider"></span><div class="speed-controls" role="group" aria-label="Playback speed"><button data-speed="1" class="active" aria-pressed="true">1×</button><button data-speed="2" aria-pressed="false">2×</button><button data-speed="4" aria-pressed="false">4×</button></div><span class="control-divider"></span><div class="camera-controls" role="group" aria-label="Camera view"><button data-camera="follow" class="active icon-button" title="Follow driver · reset camera" aria-label="Follow driver · reset camera" aria-pressed="true">${icon('Gauge')}</button><button data-camera="orbit" class="icon-button" title="Orbit circuit" aria-label="Orbit circuit" aria-pressed="false">${icon('Layers')}</button><button data-camera="top" class="icon-button" title="Aerial view" aria-label="Aerial view" aria-pressed="false">${icon('Focus')}</button></div></div></section></main>
-<dialog id="setup-dialog" aria-labelledby="setup-title"><button class="dialog-close icon-button" data-close aria-label="Close race setup">${icon('X')}</button><h2 id="setup-title">Race setup</h2><div class="setup-tabs" role="group" aria-label="Race setup view"><button type="button" data-setup-tab="circuit" class="active" aria-pressed="true">Circuit</button><button type="button" data-setup-tab="grid" aria-pressed="false">Grid</button></div><form id="setup-form"><section id="circuit-panel">
+<dialog id="setup-dialog" aria-labelledby="setup-title"><button class="dialog-close icon-button" data-close aria-label="Close race setup">${icon('X')}</button><h2 id="setup-title">Race setup</h2><div class="setup-tabs" role="group" aria-label="Race setup view"><button type="button" data-setup-tab="circuit" class="active" aria-pressed="true">Circuit</button><button type="button" data-setup-tab="grid" aria-pressed="false">Drivers</button></div><form id="setup-form"><section id="circuit-panel">
 <div class="track-preview"><svg id="track-preview" viewBox="-115 -115 230 230" role="img" aria-label="Generated circuit preview"></svg><div class="circuit-controls"><small id="track-length"></small><label for="race-seed">Seed</label><input id="race-seed" type="number" min="0" max="4294967295" step="1" required value="42"/><button type="button" id="randomize" class="icon-button" aria-label="Generate circuit" title="Generate circuit">${icon('Shuffle')}</button></div></div>
 <label for="race-title">Name</label><input id="race-title" required maxlength="60" value="Sunshine Grand Prix"/>
 <div class="setup-options"><div><span class="field-label" id="driver-mode-label">Drivers</span><div class="mode-choices" role="group" aria-labelledby="driver-mode-label"><button type="button" data-mode="demo" class="mode-choice active" aria-pressed="true">Demo</button><button type="button" data-mode="jev" class="mode-choice" aria-pressed="false">Jev</button></div></div><div><label for="race-laps">Laps</label><select id="race-laps">${[1, 2, 3, 4, 5].map((n) => `<option ${n === 3 ? 'selected' : ''} value="${n}">${n}</option>`).join('')}</select></div></div>
-<div id="setup-key-field" hidden><label for="setup-key">TypeSafe API key</label><input type="password" id="setup-key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512" placeholder="Paste your key"/><button type="button" id="connect-setup" class="connection-button">Connect TypeSafe</button><p id="setup-connection" class="field-note">Session only · never saved</p><details class="api-usage"><summary>API usage</summary><p>Up to 10 TypeSafe requests per simulation second, with at most one batch every two real seconds. Keys are never stored with recordings.</p></details></div></section><section id="grid-panel" hidden><div class="grid-editor-tabs" role="group" aria-label="Edit driver">${DRIVERS.map((d, i) => `<button type="button" data-grid-driver="${i}" style="--pilot:${d.color}" aria-label="Configure ${d.name}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${d.number}</button>`).join('')}</div><div class="grid-driver-heading"><h3 id="grid-driver-name"></h3><span id="grid-driver-style"></span></div><div class="driver-identity"><div><label for="driver-name">Name</label><input id="driver-name" maxlength="40" /></div><div><label for="driver-number">Number</label><input id="driver-number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" /></div></div><details class="driver-brain"><summary>Jev settings</summary><label for="driver-model">Model</label><select id="driver-model"></select><label for="driver-prompt">Driver prompt</label><textarea id="driver-prompt" rows="4" maxlength="1000" spellcheck="false"></textarea><details class="race-prompt-details"><summary>Race prompt</summary><label class="sr-only" for="race-prompt">Shared race prompt</label><textarea id="race-prompt" rows="3" maxlength="2000" spellcheck="false"></textarea></details></details><div class="grid-editor-footer"><span id="grid-mode-note">Prompts run in Jev mode.</span><button type="button" id="reset-prompts">Reset grid</button></div></section><p id="setup-error" class="error" role="alert"></p><button type="submit" class="primary-button wide"><span>Start race</span>${icon('Play')}</button></form></dialog>
+<div id="setup-key-field" hidden><div id="connection-ready" class="connection-ready" hidden><span class="connection-check">${icon('Check')}</span><div><strong>TypeSafe connected</strong><small>This tab only</small></div><button type="button" id="change-setup-key">Change key</button></div><div id="connection-entry"><label for="setup-key">TypeSafe API key</label><div class="key-entry-row"><input type="password" id="setup-key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512" placeholder="Paste your key"/><button type="button" id="connect-setup" class="secondary-button">Connect</button></div><p id="setup-connection" class="field-note" role="status">Kept in memory for this tab.</p></div><details class="api-usage"><summary>Usage &amp; privacy</summary><p>Up to 5 TypeSafe calls per batch, at least 2 seconds apart. Two questions per call; your TypeSafe account pays for usage. Reloading clears your key. Recordings never include it.</p></details></div></section><section id="grid-panel" hidden><div class="grid-editor-tabs" role="group" aria-label="Edit driver">${DRIVERS.map((d, i) => `<button type="button" data-grid-driver="${i}" style="--pilot:${d.color}" aria-label="Configure ${d.name}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${d.number}</button>`).join('')}</div><div class="grid-driver-heading"><h3 id="grid-driver-name"></h3><span id="grid-driver-style"></span></div><div class="driver-identity"><div><label for="driver-name">Name</label><input id="driver-name" maxlength="40" /></div><div><label for="driver-number">Number</label><input id="driver-number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" /></div></div><div class="driver-brain"><label for="driver-prompt">Driver prompt</label><textarea id="driver-prompt" rows="4" maxlength="1000" spellcheck="false" aria-describedby="driver-prompt-scope"></textarea><p id="driver-prompt-scope" class="field-note"></p><div class="model-field"><label for="driver-model">Model</label><select id="driver-model"></select></div><details class="race-prompt-details"><summary>Race rules <span>All drivers</span></summary><label class="sr-only" for="race-prompt">Shared race prompt</label><textarea id="race-prompt" rows="3" maxlength="2000" spellcheck="false"></textarea></details></div><div class="grid-editor-footer"><span id="grid-mode-note">Prompts run in Jev mode.</span><button type="button" id="reset-prompts">Reset grid</button></div></section><p id="setup-error" class="error" role="alert"></p></form><button type="submit" form="setup-form" class="primary-button wide"><span>Start race</span>${icon('Play')}</button></dialog>
 <dialog id="results-dialog" aria-labelledby="results-title"><button class="dialog-close icon-button" data-close aria-label="Close results">${icon('X')}</button><h2 id="results-title">Results</h2><div class="result-tabs" role="group" aria-label="Results view"><button class="active" data-results="current" aria-pressed="true">This race</button><button data-results="saved" aria-pressed="false">My races</button><button data-results="community" aria-pressed="false">Community</button></div><section id="current-results"><div class="results-heading"><div><h3 id="results-race-name"></h3><p id="results-status"></p></div><button id="export" class="icon-button" aria-label="Download race recording" title="Download race recording">${icon('Download')}</button></div><div class="results-table-wrap"><table><thead><tr><th>POS</th><th>DRIVER</th><th>LAPS</th><th>BEST LAP</th><th>TOTAL</th></tr></thead><tbody id="results-body"></tbody></table></div><div class="results-footer"><span id="results-mode"></span></div><details id="saved-config" class="saved-config"><summary>Race setup</summary><div id="saved-config-body"></div></details><div class="result-actions"><button id="share-current" class="secondary-button">Share race</button><button id="save-race" class="secondary-button" hidden>${icon('RotateCcw')} Retry save</button><button id="watch-current" class="secondary-button">${icon('Film')} Watch replay</button></div><p id="save-status" class="field-note" role="status"></p></section><section id="saved-results" hidden><p id="archive-scope" class="field-note" hidden>Saved for this browser for up to 90 days. Download recordings to keep a copy.</p><div id="archive-list"></div><p id="archive-error" class="error" role="alert"></p><button id="refresh-archive" class="secondary-button">${icon('RotateCcw')} Refresh</button></section><section id="community-results" hidden><p class="field-note">Shared by players · unverified results</p><div id="community-list"></div><p id="community-error" class="error" role="alert"></p><button id="refresh-community" class="secondary-button">Refresh</button></section></dialog>
 <dialog id="share-dialog" aria-labelledby="share-title"><button class="dialog-close icon-button" data-close aria-label="Close sharing">${icon('X')}</button><h2 id="share-title">Share race</h2><p id="share-name"></p><p class="field-note">Anyone can replay this race and read its driver names, models and prompts. You can remove it from Community in My races.</p><p id="share-error" class="error" role="alert"></p><button id="confirm-share" class="primary-button wide">Publish replay</button></dialog>
 <dialog id="key-dialog" aria-labelledby="key-title"><button class="dialog-close icon-button" data-close aria-label="Close API settings">${icon('X')}</button><h2 id="key-title">TypeSafe connection</h2><label for="api-key">TypeSafe API key</label><input type="password" id="api-key" placeholder="Paste your key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512"/><p id="key-status" class="field-note"></p><p class="field-note">Kept in memory. Sent through this server to TypeSafe over HTTPS; never saved.</p><button id="save-key" class="primary-button">${icon('Check')} Connect</button><button id="clear-key" class="secondary-button">Clear key</button><button id="show-shortcuts" class="source-link" type="button">Keyboard shortcuts <kbd>?</kbd></button><a class="source-link" href="https://github.com/MartinPuli/f1" target="_blank" rel="noopener">${icon('Github')} Source code</a></dialog>
@@ -249,9 +250,9 @@ function setMode(mode) {
     b.setAttribute('aria-pressed', String(active));
   });
   $('#setup-key-field').hidden = mode !== 'jev';
-  $('#setup-key').placeholder = key ? 'Connected for this session' : 'Paste your key';
+  renderConnection();
   $('#grid-mode-note').textContent =
-    mode === 'demo' ? 'Prompts run in Jev mode.' : 'TypeSafe · five independent drivers';
+    mode === 'demo' ? 'Switch to Jev to use prompts.' : 'Each driver uses its own prompt.';
 }
 function openSetup() {
   draftSettings = cleanSettings(replay?.record.settings || race.settings);
@@ -347,7 +348,8 @@ $('#clear-key').onclick = () => {
   $('#api-key').value = '';
   $('#key-status').textContent = 'Key cleared.';
   $('#setup-key').value = '';
-  $('#setup-connection').textContent = 'Session only · never saved';
+  $('#setup-connection').textContent = 'Kept in memory for this tab.';
+  renderConnection();
   availableModels = [...MODEL_CHOICES];
   renderGridEditor();
 };
@@ -780,6 +782,9 @@ window.jevSnapshot = () => ({
     speed: c.speed,
     lap: c.lap,
     progress: c.progress,
+    offTrack: c.offTrack,
+    off: c.off,
+    action: c.action,
   })),
 });
 if (document.modelContext?.registerTool) {
@@ -828,10 +833,11 @@ function renderGridEditor() {
     .join('');
   $('#driver-model').value = config.model;
   $('#driver-prompt').value = config.prompt;
+  $('#driver-prompt-scope').textContent = `Instructions for ${config.name}.`;
   $('#race-prompt').value = draftSettings.prompt;
   $$('[data-grid-driver]').forEach((b) => {
     const entry = draftSettings.drivers[Number(b.dataset.gridDriver)];
-    b.textContent = entry.number;
+    b.innerHTML = `<strong>${esc(entry.number)}</strong><span>${esc(entry.name.split(' ')[0])}</span>`;
     b.setAttribute('aria-label', `Edit ${entry.name}`);
     const active = Number(b.dataset.gridDriver) === gridDriver;
     b.classList.toggle('active', active);
@@ -848,11 +854,13 @@ $$('[data-grid-driver]').forEach(
 $('#driver-name').oninput = (e) => {
   draftSettings.drivers[gridDriver].name = e.target.value;
   $('#grid-driver-name').textContent = e.target.value;
+  $('#driver-prompt-scope').textContent = `Instructions for ${e.target.value}.`;
+  $(`[data-grid-driver="${gridDriver}"] span`).textContent = e.target.value.split(' ')[0];
 };
 $('#driver-number').oninput = (e) => {
   draftSettings.drivers[gridDriver].number = e.target.value.replace(/\D/g, '').slice(0, 2);
   e.target.value = draftSettings.drivers[gridDriver].number;
-  $(`[data-grid-driver="${gridDriver}"]`).textContent = e.target.value;
+  $(`[data-grid-driver="${gridDriver}"] strong`).textContent = e.target.value;
 };
 $('#driver-model').onchange = (e) => {
   draftSettings.drivers[gridDriver].model = e.target.value;
@@ -866,6 +874,18 @@ $('#race-prompt').oninput = (e) => {
 $('#reset-prompts').onclick = () => {
   draftSettings = defaultSettings();
   renderGridEditor();
+};
+function renderConnection(editing = false) {
+  editingKey = editing;
+  $('#connection-ready').hidden = !key;
+  $('#connection-entry').hidden = !!key && !editing;
+  $('#change-setup-key').textContent = editing ? 'Cancel' : 'Change key';
+  $('#setup-key').placeholder = key ? 'Paste a replacement key' : 'Paste your key';
+}
+$('#change-setup-key').onclick = () => {
+  renderConnection(!editingKey);
+  $('#setup-key').value = '';
+  if (editingKey) $('#setup-key').focus();
 };
 async function connectKey(candidate, source) {
   const status = source === 'setup' ? $('#setup-connection') : $('#key-status');
@@ -903,7 +923,8 @@ async function connectKey(candidate, source) {
     if (live) live.race.apiKey = key;
     $('#setup-key').value = $('#api-key').value = '';
     status.textContent = 'Connected · session only';
-    $('#setup-connection').textContent = 'Connected · session only';
+    $('#setup-connection').textContent = 'Connected.';
+    renderConnection();
     renderGridEditor();
     return true;
   } catch (e) {

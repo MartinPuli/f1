@@ -20,7 +20,10 @@ test('per-driver models and prompts are routed independently and resolved versio
     return new Response(
       JSON.stringify({
         model: 'jev-1.13.0',
-        answers: { drive: { choice: 'push_straight', confidence: 0.9 } },
+        answers: {
+          line: { choice: 'center', confidence: 0.9 },
+          pace: { choice: 'balanced', confidence: 0.8 },
+        },
       }),
     );
   };
@@ -39,14 +42,33 @@ test('per-driver models and prompts are routed independently and resolved versio
     );
     assert.equal(result.status, 200);
     assert.equal(calls[0].model, 'jev-preview');
-    assert.equal(calls[0].questions.drive.instructions.driver, 'Brake early.');
-    assert.equal(calls[1].questions.drive.instructions.driver, settings.drivers[4].prompt);
-    assert.equal(calls[0].questions.drive.instructions.race, settings.prompt);
+    assert.equal(calls[0].questions.line.instructions.driver, 'Brake early.');
+    assert.equal(calls[1].questions.line.instructions.driver, settings.drivers[4].prompt);
+    assert.equal(calls[0].questions.line.instructions.race, settings.prompt);
+    assert.equal(calls[0].questions.pace.instructions.driver, 'Brake early.');
+    assert.equal(calls[0].questions.pace.instructions.race, settings.prompt);
+    assert.deepEqual(Object.keys(calls[0].questions).sort(), ['line', 'pace']);
+    assert.ok(JSON.parse(calls[0].state).road.speed_limit_mps > 0);
     assert.ok(!calls[0].state.includes('seed'));
     assert.equal((await result.json()).decisions[0].model, 'jev-1.13.0');
   } finally {
     globalThis.fetch = old;
   }
+});
+test('an invalid pace rejects the entire batch rather than applying partial decisions', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () =>
+    Response.json({
+      answers: { line: { choice: 'center' }, pace: { choice: 'full-throttle-forever' } },
+    }),
+  );
+  const race = new Race();
+  const response = await api(
+    request('decide', {
+      states: [observe(race.cars[0], race.cars, race.track, 0)],
+    }),
+  );
+  assert.equal(response.status, 502);
+  assert.equal((await response.json()).decisions, undefined);
 });
 test('model lookup uses the fixed TypeSafe endpoint, strips extra data and does not cache keys', async () => {
   const old = globalThis.fetch;

@@ -185,7 +185,7 @@ test('Jev batches stay two wall-clock seconds apart even at 4x playback and stop
   t.mock.method(Date, 'now', () => now);
   t.mock.method(globalThis, 'fetch', async () => {
     calls++;
-    return Response.json({ decisions: Array(5).fill({ choice: 'push_straight' }) });
+    return Response.json({ decisions: Array(5).fill({ line: 'center', pace: 'balanced' }) });
   });
   const race = new Race();
   race.mode = 'jev';

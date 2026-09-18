@@ -27,7 +27,7 @@ The existing OpenAI Sites deployment uses a separate adapter with platform ident
 
 **Circuit** controls the name, seed, lap count, and Demo/Jev mode. A seed reproduces a circuit under the same generator version. The 32-bit seed range contains 4,294,967,296 values; the project generates tracks on demand and doesn't claim to have tested every value.
 
-Open **Grid** to edit driver names and car numbers. **Jev settings** contains the model and prompts; **Reset grid** restores the starter lineup. [Jev driving defaults](docs/JEV.md) explains the request and decision rules. The shared race prompt applies to all five drivers, but each receives only its own observations. Connecting TypeSafe checks the model catalog without starting inference. Different aliases may resolve to the same model; results retain the returned version when TypeSafe supplies it.
+Open **Drivers**, select a car, and edit its name, number, prompt, or model. **Race rules** applies to everyone; **Reset grid** restores the starter lineup. [Jev driving defaults](docs/JEV.md) explains the request and decision rules. The shared race prompt applies to all five drivers, but each receives only its own observations. Connecting TypeSafe checks the model catalog without starting inference. Different aliases may resolve to the same model; results retain the returned version when TypeSafe supplies it.
 
 Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **Space** or **P** plays and pauses, **Esc** closes a window or pauses the race, **1–5** and the left/right arrows select drivers, **C** changes the camera, and **F** recenters it. **R** opens Results, **N** opens race setup, and **?** shows the shortcut sheet. Shortcuts leave text fields alone; you can disable them in the sheet, which is also available through settings. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
 
@@ -45,7 +45,7 @@ The browser keeps the key in memory until you clear it or leave the page. Reques
 
 Don't put secrets in driver prompts or race names, because the archive deliberately stores those fields. The interface blocks the currently connected key when it detects it there. Keep request-body logging, session replay tools, and third-party scripts away from the connection flow. [SECURITY.md](SECURITY.md) describes the boundaries and remaining risks.
 
-Jev makes up to **10 upstream calls per simulation second**: five drivers, two decisions each second. The browser starts at most one batch every two real seconds, including at 4× playback. The race freezes while a batch runs, and service errors pause it. A batch already sent may still complete after you pause or clear the key. Use TypeSafe's account controls to limit spending; JEVRACE doesn't enforce a dollar budget.
+Jev makes up to **10 upstream calls per simulation second**: five drivers, two decisions each second, with two Choice questions in each call. The browser starts at most one batch every two real seconds, including at 4× playback. The race freezes while a batch runs, and service errors pause it. A batch already sent may still complete after you pause or clear the key. Use TypeSafe's account controls to limit spending; JEVRACE doesn't enforce a dollar budget.
 
 ## Work on the code
 
@@ -70,7 +70,7 @@ See [architecture notes](docs/ARCHITECTURE.md) for the request path, recording f
 
 ## Limits
 
-This is a spectator experiment, not a competitive leaderboard. Visitors control the client and can submit invented race data to their own archives. Drivers see five local road samples up to 42 meters ahead, nearby cars, and their own recent observations; they never receive the circuit seed or the full track. A race times out after 100 simulation seconds per lap.
+This is a spectator experiment, not a competitive leaderboard. Visitors control the client and can submit invented race data to their own archives. Jev chooses a road lane and pace. A shared steering and speed controller executes those targets at 40 Hz, using only the current local road samples; it also slows down to recover when a car leaves the road. This is assisted driving, not direct model control of each wheel input. Drivers see five local road samples up to 42 meters ahead, nearby cars, and their own recent observations; they never receive the circuit seed or the full track. A race times out after 100 simulation seconds per lap.
 
 Vercel limits each browser archive to 50 races and 50 MB of JSON. Shared Postgres counters cap requests by browser, IP, and project, including daily and monthly budgets. One database statement checks all applicable counters; short rejection caches reduce repeat queries in warm functions. These limits don't prevent function invocation charges or protect static bandwidth. Configure the free Vercel bot rules and API firewall rule in [the deployment guide](docs/VERCEL.md) before sharing the URL.
 

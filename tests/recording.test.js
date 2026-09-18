@@ -67,7 +67,12 @@ test('Jev uses only visitor keys and passes isolated observations to the upstrea
   globalThis.fetch = async (url, init) => {
     requests.push({ url, init });
     return new Response(
-      JSON.stringify({ answers: { drive: { choice: 'push_straight', confidence: 0.8 } } }),
+      JSON.stringify({
+        answers: {
+          line: { choice: 'center', confidence: 0.8 },
+          pace: { choice: 'balanced', confidence: 0.8 },
+        },
+      }),
     );
   };
   try {

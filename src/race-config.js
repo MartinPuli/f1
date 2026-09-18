@@ -48,13 +48,13 @@ export const DRIVERS = [
 export const DRIVER_IDS = ['max', 'lewis', 'charles', 'lando', 'franco'];
 export const MODEL_CHOICES = ['jev-latest'];
 export const DEFAULT_PROMPT =
-  'Which driving action keeps the car on the visible road while making the most forward progress over the next 0.5 seconds? Brake before tight bends or a close car ahead. If off track, slow down and steer toward the visible centerline. Use only this observation and recent actions.';
+  'Finish the race on the road. Choose a pace for the visible bend and traffic; use the center lane unless passing on a clear side. Recover at low speed if off track or facing away. Never assume an unseen turn.';
 const strategies = [
-  'Attack corner exits and overtake when there is room. Accept controlled risk, but brake before tight turns.',
-  'Adapt your pace to the road ahead. Prioritize smooth steering and consistent lap times.',
-  'Choose precise lines. Brake early for corners and accelerate once the car is aligned with the exit.',
-  'Look for overtaking opportunities. Use clear space without sacrificing control of the car.',
-  'Build speed progressively. Prioritize finishing and avoid collisions or running wide.',
+  'Attack on clear straights and corner exits. Use a clear side lane to pass. Return to balanced pace before a bend; recover immediately if off track.',
+  'Favor balanced pace and the center lane. Use cautious pace for tight bends or close traffic. Pass only with a clear side lane; recover if off track.',
+  'Use cautious pace through tight bends and balanced pace elsewhere. Stay near the center and attack only on a clear straight. Recover if off track.',
+  'Pass slower cars using whichever side lane is clear. Attack when aligned with open road, balanced through bends, cautious in traffic. Recover if off track.',
+  'Favor cautious pace near bends and traffic. Use balanced pace on clear road, keep the center lane, and pass only with ample space. Recover if off track.',
 ];
 export const validModel = (value) =>
   typeof value === 'string' && /^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,79}$/.test(value);

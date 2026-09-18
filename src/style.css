@@ -37,7 +37,7 @@
   --display: 'Barlow Condensed', sans-serif;
   --data: ui-monospace, SFMono-Regular, Consolas, monospace;
   --shadow: 0 8px 24px rgb(36 54 75 / 0.09);
-  --radius: 6px;
+  --radius: 2px;
   font-family: var(--body);
   color: var(--ink);
   background: var(--panel);
@@ -186,7 +186,7 @@ svg {
   padding: 4px;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 3px;
   box-shadow: var(--shadow);
 }
 .nav-button {
@@ -337,7 +337,7 @@ svg {
   padding: 4px;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 3px;
   box-shadow: var(--shadow);
 }
 .pilot-button {
@@ -385,7 +385,7 @@ svg {
   padding: 5px;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 3px;
   box-shadow: var(--shadow);
 }
 .control-dock > .primary-button {
@@ -445,7 +445,7 @@ svg {
   align-items: center;
   gap: 16px;
   background: var(--paper);
-  border-radius: 8px;
+  border-radius: 3px;
   padding: 12px 16px;
   box-shadow: var(--shadow);
   max-width: calc(100vw - 430px);
@@ -547,7 +547,7 @@ dialog select:hover {
 }
 .track-preview {
   background: #d7ebed;
-  border-radius: 8px;
+  border-radius: 3px;
   overflow: hidden;
 }
 .track-preview > svg {
@@ -628,7 +628,7 @@ dialog select:hover {
 .mode-choice:hover {
   color: var(--ink);
 }
-#setup-form > .primary-button {
+#setup-dialog > .primary-button {
   margin-top: 24px;
   justify-content: space-between;
   padding: 0 16px;
@@ -1104,7 +1104,7 @@ td strong {
   gap: 5px;
   background: var(--ink);
   padding: 4px;
-  border-radius: 9px;
+  border-radius: 3px;
   margin: 0 0 20px;
 }
 .setup-tabs button {
@@ -1143,7 +1143,7 @@ td strong {
 .grid-editor-tabs button {
   flex: 1;
   min-height: 43px;
-  border-radius: 7px;
+  border-radius: 2px;
   border-bottom: 3px solid var(--pilot);
   font: 600 24px var(--display);
   background: var(--panel);
@@ -1746,5 +1746,193 @@ dialog .shortcut-toggle input {
   line-height: 1.55;
 }
 .saved-instruction {
+  margin-top: 16px;
+}
+
+/* Compact race instruments leave the road visible. */
+.lap-widget {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  column-gap: 12px;
+  padding: 9px 12px;
+  border-radius: 0;
+  border-top: 2px solid var(--ink);
+  background: #f8fafcf2;
+}
+.lap-widget strong {
+  font-size: 25px;
+  margin: 0;
+}
+.lap-widget em {
+  font-size: 17px;
+}
+#clock {
+  grid-column: 1 / -1;
+  margin-top: 5px;
+  font-size: 11px;
+}
+.onboard-strip {
+  display: none;
+}
+.timing-tower {
+  border-radius: 0;
+}
+.track-label {
+  border-radius: 0;
+  box-shadow: none;
+  border-left: 2px solid var(--accent);
+}
+.speed-widget {
+  border-radius: 0;
+  padding: 7px 10px;
+}
+.speed-widget strong {
+  font-size: 30px;
+}
+.setup-tabs {
+  border-radius: 2px;
+}
+.setup-tabs button,
+.grid-editor-tabs button,
+textarea {
+  border-radius: 2px;
+}
+.grid-editor-tabs {
+  gap: 4px;
+  padding-bottom: 12px;
+}
+.grid-editor-tabs button {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+.grid-editor-tabs strong {
+  font: 600 25px/1 var(--display);
+}
+.grid-editor-tabs span {
+  font: 500 11px var(--body);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.grid-driver-heading {
+  margin-top: 16px;
+}
+.driver-brain {
+  border: 0;
+  padding: 0;
+  margin-top: 4px;
+}
+.driver-brain textarea {
+  min-height: 120px;
+}
+.driver-brain .field-note {
+  margin-top: 6px;
+  font-size: 12px;
+}
+.model-field {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.model-field label {
+  margin: 0;
+}
+.race-prompt-details {
+  padding: 14px 0;
+  border-block: 1px solid var(--line);
+}
+.race-prompt-details summary span {
+  float: right;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.connection-ready {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 0;
+  border-block: 1px solid var(--line);
+}
+.connection-check {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: #277465;
+  background: #e3efeb;
+}
+.connection-ready strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+.connection-ready small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+.connection-ready button {
+  margin-left: auto;
+  font-size: 12px;
+  min-height: 40px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.key-entry-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.key-entry-row .secondary-button {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+@media (max-width: 720px) {
+  .lap-widget {
+    padding: 7px 9px;
+    column-gap: 8px;
+  }
+  .lap-widget strong {
+    font-size: 23px;
+  }
+  .lap-widget em {
+    font-size: 16px;
+  }
+  .lap-widget > span:first-child {
+    font-size: 10px;
+  }
+  .grid-editor-tabs button {
+    padding: 8px;
+  }
+}
+
+#setup-dialog[open] {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 4px;
+}
+#setup-dialog > h2,
+#setup-dialog > .setup-tabs,
+#setup-dialog > .primary-button {
+  flex-shrink: 0;
+}
+#setup-form {
+  overflow-y: auto;
+  min-height: 0;
+  padding: 2px 3px;
+  scrollbar-width: thin;
+}
+#setup-dialog > .primary-button {
   margin-top: 16px;
 }
