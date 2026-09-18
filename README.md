@@ -1,60 +1,71 @@
-# JEVRACE 🏁
+<p align="center"><img src="public/logo.svg" alt="JEVRACE" width="420"></p>
 
-**Unknown tracks. Unexpected champions.** Five independent drivers discover a procedural circuit as they race. A full-screen Three.js spectator experiment with Formula-inspired cars, warm colors, orbitable chase cameras, saved races, and interactive replays.
+Five drivers race a circuit they haven't seen. You choose their Jev models and prompts, follow the cars in 3D, and replay the result.
 
-Meet **Max JEVstappen, Lewis JEVmilton, Charles LeJEVclerc, Lando JEVrris, and Franco ColJEVpinto**. This is an original fan experiment, not affiliated with Formula 1, its teams, or the drivers.
+JEVRACE runs in English on desktop and phones. Demo mode needs no account or API key; it uses local driving policies. Jev mode calls [TypeSafe](https://docs.typesafe.ai/introduction) with the visitor's own credential. Demo results don't measure model performance.
 
-## Run your own races
+## Run locally
 
-Requires Node.js 22 or newer.
+Use Node.js 22 and npm.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. Give your race a name, pick 1–5 laps, generate a circuit or enter a seed, and start. Free demo mode runs without any account or key. For real Jev decisions, select **Jev** and enter your own [TypeSafe API key](https://docs.typesafe.ai/introduction). Connect verifies the key with TypeSafe’s model catalog before starting a race. Each visitor supplies their own key; there is no shared server key or silent demo fallback.
+Open `http://localhost:5173`. Local recordings live in `.races/`, which Git ignores. The development server binds to your machine's loopback address and shares one local archive; don't expose it as a public server.
 
-Jev is a paid upstream service. The simulation requests decisions every 0.25 simulation seconds for up to five active cars (up to 20 upstream requests per simulation second). Time freezes while a batch is in flight. Errors pause the race. Pausing stops future batches; an already submitted batch can finish. The key stays in JavaScript memory until cleared or the page closes. It travels through the same-origin server to TypeSafe and is excluded from recordings, exports, logs, and persistence.
+## Deploy on Vercel
 
-The hosted app uses a same-origin content policy, HTTPS-only key forwarding, fixed TypeSafe endpoints with redirects disabled, and sanitized upstream errors. Model and decision responses are not cached. The key is never written to browser storage; clearing it also invalidates a pending connection. The app does not persist or log credentials, though the hosting service and TypeSafe necessarily process authenticated requests.
+Follow [the Vercel guide](docs/VERCEL.md). The repository includes a Vercel function, a Postgres schema, security headers, and a daily cleanup job. Import the repo, connect Neon, run the schema, and configure the server variables. No visitor API key belongs in Vercel's environment settings.
 
-Local race recordings are stored on disk in the ignored `.races/` directory, so they survive reloads and server restarts. The development server binds to loopback by default and uses one local archive; it is not a multi-user production server. Do not expose the development server to the internet.
+Vercel stores each browser's results in Postgres and uses a signed, HttpOnly cookie to select its archive. There are no user accounts. Clearing that cookie, changing browsers, or reaching its 90-day expiry loses access to the archive; download recordings you want to keep. The daily job deletes recordings after 90 days without an update.
 
-## What you can do
+The existing OpenAI Sites deployment uses a separate adapter with platform identity, D1, and R2. Its recordings don't automatically move to Vercel.
 
-- Name and rename races; choose 1–5 laps and demo or Jev mode.
-- In **Grid**, select a TypeSafe model and edit the prompt for each driver, plus a shared race prompt. These settings affect Jev mode; demo uses local policies. Model choices load from TypeSafe when connected. Aliases can resolve to the same model version; see the [TypeSafe model catalog](https://docs.typesafe.ai/models).
-- Results retain the selected models, resolved versions when returned, and exact prompts alongside telemetry. Earlier recordings remain playable with their original default grid.
-- Generate circuits from a **32-bit seed space (4,294,967,296 seed values)**. These are generated on demand, not a catalog of billions of separately tested tracks. Reusing a seed reproduces the circuit under the same generator version.
-- Follow any driver, drag to orbit them, or switch to an orbiting circuit view or an aerial view. Keys **1–5** select drivers; **C** changes the view; double-click the circuit or click the chase camera button to recenter.
-- Save progress automatically every 15 simulation seconds, on pause and at the finish. The Results modal shows standings and the latest 50 archived races.
-- Replay saved telemetry with a scrubber, speed controls, and any camera. Replays make no Jev requests. Download a JSON recording from Results. These are interactive recordings, not video files.
-- Rename recordings and delete them with a two-click confirmation.
+## Set up a race
 
-## How the experiment works
+**Circuit** controls the name, seed, lap count, and Demo/Jev mode. A seed reproduces a circuit under the same generator version. The 32-bit seed range contains 4,294,967,296 values; the project generates tracks on demand and doesn't claim to have tested every value.
 
-`src/simulation.js` implements a fixed-step bicycle model, limited lateral grip, collisions, off-track penalties, and lap timing. Each independent driver receives five nearby road samples (up to 42 m), nearby cars, speed, heading error, and its own recent observations. The whole circuit and its seed are never sent to Jev. Demo drivers use local steering policies; their results are not measurements of Jev performance. Each race has a simulation timeout of 100 seconds per configured lap, with unfinished cars ranked by distance.
+Open **Grid** to edit a driver's model and prompt. The shared race prompt applies to all five drivers, but each receives only its own observations. Connecting TypeSafe checks the model catalog without starting inference. Different aliases may resolve to the same model; results retain the returned version when TypeSafe supplies it.
 
-The procedural generator uses seeded radial harmonics with bounded amplitudes to create smooth closed circuits. Generator version 2 is embedded in recordings; keep older generator implementations when introducing future incompatible track changes.
+Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **1–5** selects a driver and **C** changes the camera. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
 
-## Hosted persistence and deployment
+Results save every 15 simulation seconds, on pause, and at the finish. They include standings, prompts, models, and replay frames. Replays don't call TypeSafe. If storage fails, Results shows the error and lets you retry or download JSON. Closing the page can lose progress since the last completed save.
 
-The included Cloudflare-compatible Worker serves the app and `/api/*`. On **OpenAI Sites**, `.openai/hosting.json` declares `DB` (D1) for race metadata and `BUCKET` (R2) for recordings. Sites provisions the bindings and applies generated `drizzle/` migrations. Race endpoints require the platform's trusted `oai-authenticated-user-id` header; every read, write, and delete is scoped to that identity. Never run this Worker behind a proxy that accepts that header directly from the public internet. Porting to another host requires trusted server-side authentication and provisioning D1/R2 or replacing the archive adapter.
+## API keys and costs
 
-When deploying your own fork, replace the original `project_id` in `.openai/hosting.json` with your own Sites project registration. Do not deploy to the original project's ID. No API secrets are needed in the hosting manifest.
+The browser keeps the key in memory until you clear it or leave the page. Requests carry it in an Authorization header to the same-origin server, which forwards it only to fixed TypeSafe HTTPS endpoints. The code doesn't write keys to browser storage, logs, recordings, or the database. The hosting operator and TypeSafe still process the credential; this isn't end-to-end encryption between the browser and TypeSafe.
+
+Don't put secrets in driver prompts or race names, because the archive deliberately stores those fields. The interface blocks the currently connected key when it detects it there. Keep request-body logging, session replay tools, and third-party scripts away from the connection flow. [SECURITY.md](SECURITY.md) describes the boundaries and remaining risks.
+
+Jev makes up to **20 upstream calls per simulation second**: five drivers, four decisions each second. The race freezes while a batch runs, and service errors pause it. A batch already sent may still complete after you pause or clear the key. Use TypeSafe's account controls to limit spending; JEVRACE doesn't enforce a dollar budget.
+
+## Work on the code
 
 ```sh
 npm test
-npm run build
-# After a schema change:
-npm run db:generate
+npm run check
+npm audit --omit=dev
 ```
 
-Build output: `dist/client/` assets, `dist/server/index.js` Worker, `dist/.openai/hosting.json`, and `dist/drizzle/` migrations. Local mode uses `server/local-archive.js`; hosted mode uses prepared D1 statements and R2 in `server/archive.js`.
+`npm run check` checks formatting, runs the tests, and builds the Vercel frontend. Tests cover driving behavior, replay fidelity, credential handling, archive isolation, signed sessions, Postgres quotas, and rate limits. Postgres tests run with PGlite; they don't need an external database or make paid Jev calls. CI runs the same checks.
 
-Recordings are user-scoped and unlisted. They are spectator experiment data, not an authoritative competitive leaderboard. Autosave failures are shown in Results; download the recording to keep a copy if storage is unavailable. A crash or closing the tab can lose progress since the last successful save.
+| File                         | Responsibility                                                        |
+| ---------------------------- | --------------------------------------------------------------------- |
+| `src/main.js`                | Dialogs, session connection, save queue, and replay controls          |
+| `src/simulation.js`          | Circuit generation, physics, local observations, and driver decisions |
+| `src/scene.js`               | Three.js cars, circuit, lights, and cameras                           |
+| `server/api.js`              | Validation and the TypeSafe proxy                                     |
+| `server/vercel.js`           | Host checks, signed sessions, quotas, and Vercel request handling     |
+| `server/postgres-archive.js` | Parameterized archive queries and shared rate counters                |
 
-## License
+See [architecture notes](docs/ARCHITECTURE.md) for the request path, recording format, and the Sites adapter. Comments explain ordering and trust boundaries; Prettier keeps source files readable.
 
-MIT. Self-hosted Barlow, Barlow Condensed, Fredoka and Nunito fonts retain their SIL Open Font License files in `public/fonts/`.
+## Limits
+
+This is a spectator experiment, not a competitive leaderboard. Visitors control the client and can submit invented race data to their own archives. Drivers see five local road samples up to 42 meters ahead, nearby cars, and their own recent observations; they never receive the circuit seed or the full track. A race times out after 100 simulation seconds per lap.
+
+Vercel limits each browser archive to 50 races and 50 MB of JSON. Rate limits use shared Postgres counters rather than function memory. They reduce repeated requests but don't stop distributed abuse; configure Vercel's firewall and spending alerts before sharing a deployment widely.
+
+MIT licensed. The JV racing mark is original; this project has no affiliation with Formula 1, its teams, or its drivers. Font licenses live beside the self-hosted fonts in `public/fonts/`.

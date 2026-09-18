@@ -7,3 +7,5 @@ Tokens: ivory #fffaf0, midnight #243748, muted #63746f, racing red #bc4436, sky 
 The setup modal has two views: Circuit and Grid. Circuit contains the track, name, laps, driver mode and session connection. Grid has five driver selectors with model and editable strategy prompt. The saved result includes the exact grid configuration. Keys never enter saved configuration.
 
 Keep one primary start action. No slogans, permanent technical instructions or repeated labels. Security/usage details stay beside the session connection where they affect the user's choice.
+
+Logo revision: a forward-leaning JV monogram with a narrow car nose between its strokes. Two horizontal cuts suggest a front wing. Keep the existing racing red and midnight ink; the mark must work at favicon size without text. Mobile uses safe-area insets and at least 44 px targets, with a compact horizontal dock in landscape.

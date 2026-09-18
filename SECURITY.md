@@ -1,0 +1,37 @@
+# Security notes
+
+JEVRACE accepts a visitor's TypeSafe API key so that the visitor pays for their own race. The browser and hosting server both see that key while processing requests. Don't describe this as zero-trust or end-to-end encrypted.
+
+## Credential handling
+
+The browser keeps the key in JavaScript memory, clears password inputs after connecting, and doesn't write it to localStorage, sessionStorage, cookies, exports, or recordings. The server accepts it only in an Authorization header and forwards it to fixed HTTPS TypeSafe endpoints. Redirects fail rather than send it to another destination. Model discovery and decisions return `no-store`; errors never echo upstream exception text.
+
+The production content policy allows scripts and connections from the same origin. Fonts ship with the app, and no analytics or session recorder runs in the page. Inline styles remain allowed because driver colors and Three.js layout use them. These controls limit exposure; an XSS bug, compromised dependency, malicious browser extension, or modified deployment could still read the key.
+
+Clear disconnects future calls. It can't revoke a key at TypeSafe or cancel billing for a batch already accepted there. Revoke a suspected leak in TypeSafe's dashboard.
+
+## Archive ownership on Vercel
+
+An HMAC-signed, Secure, HttpOnly, SameSite=Strict cookie carries a random archive ID and a 90-day expiry. The `__Host-` prefix prevents domain-scoped cookie overrides. The backend verifies the signature before using that ID, ignores externally supplied Sites identity headers, and includes the owner in every archive query.
+
+POST and DELETE require the configured same-origin Origin header. Cross-site fetches and unexpected hosts fail before any upstream request. All SQL uses separate parameters. Recording validation bounds incoming JSON at 3.5 MB and strips unexpected properties; a database function serializes saves for each owner before checking the 50-race and 50 MB quotas.
+
+Rate counters live in Postgres. The IP counter uses an HMAC instead of retaining the raw address, and only trusts Vercel's edge-supplied forwarded header. Cookie rotation can't bypass that IP counter, although distributed clients can use multiple addresses. Configure the platform firewall for broader abuse control.
+
+## What storage contains
+
+Names, prompts, selected and resolved models, timing, and replay telemetry. Don't put credentials or private data in prompts. The application can catch the connected key in common input flows, but it can't recognize every secret someone types into arbitrary text.
+
+The daily maintenance job deletes recordings after 90 days without an update and counters older than one day. Database backups can retain earlier data according to the provider's retention policy. Losing the browser cookie loses access; the app has no account recovery.
+
+## Operating the service
+
+Keep `DATABASE_URL`, `SESSION_SECRET`, and `CRON_SECRET` server-only. Rotating `SESSION_SECRET` invalidates existing browser archive access. Use a separate database and secrets for previews, limit who can deploy, and review changes to API routes before merging them.
+
+Don't enable request body or Authorization logging. Platform operators may still have access to runtime requests, and provider controls sit outside this codebase. The app deliberately suppresses raw database and upstream exception details in logs as well as responses.
+
+CI runs tests, a build, and the production dependency audit. PGlite checks the actual Postgres statements in tests; a live Neon/Vercel deployment still needs the checks in [the deployment guide](docs/VERCEL.md). No code review or test suite can promise that a service has no vulnerabilities.
+
+## Reporting a problem
+
+For a suspected credential leak, revoke the affected key first. Contact the deployment operator privately and include the affected route, time, and steps to reproduce. Don't post credentials, cookies, network traces, or other visitors' data in a public issue.

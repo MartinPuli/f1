@@ -10,3 +10,5 @@ playwright-report/
 .impeccable/
 
 .races/
+
+.vercel/

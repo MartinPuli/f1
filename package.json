@@ -7,16 +7,32 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build && node scripts/build-worker.mjs",
     "test": "node --test tests/*.test.js",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "build:vercel": "vite build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:vercel": "node --env-file=.env.local scripts/migrate-postgres.mjs",
+    "check": "npm run format:check && npm test && npm run build:vercel"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
     "drizzle-orm": "^0.45.2",
     "lucide": "^0.468.0",
     "three": "^0.180.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "drizzle-kit": "^0.31.10",
     "esbuild": "^0.28.2",
+    "prettier": "^3.9.8",
     "vite": "^7.1.0"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    }
   }
 }

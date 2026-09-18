@@ -1,0 +1,8 @@
+node_modules
+dist
+.races
+.vercel
+.sites-runtime
+package-lock.json
+public/fonts
+drizzle/meta
