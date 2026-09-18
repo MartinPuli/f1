@@ -3118,3 +3118,23 @@ textarea,
 #decision-values.choices-only .choice-probabilities {
   display: none;
 }
+
+@media (max-width: 720px) {
+  .has-jev-activity .speed-widget {
+    display: none;
+  }
+  body.has-jev-activity:not(.showcase-active) #replay-bar {
+    bottom: 382px;
+    left: 12px;
+    width: calc(100% - 24px);
+    transform: none;
+  }
+  body.has-jev-activity:not(.showcase-active) #stage-message:not(:empty) {
+    bottom: 432px;
+    left: 12px;
+    transform: none;
+    width: 180px;
+    font-size: 11px;
+    padding: 9px;
+  }
+}
