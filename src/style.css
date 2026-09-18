@@ -1952,7 +1952,6 @@ textarea {
 .showcase-active .control-dock,
 .showcase-active #replay-bar,
 .showcase-active .track-label,
-.showcase-active #stage-message,
 .showcase-active .finish-banner {
   display: none !important;
 }
