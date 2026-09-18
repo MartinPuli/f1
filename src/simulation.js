@@ -235,7 +235,6 @@ export class Race {
     this.finished = false;
     this.error = '';
     this.nextDecision = 0;
-    this.networkNotBefore = 0;
     this.retryNotBefore = 0;
     this.decisions = 0;
     this.events = [];
@@ -268,7 +267,6 @@ export class Race {
     }
     const generation = this.generation;
     this.waiting = true;
-    this.networkNotBefore = Date.now() + 2000;
     try {
       const response = await fetch('/api/decide', {
         method: 'POST',
@@ -350,10 +348,6 @@ export class Race {
     this.accumulator += Math.min(realDelta, 0.1) * speed;
     while (this.accumulator >= 0.025) {
       if (this.time >= this.nextDecision) {
-        if (this.mode === 'jev' && Date.now() < this.networkNotBefore) {
-          this.accumulator = 0;
-          return;
-        }
         this.nextDecision = this.time + (this.mode === 'jev' ? 0.5 : 0.25);
         this.decide();
         if (this.waiting) {

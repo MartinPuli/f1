@@ -161,8 +161,8 @@ export function createVercelHandler({ env, store }) {
         uploadOwner = owner;
         uploads.add(owner);
       }
-      if (group === 'drive' && (active.has(owner) || active.size >= 8))
-        return finish(json({ error: 'A decision is already running. Wait and resume.' }, 429));
+      if (group === 'drive' && active.has(owner))
+        return finish(json({ error: 'A decision is already running. Wait and resume.' }, 409));
       if (group === 'drive') {
         activeOwner = owner;
         active.add(owner);
@@ -190,7 +190,7 @@ export function createVercelHandler({ env, store }) {
         bytes,
       });
       phase = 'traffic';
-      const admission = await store.admit(policies);
+      const admission = policies.length ? await store.admit(policies) : { allowed: true };
       if (!admission.allowed) {
         denied.set(admission.blocked);
         const retry = Math.max(

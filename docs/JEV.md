@@ -19,7 +19,7 @@ Recovery overrides the lane target when a car goes off track or points away from
 
 The previous action set combined a fixed steering angle with acceleration or braking. Its tight-turn action could brake the car to a standstill, where steering couldn't turn it. Separating the targets lets the controller correct steering between model calls and maintain a low recovery speed.
 
-Five drivers still cost up to five upstream calls per batch. Each call now contains two questions, which adds tokens. Batches start at least two wall-clock seconds apart, including at 4× playback. Service errors pause the race; no local policy replaces missing Jev decisions.
+Five drivers still cost up to five upstream calls per batch. Each call now contains two questions, which adds tokens. There is no application rate quota or artificial wall-clock delay between batches. The next batch starts when its simulation step is due and the previous one has completed. Provider rate responses still pause the race. Service errors pause the race; no local policy replaces missing Jev decisions.
 
 ## Testing
 

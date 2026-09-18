@@ -108,27 +108,32 @@ test('invalid requests and returning status avoid Postgres; cached rejections av
   assert.equal(reads, 1);
 });
 
-test('simultaneous decisions from one browser reserve their slot before database I/O', async () => {
+test('driving skips rate counters and rejects overlapping batches from the same session', async (t) => {
   let release,
     reads = 0;
+  t.mock.method(globalThis, 'fetch', async () => {
+    await new Promise((resolve) => (release = resolve));
+    return Response.json({ answers: { line: { choice: 'center' }, pace: { choice: 'balanced' } } });
+  });
   const handler = createVercelHandler({
     env,
     store: {
       admit: async () => {
         reads++;
-        await new Promise((r) => (release = r));
-        return { allowed: true, blocked: [] };
+        throw new Error('Driving must not hit counters');
       },
     },
   });
-  const first = handler(req('decide', post({}, { authorization: 'Bearer test' })));
-  // Let the first request finish its bounded body read and enter the deferred query.
-  while (!release) await new Promise((r) => setImmediate(r));
-  const second = await handler(req('decide', post({}, { authorization: 'Bearer test' })));
-  assert.equal(second.status, 429);
-  assert.equal(reads, 1);
+  const race = new Race();
+  const body = { states: [observe(race.cars[0], race.cars, race.track, 0)] };
+  assert.deepEqual(policiesFor({ owner: 'alice', ip: 'ip', group: 'drive' }), []);
+  const first = handler(req('decide', post(body, { authorization: 'Bearer test' })));
+  while (!release) await new Promise((resolve) => setImmediate(resolve));
+  const second = await handler(req('decide', post(body, { authorization: 'Bearer test' })));
+  assert.equal(second.status, 409);
+  assert.equal(reads, 0);
   release();
-  assert.equal((await first).status, 400);
+  assert.equal((await first).status, 200);
 });
 
 test('slow and oversized streams are cancelled', async () => {
@@ -179,7 +184,7 @@ test('model observations discard arbitrary payloads and failed batches abort the
   assert.equal(cancelled, 4);
 });
 
-test('Jev batches stay two wall-clock seconds apart even at 4x playback and stop on rate limits', async (t) => {
+test('Jev has no artificial wall-clock cooldown but respects upstream rate responses', async (t) => {
   let now = 100000,
     calls = 0;
   t.mock.method(Date, 'now', () => now);
@@ -194,11 +199,8 @@ test('Jev batches stay two wall-clock seconds apart even at 4x playback and stop
     race.tick(0.1, 4);
     await new Promise((r) => setImmediate(r));
   }
-  assert.equal(calls, 1);
-  now += 2000;
-  race.tick(0.1, 4);
-  await new Promise((r) => setImmediate(r));
-  assert.equal(calls, 2);
+  assert.ok(calls > 10, 'batches can continue without advancing the wall clock');
+  assert.ok(race.time > 5);
   t.mock.method(globalThis, 'fetch', async () =>
     Response.json({ error: 'Wait' }, { status: 429, headers: { 'Retry-After': '120' } }),
   );

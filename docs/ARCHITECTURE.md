@@ -4,7 +4,7 @@ JEVRACE has one browser scene. The interface opens dialogs over it for race setu
 
 ## A decision batch
 
-`Race.tick()` advances a fixed 25 ms physics step. Every half-second of simulation time, Jev mode pauses advancement and requests decisions for the active cars. The browser also spaces batches by at least two real seconds and honors server cooldowns. Demo decisions remain local and run every quarter-second. `observe()` gives each driver local road samples, nearby cars, and its own memory. It doesn't include a seed, full track, or another driver's prompt.
+`Race.tick()` advances a fixed 25 ms physics step. Every half-second of simulation time, Jev mode pauses advancement and requests decisions for the active cars. There is no artificial gap between batches; the client still honors provider cooldown responses. Driving bypasses application rate counters. Demo decisions remain local and run every quarter-second. `observe()` gives each driver local road samples, nearby cars, and its own memory. It doesn't include a seed, full track, or another driver's prompt.
 
 `server/api.js` validates the batch, matches each driver ID to its configured model and prompt, then calls TypeSafe. It accepts only known action names. The response includes the resolved model when available. A generation counter stops an old network response from changing a reset race, while service errors pause the run instead of silently using demo driving.
 

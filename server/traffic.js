@@ -6,6 +6,8 @@ export const TRAFFIC = {
   uploadMonth: 50000000,
 };
 export function policiesFor({ owner, ip, group, bytes = 0, now = Date.now() }) {
+  // Personal-use driving has no application quota; archive and session budgets remain separate.
+  if (group === 'drive') return [];
   const rule = (bucket, limit, seconds, cost = 1) => ({ bucket, limit, seconds, cost });
   const month = new Date(now);
   const monthStart = Date.UTC(month.getUTCFullYear(), month.getUTCMonth(), 1) / 1000;
@@ -27,15 +29,11 @@ export function policiesFor({ owner, ip, group, bytes = 0, now = Date.now() }) {
   if (group === 'session')
     limits.push(rule('global:sessions', 300, 86400), rule(`ip:${ip}:sessions`, 20, 3600));
   else {
-    const [minute, day] = { drive: [45, 900], connect: [6, 50], write: [6, 100], read: [30, 400] }[
-      group
-    ];
+    const [minute, day] = { connect: [6, 50], write: [6, 100], read: [30, 400] }[group];
     limits.push(
       rule(`owner:${owner}:${group}:minute`, minute, 60),
       rule(`owner:${owner}:${group}:day`, day, 86400),
     );
-    if (group === 'drive')
-      limits.push(rule('global:drive-burst', 12, 10), rule(`owner:${owner}:drive-burst`, 1, 1));
     if (bytes)
       limits.push(
         monthly('global:upload-month', TRAFFIC.uploadMonth, bytes),

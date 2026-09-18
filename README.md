@@ -45,7 +45,7 @@ The browser keeps the key in memory until you clear it or leave the page. Reques
 
 Don't put secrets in driver prompts or race names, because the archive deliberately stores those fields. The interface blocks the currently connected key when it detects it there. Keep request-body logging, session replay tools, and third-party scripts away from the connection flow. [SECURITY.md](SECURITY.md) describes the boundaries and remaining risks.
 
-Jev makes up to **10 upstream calls per simulation second**: five drivers, two decisions each second, with two Choice questions in each call. The browser starts at most one batch every two real seconds, including at 4× playback. The race freezes while a batch runs, and service errors pause it. A batch already sent may still complete after you pause or clear the key. Use TypeSafe's account controls to limit spending; JEVRACE doesn't enforce a dollar budget.
+Jev makes up to **10 upstream calls per simulation second**: five drivers, two decisions each second, with two Choice questions in each call. Driving has no JEVRACE rate quota or artificial delay between batches. At 4× playback, paid calls can run faster. The race freezes while a batch runs, and service errors pause it. A batch already sent may still complete after you pause or clear the key. Use TypeSafe's account controls to limit spending; JEVRACE doesn't enforce a dollar budget.
 
 ## Work on the code
 
@@ -72,6 +72,12 @@ See [architecture notes](docs/ARCHITECTURE.md) for the request path, recording f
 
 This is a spectator experiment, not a competitive leaderboard. Visitors control the client and can submit invented race data to their own archives. Jev chooses a road lane and pace. A shared steering and speed controller executes those targets at 40 Hz, using only the current local road samples; it also slows down to recover when a car leaves the road. This is assisted driving, not direct model control of each wheel input. Drivers see five local road samples up to 42 meters ahead, nearby cars, and their own recent observations; they never receive the circuit seed or the full track. A race times out after 100 simulation seconds per lap.
 
-Vercel limits each browser archive to 50 races and 50 MB of JSON. Shared Postgres counters cap requests by browser, IP, and project, including daily and monthly budgets. One database statement checks all applicable counters; short rejection caches reduce repeat queries in warm functions. These limits don't prevent function invocation charges or protect static bandwidth. Configure the free Vercel bot rules and API firewall rule in [the deployment guide](docs/VERCEL.md) before sharing the URL.
+Vercel limits each browser archive to 50 races and 50 MB of JSON. Shared Postgres counters cap session, catalog, and archive requests by browser, IP, and project; driving requests bypass these counters. One database statement checks all applicable counters; short rejection caches reduce repeat queries in warm functions. These limits don't prevent function invocation charges or protect static bandwidth. Configure the free Vercel bot rules and API firewall rule in [the deployment guide](docs/VERCEL.md) before sharing the URL.
 
 MIT licensed. The JV racing mark is original; this project has no affiliation with Formula 1, its teams, or its drivers. Font licenses live beside the self-hosted fonts in `public/fonts/`.
+
+## Recording a race film
+
+Run a race, then choose **Results → Watch film**. The camera sequence uses the recorded race positions, starting lights, and a winner card. It loops without new inference calls or archive writes. A Jev recording shows **JEV · TypeSafe**; a local race shows **Race replay**. The film doesn't substitute local decisions for Jev decisions.
+
+Use a screen recorder at 1920 × 1080 to capture a loop. **Space** pauses; **Esc** returns to your race. **Results → My races → Open recording** loads a downloaded JEVRACE JSON file without uploading it. Prompts, resolved models, and results remain in the recording; credentials do not.
