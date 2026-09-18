@@ -27,6 +27,7 @@ export function createVercelHandler({ env, store }) {
   return async (request) => {
     request = normalizeVercelRequest(request);
     let cookie, activeOwner;
+    let phase = 'configuration';
     const finish = (result) => {
       const response = secureResponse(result);
       if (result.status === 429 && !response.headers.has('Retry-After'))
@@ -44,8 +45,21 @@ export function createVercelHandler({ env, store }) {
         !store
       )
         return finish(json({ error: 'Server setup is incomplete.' }, 503));
-      const url = new URL(request.url),
+      const url = new URL(request.url);
+      let allowed;
+      try {
         allowed = new URL(env.APP_ORIGIN);
+      } catch {
+        return finish(
+          json(
+            {
+              error: 'APP_ORIGIN must be a full HTTPS URL, without a path.',
+              code: 'INVALID_APP_ORIGIN',
+            },
+            503,
+          ),
+        );
+      }
       const path = url.pathname;
       // Cron may use Vercel's deployment hostname rather than the browser's custom domain.
       if (path === '/api/maintenance' && url.protocol === 'https:') {
@@ -163,6 +177,7 @@ export function createVercelHandler({ env, store }) {
         result.headers.set('Retry-After', String(cachedWait));
         return result;
       }
+      phase = 'traffic';
       const admission = await store.admit(policies);
       if (!admission.allowed) {
         denied.set(admission.blocked);
@@ -176,11 +191,13 @@ export function createVercelHandler({ env, store }) {
         result.headers.set('Retry-After', String(retry));
         return result;
       }
+      phase = 'session';
       if (!owner) {
         ({ owner, cookie } = issueSession(env.SESSION_SECRET));
         return finish(json({ byok: true, archive: 'browser', retentionDays: 90, community: true }));
       }
 
+      phase = 'archive';
       // Ignore Sites identity headers on Vercel. Only our signed cookie selects the archive owner.
       const headers = new Headers(request.headers);
       headers.delete('oai-authenticated-user-id');
@@ -193,6 +210,12 @@ export function createVercelHandler({ env, store }) {
       return finish(
         json(
           {
+            code: `UNAVAILABLE_${phase.toUpperCase()}`,
+            reason: ['42P01', '42703', '28P01', '3D000', '53300', '57P03'].includes(error.code)
+              ? error.code
+              : error.name === 'TimeoutError'
+                ? 'TIMEOUT'
+                : 'REQUEST_FAILED',
             error: ['42P01', '42703'].includes(error.code)
               ? 'Cloud archive setup is incomplete. Download your race to keep it.'
               : 'Service unavailable. Try again or download your recording.',
