@@ -53,4 +53,4 @@ Recordings are user-scoped and unlisted. They are spectator experiment data, not
 
 ## License
 
-MIT. Self-hosted Fredoka and Nunito fonts retain their SIL Open Font License files in `public/fonts/`.
+MIT. Self-hosted Barlow, Barlow Condensed, Fredoka and Nunito fonts retain their SIL Open Font License files in `public/fonts/`.
