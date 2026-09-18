@@ -209,3 +209,69 @@ test('Jev batches stay two wall-clock seconds apart even at 4x playback and stop
   race.tick(0.1);
   assert.equal(race.running, false);
 });
+
+test('known upload limits reject before reading another body', async () => {
+  let queries = 0;
+  const handler = createVercelHandler({
+    env,
+    store: {
+      admit: async (policies) => {
+        queries++;
+        return {
+          allowed: false,
+          blocked: [policies.find((p) => p.bucket === 'global:upload-month')],
+        };
+      },
+    },
+  });
+  assert.equal((await handler(req('races', post({})))).status, 429);
+  const blocked = req('races', post({}));
+  const body = blocked.body;
+  assert.equal((await handler(blocked)).status, 429);
+  assert.equal(body.locked, false, 'the blocked upload was never read');
+  assert.equal(queries, 1);
+});
+
+test('upload slots bound simultaneous parsing and are released after invalid bodies', async () => {
+  let queries = 0;
+  const handler = createVercelHandler({
+    env,
+    store: {
+      admit: async () => {
+        queries++;
+        return { allowed: true, blocked: [] };
+      },
+    },
+  });
+  const streams = [];
+  const sessions = Array.from({ length: 5 }, () => issueSession(secret).cookie);
+  const running = sessions.slice(0, 4).map((cookie) =>
+    handler(
+      req('races', {
+        method: 'POST',
+        headers: { cookie, origin, 'content-type': 'application/json' },
+        duplex: 'half',
+        body: new ReadableStream({
+          start(controller) {
+            streams.push(controller);
+          },
+        }),
+      }),
+    ),
+  );
+  const extra = req('races', post({}, { cookie: sessions[4] }));
+  assert.equal((await handler(extra)).status, 429);
+  assert.equal(extra.body.locked, false);
+  assert.equal((await handler(req('races', post({}, { cookie: sessions[0] })))).status, 429);
+  assert.equal(queries, 0);
+  for (const stream of streams) {
+    stream.enqueue(new TextEncoder().encode('invalid'));
+    stream.close();
+  }
+  assert.deepEqual(
+    (await Promise.all(running)).map((r) => r.status),
+    [400, 400, 400, 400],
+  );
+  assert.equal((await handler(req('races', post({}, { cookie: sessions[0] })))).status, 400);
+  assert.equal(queries, 1, 'released slots allow the next request to reach admission');
+});

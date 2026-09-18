@@ -23,10 +23,11 @@ export function normalizeVercelRequest(request) {
 export function createVercelHandler({ env, store }) {
   const denied = rejectionCache();
   const active = new Set();
+  const uploads = new Set();
   let circuitUntil = 0;
   return async (request) => {
     request = normalizeVercelRequest(request);
-    let cookie, activeOwner;
+    let cookie, activeOwner, uploadOwner;
     let phase = 'configuration';
     const finish = (result) => {
       const response = secureResponse(result);
@@ -141,6 +142,25 @@ export function createVercelHandler({ env, store }) {
             : ['POST', 'DELETE'].includes(request.method)
               ? 'write'
               : 'read';
+      const rateIp = rateIdentity(ip, env.SESSION_SECRET);
+      const isUpload = path === '/api/races' && request.method === 'POST';
+      // Look up known rejections before reading a potentially large recording body.
+      const cachedWait = denied.get(
+        policiesFor({ owner, ip: rateIp, group, bytes: isUpload ? 1 : 0 }),
+      );
+      if (cachedWait) {
+        const result = finish(
+          json({ error: 'Usage limit reached. Wait before trying again.' }, 429),
+        );
+        result.headers.set('Retry-After', String(cachedWait));
+        return result;
+      }
+      if (isUpload) {
+        if (uploads.has(owner) || uploads.size >= 4)
+          return finish(json({ error: 'A save is already running. Try again shortly.' }, 429));
+        uploadOwner = owner;
+        uploads.add(owner);
+      }
       if (group === 'drive' && (active.has(owner) || active.size >= 8))
         return finish(json({ error: 'A decision is already running. Wait and resume.' }, 429));
       if (group === 'drive') {
@@ -165,18 +185,10 @@ export function createVercelHandler({ env, store }) {
       }
       const policies = policiesFor({
         owner,
-        ip: rateIdentity(ip, env.SESSION_SECRET),
+        ip: rateIp,
         group,
         bytes,
       });
-      const cachedWait = denied.get(policies);
-      if (cachedWait) {
-        const result = finish(
-          json({ error: 'Usage limit reached. Wait before trying again.' }, 429),
-        );
-        result.headers.set('Retry-After', String(cachedWait));
-        return result;
-      }
       phase = 'traffic';
       const admission = await store.admit(policies);
       if (!admission.allowed) {
@@ -225,6 +237,7 @@ export function createVercelHandler({ env, store }) {
       );
     } finally {
       if (activeOwner) active.delete(activeOwner);
+      if (uploadOwner) uploads.delete(uploadOwner);
     }
   };
 }

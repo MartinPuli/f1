@@ -24,7 +24,7 @@ Rate counters live in Postgres. The IP counter uses an HMAC instead of retaining
 
 A warm function allows one concurrent decision per browser and eight overall. A shared 12-batch/10-second counter also applies across function instances. The local concurrency guard isn't a distributed lock. Timeouts bound each upstream batch to 12 seconds; a failed driver aborts the remaining requests, though TypeSafe may already have accepted and billed them. Bodies have a five-second read deadline, with 30 KB for Vercel decisions, 3.5 MB for recordings, and 256 KB for upstream JSON.
 
-Negative quota caches last at most 60 seconds. Database errors trigger a ten-second pause within the affected warm function. Neither guard replaces the platform firewall: a cold function still runs, and distributed rejected requests can still query Postgres. Setting `API_PAUSED=1` and redeploying disables online features while leaving authenticated cleanup available.
+A warm function accepts at most four concurrent recording uploads, with one per browser; it reserves the slot before reading the body and releases it after handling the request. Known quota rejections skip body parsing. Negative quota caches last at most 60 seconds. Database errors trigger a ten-second pause within the affected warm function. Neither guard replaces the platform firewall: a cold function still runs, and distributed rejected requests can still query Postgres. Setting `API_PAUSED=1` and redeploying disables online features while leaving authenticated cleanup available.
 
 These controls apply to the Vercel adapter. Local Vite is for development; the separate Sites adapter doesn't use the Postgres traffic budgets. Don't present a Sites deployment as having Vercel's firewall settings.
 
