@@ -1,4 +1,4 @@
-import { archiveApi, boundedJson } from './archive.js';
+import { archiveApi, boundedJson, communityApi } from './archive.js';
 import { ACTIONS } from '../src/simulation.js';
 import { DRIVER_IDS, defaultSettings, validSettings, validModel } from '../src/race-config.js';
 const json = (body, status = 200) =>
@@ -45,6 +45,7 @@ export async function api(request, env = {}) {
     path = url.pathname;
   const origin = request.headers.get('origin');
   if (origin && origin !== url.origin) return json({ error: 'Origin not allowed.' }, 403);
+  if (path.startsWith('/api/community')) return communityApi(request, env);
   if (path.startsWith('/api/races')) return archiveApi(request, env);
   if (path === '/api/status') return json({ byok: true });
   if (!['/api/decide', '/api/models'].includes(path)) return json({ error: 'Not found.' }, 404);

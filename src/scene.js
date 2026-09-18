@@ -528,12 +528,12 @@ export class RaceScene {
     number.rotation.x = -Math.PI / 2;
     number.position.set(0, 0.9, 1.45);
     body.add(number);
-    const labelMesh = this.text(car.short, dark, 512, 100);
+    const labelMesh = this.text(car.number, dark, 128, 128);
     const texture = labelMesh.material.map;
     labelMesh.geometry.dispose();
     labelMesh.material.dispose();
     const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, depthTest: true }));
-    label.scale.set(5.2, 1, 1);
+    label.scale.set(1.2, 1.2, 1);
     label.position.set(0, 3.1, 0);
     root.add(label);
     root.userData = { body, wheels, label };
@@ -625,7 +625,7 @@ export class RaceScene {
       });
       mesh.userData.label.visible = this.mode !== 'follow' || i !== this.selected;
       mesh.userData.label.scale.setScalar(this.mode === 'follow' ? 1 : 1.6);
-      mesh.userData.label.scale.multiply(new THREE.Vector3(5.2, 1, 1));
+      mesh.userData.label.scale.multiply(new THREE.Vector3(1.2, 1.2, 1));
     });
     const car = this.race.cars[this.selected];
     if (this.mode === 'follow') {

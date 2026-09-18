@@ -17,7 +17,7 @@ Open `http://localhost:5173`. Local recordings live in `.races/`, which Git igno
 
 ## Deploy on Vercel
 
-Follow [the Vercel guide](docs/VERCEL.md). The repository includes a Vercel function, a Postgres schema, security headers, and a daily cleanup job. Import the repo, connect Neon, run the schema, and configure the server variables. No visitor API key belongs in Vercel's environment settings.
+Follow [the Vercel guide](docs/VERCEL.md). The repository includes a Vercel function, a Postgres schema, security headers, and a daily cleanup job. Import the repo, connect Neon, and configure the server variables. Production builds prepare the database schema automatically. No visitor API key belongs in Vercel's environment settings.
 
 Vercel stores each browser's results in Postgres and uses a signed, HttpOnly cookie to select its archive. There are no user accounts. Clearing that cookie, changing browsers, or reaching its 90-day expiry loses access to the archive; download recordings you want to keep. The daily job deletes recordings after 90 days without an update.
 
@@ -27,11 +27,17 @@ The existing OpenAI Sites deployment uses a separate adapter with platform ident
 
 **Circuit** controls the name, seed, lap count, and Demo/Jev mode. A seed reproduces a circuit under the same generator version. The 32-bit seed range contains 4,294,967,296 values; the project generates tracks on demand and doesn't claim to have tested every value.
 
-Open **Grid** to edit a driver's model and prompt. The shared race prompt applies to all five drivers, but each receives only its own observations. Connecting TypeSafe checks the model catalog without starting inference. Different aliases may resolve to the same model; results retain the returned version when TypeSafe supplies it.
+Open **Grid** to edit driver names and car numbers. **Jev settings** contains the model and prompts; **Reset grid** restores the starter lineup. [Jev driving defaults](docs/JEV.md) explains the request and decision rules. The shared race prompt applies to all five drivers, but each receives only its own observations. Connecting TypeSafe checks the model catalog without starting inference. Different aliases may resolve to the same model; results retain the returned version when TypeSafe supplies it.
 
 Click a driver to follow them, drag to move the camera, or select the circuit and aerial views. On a keyboard, **Space** or **P** plays and pauses, **Esc** closes a window or pauses the race, **1–5** and the left/right arrows select drivers, **C** changes the camera, and **F** recenters it. **R** opens Results, **N** opens race setup, and **?** shows the shortcut sheet. Shortcuts leave text fields alone; you can disable them in the sheet, which is also available through settings. Touch controls work in portrait and landscape; the renderer lowers resolution and shadow size on touch devices.
 
 Autosaves need both 30 simulation seconds of new progress and 60 seconds since the previous autosave. Pausing and finishing also queue a save. The queue keeps the newest pending snapshot per race and spaces writes at least 15 seconds apart; opening a dialog without changing the race doesn't save it again. They include standings, prompts, models, and replay frames. Replays don't call TypeSafe. If storage fails, Results shows the error and lets you retry or download JSON. Closing the page can lose progress since the last completed save.
+
+## Community replays
+
+**Results → My races** lists your private archive. After a race finishes, **Share race** lets you publish its replay in **Community**, including names, models, and prompts. Nothing publishes automatically. Choose **Unpublish** in My races to remove a shared recording; someone who already downloaded it can retain a copy. Community results come from visitors' browsers and aren't verified race scores.
+
+Community is available on Vercel and in local development. The older Sites adapter doesn't provide a public feed. Production builds apply the updated Postgres schema; it adds publication columns and indexes without making existing races public.
 
 ## API keys and costs
 

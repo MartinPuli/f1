@@ -20,7 +20,7 @@ The first deployment can serve the demo before you finish setup, but the API ret
 
 Add Neon through Vercel's Marketplace, or create a database in Neon and copy its connection string into Vercel as `DATABASE_URL`. Choose a region near your Vercel function. Use a separate database branch for previews so tests can't alter production recordings.
 
-Run [`db/postgres/001_archive.sql`](../db/postgres/001_archive.sql) in Neon's SQL editor. It creates two tables, indexes, and a save function that checks storage quotas under a transaction lock. You can run it again without deleting existing races.
+Production builds run [`db/postgres/001_archive.sql`](../db/postgres/001_archive.sql) automatically when Vercel provides `DATABASE_URL`. You can also run it in Neon's SQL editor. It creates two tables, indexes, a save function that checks storage quotas under a transaction lock, and private-by-default publication fields. Production deployment applies updates for Community replays. A failed migration stops the new deployment; the previous deployment stays active. You can run it again without deleting existing races.
 
 Alternatively, put `DATABASE_URL` in an ignored `.env.local` file and run:
 
@@ -88,6 +88,8 @@ Keep body/header logging off for these endpoints. A visitor must trust the opera
 The archive uses browser identity, with no sign-in or recovery. If you need cross-device access, add an authentication provider and map its verified server-side user ID to the archive owner. Don't replace this with a client-supplied user ID or trust the OpenAI Sites identity header on Vercel.
 
 ## Troubleshooting
+
+**“Cloud archive setup is incomplete”:** run the current `db/postgres/001_archive.sql` against the database connected through `DATABASE_URL`. This message means the expected table or column is missing.
 
 **503 on `/api/status`:** check whether `API_PAUSED` is enabled; otherwise check the server variables, confirm the SQL ran, and redeploy. The app hides database exception text because it can contain connection details or user data.
 

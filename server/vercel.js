@@ -78,13 +78,17 @@ export function createVercelHandler({ env, store }) {
         (!['GET', 'HEAD'].includes(request.method) && origin !== allowed.origin)
       )
         return finish(json({ error: 'Origin not allowed.' }, 403));
-      if (!/^\/api\/(status|models|decide|races(?:\/[a-f0-9-]{36})?)$/.test(path))
+      if (
+        !/^\/api\/(status|models|decide|community(?:\/[a-f0-9-]{36})?|races(?:\/[a-f0-9-]{36}(?:\/publish)?)?)$/.test(
+          path,
+        )
+      )
         return finish(json({ error: 'Not found.' }, 404));
 
       const methods =
-        path === '/api/status' || path === '/api/models'
+        path === '/api/status' || path === '/api/models' || path.startsWith('/api/community')
           ? ['GET']
-          : path === '/api/decide'
+          : path === '/api/decide' || path.endsWith('/publish')
             ? ['POST']
             : path === '/api/races'
               ? ['GET', 'POST']
@@ -93,7 +97,7 @@ export function createVercelHandler({ env, store }) {
         return finish(json({ error: 'Method not allowed.' }, 405));
       if (request.headers.has('content-encoding'))
         return finish(json({ error: 'Encoded request bodies are not supported.' }, 415));
-      const maximum = path === '/api/decide' ? 30000 : 3500000;
+      const maximum = path.endsWith('/publish') ? 100 : path === '/api/decide' ? 30000 : 3500000;
       const size = request.headers.get('content-length');
       if (size && (!/^\d+$/.test(size) || Number(size) > maximum))
         return finish(json({ error: 'Request is too large.' }, 413));
@@ -107,7 +111,7 @@ export function createVercelHandler({ env, store }) {
         return finish(json({ error: 'Reload the page to start a browser session.' }, 401));
       // A returning page only needs to verify its signature; it doesn't need a database read.
       if (owner && path === '/api/status')
-        return finish(json({ byok: true, archive: 'browser', retentionDays: 90 }));
+        return finish(json({ byok: true, archive: 'browser', retentionDays: 90, community: true }));
       if (
         (path === '/api/decide' || path === '/api/models') &&
         !/^Bearer [^\s]{1,512}$/i.test(request.headers.get('authorization') || '')
@@ -174,7 +178,7 @@ export function createVercelHandler({ env, store }) {
       }
       if (!owner) {
         ({ owner, cookie } = issueSession(env.SESSION_SECRET));
-        return finish(json({ byok: true, archive: 'browser', retentionDays: 90 }));
+        return finish(json({ byok: true, archive: 'browser', retentionDays: 90, community: true }));
       }
 
       // Ignore Sites identity headers on Vercel. Only our signed cookie selects the archive owner.
@@ -183,11 +187,18 @@ export function createVercelHandler({ env, store }) {
       return finish(
         await api(new Request(request, { headers }), { ARCHIVE: store, ARCHIVE_OWNER: owner }),
       );
-    } catch {
+    } catch (error) {
       circuitUntil = Date.now() + 10000;
       // Driver errors can contain SQL values. Keep them out of responses and platform logs.
       return finish(
-        json({ error: 'Service unavailable. Try again or download your recording.' }, 503),
+        json(
+          {
+            error: ['42P01', '42703'].includes(error.code)
+              ? 'Cloud archive setup is incomplete. Download your race to keep it.'
+              : 'Service unavailable. Try again or download your recording.',
+          },
+          503,
+        ),
       );
     } finally {
       if (activeOwner) active.delete(activeOwner);

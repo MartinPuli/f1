@@ -85,7 +85,7 @@ let race = new Race(42),
   pendingMode = 'demo';
 $('#app').innerHTML = `
 <header class="topbar"><a href="/" class="brand" aria-label="JEVRACE home"><img src="/logo-mark.svg" alt=""/><span>JEV<em>RACE</em></span></a><nav aria-label="Race actions"><button id="new-race" class="nav-button">${icon('Plus')} New race</button><button id="results" class="nav-button">${icon('Trophy')} Results</button></nav><div class="header-end"><span id="mode-caption" class="mode-caption">DEMO</span><button class="icon-button" id="configure" aria-label="Session API key" title="Session API key">${icon('Settings2')}</button></div></header>
-<main><section id="race-view" aria-label="Race circuit"><div id="canvas-host"></div><div class="position-widget"><strong id="position-number"></strong><span id="position-name"></span></div><div class="race-status"><span class="dot"></span><span id="live-status">ON THE GRID</span></div><div class="lap-widget"><span>LAP</span><strong id="lap"></strong><span id="clock">00:00.00</span></div>
+<main><section id="race-view" aria-label="Race circuit"><div id="canvas-host"></div><aside class="timing-tower" aria-label="Live standings"><div class="timing-header"><span class="dot"></span><span id="live-status">ON THE GRID</span><span>GAP</span></div><div id="timing-rows"></div></aside><div class="onboard-strip"><span id="position-number"></span><span id="position-name"></span><small>ONBOARD</small></div><div class="lap-widget"><span>LAP</span><strong id="lap"></strong><span id="clock">00:00.00</span></div>
 <button class="track-label" id="rename-race" aria-label="Rename race"><span id="race-name"></span><small id="seed-label"></small>${icon('Pencil')}</button><div class="speed-widget"><strong id="selected-speed">0</strong><span>km/h</span></div><div id="stage-message" role="status"></div><div class="finish-banner" id="finish-overlay" hidden></div>
 <div class="driver-switcher" role="group" aria-label="Choose a driver to follow">${DRIVERS.map((d, i) => `<button class="pilot-button ${i === 4 ? 'active' : ''}" data-pilot="${i}" style="--pilot:${d.color}" aria-label="Follow ${d.name}" title="${d.name} · ${i + 1}" aria-pressed="${i === 4}"><span class="pilot-avatar"><b>${d.number}</b></span><span>${d.short}</span></button>`).join('')}</div>
 <div id="replay-bar" hidden><span>${icon('Film')} REPLAY</span><input id="replay-seek" type="range" min="0" step="0.1" value="0" aria-label="Replay position"/><output id="replay-time">00:00</output><button id="exit-replay" class="icon-button" aria-label="Exit replay">${icon('X')}</button></div>
@@ -94,8 +94,9 @@ $('#app').innerHTML = `
 <div class="track-preview"><svg id="track-preview" viewBox="-115 -115 230 230" role="img" aria-label="Generated circuit preview"></svg><div class="circuit-controls"><small id="track-length"></small><label for="race-seed">Seed</label><input id="race-seed" type="number" min="0" max="4294967295" step="1" required value="42"/><button type="button" id="randomize" class="icon-button" aria-label="Generate circuit" title="Generate circuit">${icon('Shuffle')}</button></div></div>
 <label for="race-title">Name</label><input id="race-title" required maxlength="60" value="Sunshine Grand Prix"/>
 <div class="setup-options"><div><span class="field-label" id="driver-mode-label">Drivers</span><div class="mode-choices" role="group" aria-labelledby="driver-mode-label"><button type="button" data-mode="demo" class="mode-choice active" aria-pressed="true">Demo</button><button type="button" data-mode="jev" class="mode-choice" aria-pressed="false">Jev</button></div></div><div><label for="race-laps">Laps</label><select id="race-laps">${[1, 2, 3, 4, 5].map((n) => `<option ${n === 3 ? 'selected' : ''} value="${n}">${n}</option>`).join('')}</select></div></div>
-<div id="setup-key-field" hidden><label for="setup-key">TypeSafe API key</label><input type="password" id="setup-key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512" placeholder="Paste your key"/><button type="button" id="connect-setup" class="connection-button">Connect TypeSafe</button><p id="setup-connection" class="field-note">Session only · never saved</p><details class="api-usage"><summary>API usage</summary><p>Up to 10 TypeSafe requests per simulation second, with at most one batch every two real seconds. Keys are never stored with recordings.</p></details></div></section><section id="grid-panel" hidden><div class="grid-editor-tabs" role="group" aria-label="Edit driver">${DRIVERS.map((d, i) => `<button type="button" data-grid-driver="${i}" style="--pilot:${d.color}" aria-label="Configure ${d.name}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${d.number}</button>`).join('')}</div><div class="grid-driver-heading"><h3 id="grid-driver-name"></h3><span id="grid-driver-style"></span></div><label for="driver-model">Model</label><select id="driver-model"></select><label for="driver-prompt">Driver prompt</label><textarea id="driver-prompt" rows="4" maxlength="1000" spellcheck="false"></textarea><details class="race-prompt-details"><summary>Race prompt</summary><label class="sr-only" for="race-prompt">Shared race prompt</label><textarea id="race-prompt" rows="3" maxlength="2000" spellcheck="false"></textarea></details><div class="grid-editor-footer"><span id="grid-mode-note">Prompts run in Jev mode.</span><button type="button" id="reset-prompts">Reset grid</button></div></section><p id="setup-error" class="error" role="alert"></p><button type="submit" class="primary-button wide"><span>Start race</span>${icon('Play')}</button></form></dialog>
-<dialog id="results-dialog" aria-labelledby="results-title"><button class="dialog-close icon-button" data-close aria-label="Close results">${icon('X')}</button><h2 id="results-title">Results</h2><div class="result-tabs" role="group" aria-label="Results view"><button class="active" data-results="current" aria-pressed="true">This race</button><button data-results="saved" aria-pressed="false">Saved races</button></div><section id="current-results"><div class="results-heading"><div><h3 id="results-race-name"></h3><p id="results-status"></p></div><button id="export" class="icon-button" aria-label="Download race recording" title="Download race recording">${icon('Download')}</button></div><div class="results-table-wrap"><table><thead><tr><th>POS</th><th>DRIVER</th><th>LAPS</th><th>BEST LAP</th><th>TOTAL</th></tr></thead><tbody id="results-body"></tbody></table></div><div class="results-footer"><span id="results-mode"></span></div><details id="saved-config" class="saved-config"><summary>Grid configuration</summary><div id="saved-config-body"></div></details><div class="result-actions"><button id="save-race" class="secondary-button" hidden>${icon('RotateCcw')} Retry save</button><button id="watch-current" class="secondary-button">${icon('Film')} Watch replay</button></div><p id="save-status" class="field-note" role="status"></p></section><section id="saved-results" hidden><p id="archive-scope" class="field-note" hidden>Saved for this browser for up to 90 days. Download recordings to keep a copy.</p><div id="archive-list"></div><p id="archive-error" class="error" role="alert"></p><button id="refresh-archive" class="secondary-button">${icon('RotateCcw')} Refresh</button></section></dialog>
+<div id="setup-key-field" hidden><label for="setup-key">TypeSafe API key</label><input type="password" id="setup-key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512" placeholder="Paste your key"/><button type="button" id="connect-setup" class="connection-button">Connect TypeSafe</button><p id="setup-connection" class="field-note">Session only · never saved</p><details class="api-usage"><summary>API usage</summary><p>Up to 10 TypeSafe requests per simulation second, with at most one batch every two real seconds. Keys are never stored with recordings.</p></details></div></section><section id="grid-panel" hidden><div class="grid-editor-tabs" role="group" aria-label="Edit driver">${DRIVERS.map((d, i) => `<button type="button" data-grid-driver="${i}" style="--pilot:${d.color}" aria-label="Configure ${d.name}" aria-pressed="${i === 0}" class="${i === 0 ? 'active' : ''}">${d.number}</button>`).join('')}</div><div class="grid-driver-heading"><h3 id="grid-driver-name"></h3><span id="grid-driver-style"></span></div><div class="driver-identity"><div><label for="driver-name">Name</label><input id="driver-name" maxlength="40" /></div><div><label for="driver-number">Number</label><input id="driver-number" inputmode="numeric" pattern="[0-9]{1,2}" maxlength="2" /></div></div><details class="driver-brain"><summary>Jev settings</summary><label for="driver-model">Model</label><select id="driver-model"></select><label for="driver-prompt">Driver prompt</label><textarea id="driver-prompt" rows="4" maxlength="1000" spellcheck="false"></textarea><details class="race-prompt-details"><summary>Race prompt</summary><label class="sr-only" for="race-prompt">Shared race prompt</label><textarea id="race-prompt" rows="3" maxlength="2000" spellcheck="false"></textarea></details></details><div class="grid-editor-footer"><span id="grid-mode-note">Prompts run in Jev mode.</span><button type="button" id="reset-prompts">Reset grid</button></div></section><p id="setup-error" class="error" role="alert"></p><button type="submit" class="primary-button wide"><span>Start race</span>${icon('Play')}</button></form></dialog>
+<dialog id="results-dialog" aria-labelledby="results-title"><button class="dialog-close icon-button" data-close aria-label="Close results">${icon('X')}</button><h2 id="results-title">Results</h2><div class="result-tabs" role="group" aria-label="Results view"><button class="active" data-results="current" aria-pressed="true">This race</button><button data-results="saved" aria-pressed="false">My races</button><button data-results="community" aria-pressed="false">Community</button></div><section id="current-results"><div class="results-heading"><div><h3 id="results-race-name"></h3><p id="results-status"></p></div><button id="export" class="icon-button" aria-label="Download race recording" title="Download race recording">${icon('Download')}</button></div><div class="results-table-wrap"><table><thead><tr><th>POS</th><th>DRIVER</th><th>LAPS</th><th>BEST LAP</th><th>TOTAL</th></tr></thead><tbody id="results-body"></tbody></table></div><div class="results-footer"><span id="results-mode"></span></div><details id="saved-config" class="saved-config"><summary>Race setup</summary><div id="saved-config-body"></div></details><div class="result-actions"><button id="share-current" class="secondary-button">Share race</button><button id="save-race" class="secondary-button" hidden>${icon('RotateCcw')} Retry save</button><button id="watch-current" class="secondary-button">${icon('Film')} Watch replay</button></div><p id="save-status" class="field-note" role="status"></p></section><section id="saved-results" hidden><p id="archive-scope" class="field-note" hidden>Saved for this browser for up to 90 days. Download recordings to keep a copy.</p><div id="archive-list"></div><p id="archive-error" class="error" role="alert"></p><button id="refresh-archive" class="secondary-button">${icon('RotateCcw')} Refresh</button></section><section id="community-results" hidden><p class="field-note">Shared by players · unverified results</p><div id="community-list"></div><p id="community-error" class="error" role="alert"></p><button id="refresh-community" class="secondary-button">Refresh</button></section></dialog>
+<dialog id="share-dialog" aria-labelledby="share-title"><button class="dialog-close icon-button" data-close aria-label="Close sharing">${icon('X')}</button><h2 id="share-title">Share race</h2><p id="share-name"></p><p class="field-note">Anyone can replay this race and read its driver names, models and prompts. You can remove it from Community in My races.</p><p id="share-error" class="error" role="alert"></p><button id="confirm-share" class="primary-button wide">Publish replay</button></dialog>
 <dialog id="key-dialog" aria-labelledby="key-title"><button class="dialog-close icon-button" data-close aria-label="Close API settings">${icon('X')}</button><h2 id="key-title">TypeSafe connection</h2><label for="api-key">TypeSafe API key</label><input type="password" id="api-key" placeholder="Paste your key" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="512"/><p id="key-status" class="field-note"></p><p class="field-note">Kept in memory. Sent through this server to TypeSafe over HTTPS; never saved.</p><button id="save-key" class="primary-button">${icon('Check')} Connect</button><button id="clear-key" class="secondary-button">Clear key</button><button id="show-shortcuts" class="source-link" type="button">Keyboard shortcuts <kbd>?</kbd></button><a class="source-link" href="https://github.com/MartinPuli/f1" target="_blank" rel="noopener">${icon('Github')} Source code</a></dialog>
 <dialog id="shortcuts-dialog" aria-labelledby="shortcuts-title"><button class="dialog-close icon-button" data-close aria-label="Close keyboard shortcuts">${icon('X')}</button><h2 id="shortcuts-title">Keyboard shortcuts</h2><dl class="shortcut-list"><div><dt>Close window / pause</dt><dd><kbd>Esc</kbd></dd></div><div><dt>Play / pause</dt><dd><kbd>Space</kbd> <kbd>P</kbd></dd></div><div><dt>Follow driver</dt><dd><kbd>1</kbd>–<kbd>5</kbd></dd></div><div><dt>Previous / next driver</dt><dd><kbd>←</kbd> <kbd>→</kbd></dd></div><div><dt>Change camera / recenter</dt><dd><kbd>C</kbd> <kbd>F</kbd></dd></div><div><dt>Results / new race</dt><dd><kbd>R</kbd> <kbd>N</kbd></dd></div><div><dt>Keyboard shortcuts</dt><dd><kbd>?</kbd></dd></div></dl><label class="shortcut-toggle"><input id="enable-shortcuts" type="checkbox" checked/> Enable race shortcuts</label></dialog>
 <dialog id="rename-dialog" aria-labelledby="rename-title"><button class="dialog-close icon-button" data-close aria-label="Close rename dialog">${icon('X')}</button><h2 id="rename-title">Rename race</h2><form id="rename-form"><label for="new-name">Race name</label><input id="new-name" maxlength="60" required/><button class="primary-button" type="submit">${icon('Check')} Save name</button></form></dialog>`;
@@ -295,6 +296,11 @@ $('#setup-form').onsubmit = async (e) => {
     $('#setup-error').textContent = 'Keep your key out of race names and prompts.';
     return;
   }
+  if (!draftSettings.drivers.every((d) => d.name.trim() && /^\d{1,2}$/.test(d.number))) {
+    $('#setup-error').textContent = 'Each driver needs a name and a number from 0 to 99.';
+    setSetupTab('grid');
+    return;
+  }
   $('#setup-key').value = '';
   if (!replay && race.time) saveRace();
   if (live) {
@@ -306,7 +312,7 @@ $('#setup-form').onsubmit = async (e) => {
   race = new Race(Number($('#race-seed').value));
   race.limit = Number($('#race-laps').value);
   race.mode = pendingMode;
-  race.settings = cleanSettings(draftSettings);
+  race.configure(draftSettings);
   race.apiKey = key;
   raceId = crypto.randomUUID();
   raceName = name;
@@ -457,7 +463,9 @@ function setResultsTab(which) {
   });
   $('#current-results').hidden = which !== 'current';
   $('#saved-results').hidden = which !== 'saved';
+  $('#community-results').hidden = which !== 'community';
   if (which === 'saved') loadArchive();
+  else if (which === 'community') loadCommunity();
   else updateResults();
 }
 $('#results').onclick = () => showResults();
@@ -478,7 +486,7 @@ async function loadArchive() {
       ? races
           .map(
             (r) =>
-              `<article class="archive-row"><span class="archive-flag">${icon(r.finished ? 'Flag' : 'Pause')}</span><div><h3>${esc(r.name)}</h3><p>${esc(new Date(r.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))} · ${r.mode === 'jev' ? 'Jev' : 'Demo'} · ${r.laps} ${r.laps === 1 ? 'lap' : 'laps'} · ${r.finished ? 'Finished' : 'Saved progress'}</p><small>Seed ${r.seed} · ${formatTime(r.duration)}</small></div><button class="icon-button" data-watch="${r.id}" aria-label="Replay ${esc(r.name)}" title="Watch replay">${icon('Play')}</button><button class="icon-button" data-delete="${r.id}" aria-label="Delete ${esc(r.name)}" title="Delete recording">${icon('Trash2')}</button></article>`,
+              `<article class="archive-row"><span class="archive-flag">${icon(r.finished ? 'Flag' : 'Pause')}</span><div><h3>${esc(r.name)}</h3><p>${esc(new Date(r.created).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))} · ${r.mode === 'jev' ? 'Jev' : 'Demo'} · ${r.laps} ${r.laps === 1 ? 'lap' : 'laps'} · ${r.finished ? 'Finished' : 'Saved progress'}</p><small>Seed ${r.seed} · ${formatTime(r.duration)}</small></div><button class="archive-share" data-share="${r.id}" data-published="${!!r.published}" data-race-name="${esc(r.name)}" ${r.finished ? '' : 'disabled'}>${r.published ? 'Unpublish' : 'Share'}</button><button class="icon-button" data-watch="${r.id}" aria-label="Replay ${esc(r.name)}" title="Watch replay">${icon('Play')}</button><button class="icon-button" data-delete="${r.id}" aria-label="Delete ${esc(r.name)}" title="Delete recording">${icon('Trash2')}</button></article>`,
           )
           .join('')
       : '<p class="empty-archive">No saved races yet.</p>';
@@ -493,6 +501,27 @@ async function loadArchive() {
             $('#archive-error').textContent = e.message;
             b.disabled = false;
           }
+        }),
+    );
+    $$('[data-share]').forEach(
+      (button) =>
+        (button.onclick = async () => {
+          if (button.dataset.published === 'true') {
+            button.disabled = true;
+            try {
+              await request(`/api/races/${button.dataset.share}/publish`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ published: false }),
+              });
+              archiveLoadedAt = 0;
+              communityLoadedAt = 0;
+              loadArchive();
+            } catch (error) {
+              $('#archive-error').textContent = error.message;
+              button.disabled = false;
+            }
+          } else openShare(button.dataset.share, button.dataset.raceName);
         }),
     );
     $$('[data-delete]').forEach(
@@ -530,7 +559,7 @@ function startReplay(record) {
   replay = { record, time: 0, playing: true };
   race = new Race(record.seed);
   race.limit = record.laps;
-  race.settings = cleanSettings(record.settings || defaultSettings());
+  race.configure(record.settings || defaultSettings());
   raceName = record.name;
   if (scene) {
     scene.race = race;
@@ -572,7 +601,7 @@ function updateResults() {
   const record = currentRecord();
   $('#results-race-name').textContent = raceName;
   $('#results-status').textContent =
-    `${record.finished ? 'Final' : 'In progress'} · ${record.laps} ${record.laps === 1 ? 'lap' : 'laps'}`;
+    `${record.finished ? 'Final classification' : record.duration ? 'Paused' : 'Starting grid'} · ${record.laps} ${record.laps === 1 ? 'lap' : 'laps'}`;
   $('#results-body').innerHTML = record.drivers
     .map(
       (d, i) =>
@@ -580,16 +609,64 @@ function updateResults() {
     )
     .join('');
   $('#results-mode').textContent = record.mode === 'jev' ? 'Jev · TypeSafe' : 'Local demo';
-  renderSavedConfig(record);
-  $('#save-status').textContent = saveMessage || '';
+  $('#saved-config').hidden = record.mode !== 'jev';
+  if (record.mode === 'jev') renderSavedConfig(record);
+  $('#save-status').textContent = saveMessage.includes('unavailable')
+    ? 'Cloud save unavailable. Download this race to keep it.'
+    : saveMessage || '';
   $('#save-race').hidden = !saveMessage || saveMessage === 'Saved' || saveMessage === 'Saving…';
   $('#save-race').disabled = saving || !!replay || !race.time;
   $('#watch-current').disabled = !record.duration;
+  $('#share-current').disabled = !record.finished || !!record.shared;
+  $('#share-current').title = record.finished
+    ? 'Publish this replay in Community'
+    : 'Finish the race to share it';
 }
+function renderTiming(ranking, selected) {
+  const host = $('#timing-rows');
+  ranking.forEach((car, index) => {
+    const position = race.cars.indexOf(car);
+    let row = host.querySelector(`[data-follow="${position}"]`);
+    if (!row) {
+      row = document.createElement('button');
+      row.className = 'timing-row';
+      row.dataset.follow = position;
+      row.innerHTML =
+        '<span class="timing-pos"></span><span class="timing-number"></span><strong></strong><span class="timing-gap"></span>';
+    }
+    row.classList.toggle('selected', car === selected);
+    row.setAttribute('aria-label', `Follow ${car.name}`);
+    row.setAttribute('aria-pressed', String(car === selected));
+    row.style.setProperty('--pilot', car.color);
+    row.children[0].textContent = index + 1;
+    row.children[1].textContent = car.number;
+    row.children[2].textContent = car.short;
+    row.children[3].textContent = car.finished
+      ? 'FIN'
+      : !race.time
+        ? 'GRID'
+        : index === 0
+          ? 'LEADER'
+          : `+${Math.max(0, ranking[0].progress - car.progress).toFixed(0)} m`;
+    if (host.children[index] !== row) host.insertBefore(row, host.children[index] || null);
+  });
+  $$('.pilot-button').forEach((button, index) => {
+    const car = race.cars[index];
+    button.querySelector('b').textContent = car.number;
+    button.lastElementChild.textContent = car.short;
+    button.setAttribute('aria-label', `Follow ${car.name}`);
+    button.title = `${car.name} · ${index + 1}`;
+  });
+}
+$('#timing-rows').onclick = (event) => {
+  const row = event.target.closest('[data-follow]');
+  if (row) selectDriver(Number(row.dataset.follow));
+};
 function updateUi() {
   const ranking = race.ranking(),
     car = race.cars[scene?.selected ?? 4];
-  $('#position-number').innerHTML = `${ranking.indexOf(car) + 1}<small>/${DRIVERS.length}</small>`;
+  $('#position-number').textContent = `P${ranking.indexOf(car) + 1}`;
+  renderTiming(ranking, car);
   $('#position-name').textContent = car.name;
   $('#selected-speed').textContent = Math.round(car.speed * 3.6);
   $('#clock').textContent = formatTime(race.time);
@@ -603,19 +680,16 @@ function updateUi() {
       ? 'REPLAYING'
       : 'REPLAY PAUSED'
     : race.finished
-      ? 'CHECKERED FLAG'
+      ? 'FINISHED'
       : race.waiting
-        ? 'JEV IS THINKING'
+        ? 'DECIDING'
         : race.running
-          ? 'LIVE RACE'
+          ? 'RACING'
           : race.time
             ? 'PAUSED'
             : 'ON THE GRID';
   $('#stage-message').textContent =
-    sceneError ||
-    race.error ||
-    (saveMessage.includes('unavailable') ? saveMessage : '') ||
-    (race.waiting ? 'Waiting for Jev…' : '');
+    sceneError || race.error || (race.waiting ? 'Waiting for Jev…' : '');
   const label = replay
     ? replay.playing
       ? 'Pause replay'
@@ -740,17 +814,25 @@ $$('[data-setup-tab]').forEach((b) => (b.onclick = () => setSetupTab(b.dataset.s
 function renderGridEditor() {
   const driver = DRIVERS[gridDriver],
     config = draftSettings.drivers[gridDriver];
-  $('#grid-driver-name').textContent = driver.name;
+  $('#grid-driver-name').textContent = config.name;
+  $('#driver-name').value = config.name;
+  $('#driver-number').value = config.number;
   $('#grid-driver-style').textContent = driver.style;
   $('#grid-driver-name').style.setProperty('--pilot', driver.color);
   const models = [...new Set([...availableModels, config.model])];
   $('#driver-model').innerHTML = models
-    .map((model) => `<option value="${esc(model)}">${esc(model)}</option>`)
+    .map(
+      (model) =>
+        `<option value="${esc(model)}">${model === 'jev-latest' ? 'Jev · Default' : esc(model)}</option>`,
+    )
     .join('');
   $('#driver-model').value = config.model;
   $('#driver-prompt').value = config.prompt;
   $('#race-prompt').value = draftSettings.prompt;
   $$('[data-grid-driver]').forEach((b) => {
+    const entry = draftSettings.drivers[Number(b.dataset.gridDriver)];
+    b.textContent = entry.number;
+    b.setAttribute('aria-label', `Edit ${entry.name}`);
     const active = Number(b.dataset.gridDriver) === gridDriver;
     b.classList.toggle('active', active);
     b.setAttribute('aria-pressed', String(active));
@@ -763,6 +845,15 @@ $$('[data-grid-driver]').forEach(
       renderGridEditor();
     }),
 );
+$('#driver-name').oninput = (e) => {
+  draftSettings.drivers[gridDriver].name = e.target.value;
+  $('#grid-driver-name').textContent = e.target.value;
+};
+$('#driver-number').oninput = (e) => {
+  draftSettings.drivers[gridDriver].number = e.target.value.replace(/\D/g, '').slice(0, 2);
+  e.target.value = draftSettings.drivers[gridDriver].number;
+  $(`[data-grid-driver="${gridDriver}"]`).textContent = e.target.value;
+};
 $('#driver-model').onchange = (e) => {
   draftSettings.drivers[gridDriver].model = e.target.value;
 };
@@ -838,11 +929,81 @@ function renderSavedConfig(record) {
     host.textContent = 'Default grid · earlier recording';
     return;
   }
-  host.innerHTML = `<p class="saved-race-prompt">${esc(record.settings.prompt)}</p>${record.settings.drivers
+  host.innerHTML = `<details class="saved-instruction"><summary>Race instruction</summary><p>${esc(record.settings.prompt)}</p></details>${record.settings.drivers
     .map((d) => {
       const driver = DRIVERS.find((c) => c.id === d.id),
         resolved = record.drivers.find((c) => c.id === d.id)?.resolvedModel;
-      return `<div class="saved-driver-config"><strong>${esc(driver?.name || d.id)}</strong><code>${esc(d.model)}${resolved && resolved !== d.model ? ' → ' + esc(resolved) : ''}</code><p>${esc(d.prompt)}</p></div>`;
+      return `<details class="saved-driver-config"><summary><strong>${esc(d.number || driver?.number || '')} · ${esc(d.name || driver?.name || d.id)}</strong><small>${d.model === 'jev-latest' ? 'Jev · Default' : esc(d.model)}</small></summary><p>${esc(d.prompt)}</p>${resolved ? `<code>${esc(resolved)}</code>` : ''}</details>`;
     })
     .join('')}`;
+}
+
+let shareTarget,
+  communityLoading = false,
+  communityLoadedAt = 0;
+function openShare(id, name) {
+  shareTarget = id;
+  $('#share-name').textContent = name;
+  $('#share-error').textContent = '';
+  $('#confirm-share').disabled = false;
+  openModal('#share-dialog');
+}
+$('#share-current').onclick = () => openShare(replay?.record.id || raceId, raceName);
+$('#confirm-share').onclick = async () => {
+  const button = $('#confirm-share');
+  button.disabled = true;
+  try {
+    if (shareTarget === raceId && !replay) await saveRace(true);
+    await request(`/api/races/${shareTarget}/publish`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ published: true }),
+    });
+    archiveLoadedAt = 0;
+    communityLoadedAt = 0;
+    $('#share-dialog').close();
+    showResults('community');
+  } catch (error) {
+    $('#share-error').textContent = error.message;
+    button.disabled = false;
+  }
+};
+$('#refresh-community').onclick = () => loadCommunity();
+async function loadCommunity() {
+  if (communityLoading || Date.now() - communityLoadedAt < 15000) return;
+  communityLoading = true;
+  communityLoadedAt = Date.now();
+  const list = $('#community-list');
+  list.textContent = 'Loading replays…';
+  $('#community-error').textContent = '';
+  try {
+    const { races } = await request('/api/community');
+    list.innerHTML = races.length
+      ? races
+          .map(
+            (r) =>
+              `<article class="archive-row"><span class="archive-flag">${icon('Flag')}</span><div><h3>${esc(r.name)}</h3><p>${r.mode === 'jev' ? 'Jev' : 'Demo'} · ${r.laps} ${r.laps === 1 ? 'lap' : 'laps'} · ${formatTime(r.duration)}</p><small>${esc(r.drivers[0]?.name || '')} · Seed ${r.seed}</small></div><button class="icon-button" data-public-watch="${r.id}" aria-label="Replay ${esc(r.name)}">${icon('Play')}</button></article>`,
+          )
+          .join('')
+      : '<p class="empty-archive">No shared races yet. Finish a race and share its replay.</p>';
+    refreshIcons();
+    $$('[data-public-watch]').forEach(
+      (button) =>
+        (button.onclick = async () => {
+          button.disabled = true;
+          try {
+            startReplay(await request(`/api/community/${button.dataset.publicWatch}`));
+          } catch (error) {
+            $('#community-error').textContent = error.message;
+            button.disabled = false;
+          }
+        }),
+    );
+  } catch (error) {
+    list.textContent = '';
+    $('#community-error').textContent = error.message;
+    communityLoadedAt = (error.retryAt || Date.now() + 15000) - 15000;
+  } finally {
+    communityLoading = false;
+  }
 }

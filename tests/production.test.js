@@ -170,3 +170,49 @@ test('Vercel rewrites preserve API paths and request bodies', async () => {
   const original = new Request(origin + '/api/models?__path=models');
   assert.equal(normalizeVercelRequest(original), original);
 });
+
+test('community publication is opt-in, owner-scoped, finished-only, and revocable', async () => {
+  const db = new PGlite();
+  try {
+    await db.exec(
+      await readFile(new URL('../db/postgres/001_archive.sql', import.meta.url), 'utf8'),
+    );
+    const store = postgresArchive(async (sql, params) => (await db.query(sql, params)).rows);
+    const race = new Race();
+    race.configure({
+      ...race.settings,
+      drivers: race.settings.drivers.map((d, i) => ({
+        ...d,
+        name: `Pilot ${i}`,
+        number: String(i + 70),
+      })),
+    });
+    const record = recordRace(race, id, 'Community test', Date.now());
+    await store.put('alice', record);
+    assert.deepEqual(await store.community(), []);
+    assert.equal(await store.publish('alice', id, true), null, 'unfinished races stay private');
+    record.finished = true;
+    await store.put('alice', record);
+    assert.equal(await store.publish('bob', id, true), null);
+    const publicId = await store.publish('alice', id, true);
+    assert.ok(publicId);
+    assert.notEqual(publicId, id);
+    const list = await store.community();
+    assert.equal(list.length, 1);
+    assert.equal(list[0].id, publicId);
+    assert.equal(list[0].frames, undefined);
+    assert.equal(list[0].owner, undefined);
+    assert.equal(await store.publicRace(id), null);
+    const shared = await store.publicRace(publicId);
+    assert.equal(shared.drivers[0].name, 'Pilot 0');
+    assert.equal(shared.drivers[0].number, '70');
+    assert.equal(shared.shared, true);
+    assert.equal((await store.list('alice'))[0].published, true);
+    assert.equal(await store.publish('bob', id, false), null);
+    await store.publish('alice', id, false);
+    assert.deepEqual(await store.community(), []);
+    assert.equal(await store.publicRace(publicId), null);
+  } finally {
+    await db.close();
+  }
+});

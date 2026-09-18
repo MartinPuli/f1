@@ -27,12 +27,12 @@
   font-display: swap;
 }
 :root {
-  --paper: #fffaf0;
-  --panel: #f0eee3;
-  --ink: #243748;
-  --muted: #63746f;
-  --accent: #bc4436;
-  --line: #e2dfd1;
+  --paper: #f8fafc;
+  --panel: #eaf0f4;
+  --ink: #192c3c;
+  --muted: #60717e;
+  --accent: #c74030;
+  --line: #d9e1e7;
   --body: Barlow, sans-serif;
   --display: 'Barlow Condensed', sans-serif;
   --data: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -238,54 +238,6 @@ svg {
 }
 #canvas-host canvas:active {
   cursor: grabbing;
-}
-.position-widget {
-  border-left: 4px solid var(--accent);
-  position: absolute;
-  top: 102px;
-  left: 28px;
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 5px;
-  padding: 12px 16px;
-  background: var(--paper);
-  border-radius: var(--radius);
-  min-width: 165px;
-  box-shadow: var(--shadow);
-}
-.position-widget > strong {
-  font: 600 55px/0.9 var(--display);
-  letter-spacing: -1px;
-}
-.position-widget small {
-  font: 400 17px var(--body);
-  margin-left: 6px;
-  color: var(--muted);
-  letter-spacing: 0;
-}
-.position-widget > span {
-  font-size: 14px;
-  font-weight: 500;
-}
-.race-status {
-  position: absolute;
-  left: 30px;
-  top: 218px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.7px;
-  pointer-events: none;
-}
-.dot {
-  width: 5px;
-  height: 5px;
-  background: var(--accent);
-  border-radius: 50%;
 }
 .lap-widget {
   position: absolute;
@@ -925,28 +877,6 @@ td strong {
   .mode-caption {
     display: none;
   }
-  .position-widget {
-    top: 89px;
-    left: 16px;
-    gap: 5px;
-    padding: 10px 12px;
-    min-width: 140px;
-  }
-  .position-widget > strong {
-    font-size: 44px;
-  }
-  .position-widget small {
-    font-size: 15px;
-  }
-  .position-widget > span {
-    font-size: 13px;
-  }
-  .race-status {
-    top: 188px;
-    left: 18px;
-    font-size: 10px;
-    letter-spacing: 0.4px;
-  }
   .lap-widget {
     top: 89px;
     right: 16px;
@@ -1421,12 +1351,8 @@ textarea:hover {
   .speed-widget {
     bottom: calc(211px + env(safe-area-inset-bottom));
   }
-  .position-widget,
   .lap-widget {
     top: calc(86px + env(safe-area-inset-top));
-  }
-  .race-status {
-    top: calc(185px + env(safe-area-inset-top));
   }
   dialog {
     max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
@@ -1493,19 +1419,12 @@ textarea:hover {
   .brand {
     font-size: 25px;
   }
-  .position-widget,
   .lap-widget {
     top: 66px;
     padding: 8px 10px;
   }
-  .position-widget > strong {
-    font-size: 30px;
-  }
   .lap-widget strong {
     font-size: 25px;
-  }
-  .race-status {
-    top: 145px;
   }
   .track-label,
   .speed-widget {
@@ -1602,4 +1521,230 @@ dialog .shortcut-toggle input {
   height: 18px;
   padding: 0;
   accent-color: var(--accent);
+}
+
+/* Timing board: position, car number, driver, then distance to the leader. */
+.timing-tower {
+  position: absolute;
+  top: 96px;
+  left: 24px;
+  width: 245px;
+  color: #f5f8fa;
+  background: #192c3cf2;
+  border-radius: 3px;
+  overflow: hidden;
+  font-variant-numeric: tabular-nums;
+}
+.timing-header {
+  height: 31px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 12px;
+  font: 500 10px var(--body);
+  letter-spacing: 1px;
+  border-bottom: 1px solid #ffffff20;
+}
+.timing-header > :last-child {
+  margin-left: auto;
+  color: #b2c1ce;
+}
+.timing-header .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f27660;
+}
+.timing-row {
+  display: grid;
+  grid-template-columns: 20px 27px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  text-align: left;
+  color: inherit;
+  border-bottom: 1px solid #ffffff12;
+  border-left: 3px solid transparent;
+}
+.timing-row:hover {
+  background: #ffffff14;
+}
+.timing-row.selected {
+  background: #ffffff13;
+  border-left-color: var(--pilot);
+}
+.timing-pos {
+  color: #c9d5de;
+  font: 600 18px var(--display);
+}
+.timing-number {
+  color: var(--pilot);
+  font: 600 16px var(--display);
+}
+.timing-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.timing-gap {
+  color: #b2c1ce;
+  font: 400 9px var(--data);
+}
+.onboard-strip {
+  position: absolute;
+  left: 24px;
+  top: 347px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  background: var(--paper);
+  padding: 9px 11px;
+  border-radius: 3px;
+  max-width: 310px;
+  font-size: 12px;
+}
+#position-number {
+  font: 600 19px var(--display);
+  border-right: 1px solid var(--line);
+  padding-right: 10px;
+}
+#position-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.onboard-strip small {
+  color: var(--muted);
+  font-size: 8px;
+  letter-spacing: 1px;
+}
+.driver-identity {
+  display: grid;
+  grid-template-columns: 1fr 80px;
+  gap: 12px;
+}
+.driver-brain {
+  margin-top: 18px;
+  padding-top: 15px;
+  border-top: 1px solid var(--line);
+}
+.driver-brain summary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+}
+.driver-brain[open] summary {
+  margin-bottom: 16px;
+}
+.topbar nav {
+  border-radius: 4px;
+  box-shadow: none;
+}
+.lap-widget {
+  border-radius: 3px;
+  box-shadow: none;
+}
+#results-dialog {
+  max-width: 760px;
+}
+.saved-config {
+  border-top: 1px solid var(--line);
+}
+@media (max-width: 720px) {
+  .timing-tower {
+    top: 79px;
+    left: 12px;
+    width: 190px;
+  }
+  .timing-header {
+    height: 27px;
+    padding: 0 9px;
+    font-size: 9px;
+  }
+  .timing-row {
+    height: 36px;
+    padding: 0 8px;
+    grid-template-columns: 15px 21px 1fr auto;
+    gap: 5px;
+  }
+  .timing-row strong {
+    font-size: 11px;
+  }
+  .timing-gap {
+    font-size: 8px;
+  }
+  .onboard-strip {
+    left: 12px;
+    top: 294px;
+    padding: 6px 9px;
+    max-width: 240px;
+  }
+  .onboard-strip small {
+    display: none;
+  }
+  #position-number {
+    font-size: 17px;
+  }
+  .lap-widget {
+    top: 79px;
+    right: 12px;
+    padding: 9px;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  .timing-tower {
+    top: 64px;
+    width: 192px;
+  }
+  .timing-row {
+    height: 28px;
+  }
+  .timing-header {
+    height: 25px;
+  }
+  .onboard-strip {
+    top: 235px;
+  }
+}
+
+.driver-switcher {
+  display: none;
+}
+.archive-share {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 8px;
+}
+#share-dialog {
+  max-width: 460px;
+}
+#share-name {
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.saved-driver-config summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.saved-driver-config summary small {
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.saved-driver-config p,
+.saved-instruction p {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.saved-instruction {
+  margin-top: 16px;
 }

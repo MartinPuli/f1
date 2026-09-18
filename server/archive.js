@@ -72,6 +72,7 @@ export function validRecord(r) {
         (d.resolvedModel == null || validModel(d.resolvedModel)) &&
         typeof d.name === 'string' &&
         d.name.length <= 40 &&
+        (d.number === undefined || (typeof d.number === 'string' && /^\d{1,2}$/.test(d.number))) &&
         typeof d.id === 'string' &&
         /^#[a-f0-9]{6}$/i.test(d.color) &&
         Array.isArray(d.lapTimes) &&
@@ -112,6 +113,7 @@ export function cleanRecord(r) {
     drivers: r.drivers.map((d) => ({
       id: d.id,
       name: d.name,
+      ...(d.number !== undefined ? { number: d.number } : {}),
       color: d.color,
       ...(d.resolvedModel ? { resolvedModel: d.resolvedModel } : {}),
       lapTimes: d.lapTimes,
@@ -189,9 +191,20 @@ export async function archiveApi(request, env) {
     return json({ error: 'Origin not allowed.' }, 403);
   const path = new URL(request.url).pathname;
   const id = path.split('/')[3];
+  const publishing = path.endsWith('/publish');
   if (id && !/^[a-f0-9-]{36}$/.test(id)) return json({ error: 'Invalid race ID.' }, 400);
   try {
     const db = store(env);
+    if (publishing && request.method === 'POST') {
+      if (!db.publish)
+        return json({ error: 'Sharing is available on the Vercel deployment.' }, 503);
+      const data = await boundedJson(request, 100);
+      if (typeof data.published !== 'boolean') return json({ error: 'Choose a visibility.' }, 400);
+      const publicId = await db.publish(owner, id, data.published);
+      return publicId
+        ? json({ published: data.published, id: publicId })
+        : json({ error: 'Save a finished race before publishing.' }, 409);
+    }
     if (request.method === 'GET') {
       if (!id) return json({ races: await db.list(owner) });
       const race = await db.get(owner, id);
@@ -221,5 +234,21 @@ export async function archiveApi(request, env) {
       { error: 'The race archive is unavailable. Try again or download your recording.' },
       503,
     );
+  }
+}
+
+export async function communityApi(request, env) {
+  if (request.method !== 'GET') return json({ error: 'Method not allowed.' }, 405);
+  const id = new URL(request.url).pathname.split('/')[3];
+  if (id && !/^[a-f0-9-]{36}$/.test(id)) return json({ error: 'Invalid race ID.' }, 400);
+  try {
+    const db = store(env);
+    if (!db.community)
+      return json({ error: 'Community replays are available on the Vercel deployment.' }, 503);
+    if (!id) return json({ races: await db.community() });
+    const record = await db.publicRace(id);
+    return record ? json(record) : json({ error: 'This replay is no longer public.' }, 404);
+  } catch {
+    return json({ error: 'Community replays are unavailable. Try again later.' }, 503);
   }
 }

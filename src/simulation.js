@@ -1,53 +1,7 @@
-import { defaultSettings } from './race-config.js';
+import { defaultSettings, cleanSettings, DRIVERS } from './race-config.js';
 import { CatmullRomCurve3, Vector3 } from 'three';
 
-export const DRIVERS = [
-  {
-    id: 'max',
-    name: 'Max JEVstappen',
-    short: 'JEVstappen',
-    number: '01',
-    color: '#ff775b',
-    style: 'Aggressive',
-    risk: 1.08,
-  },
-  {
-    id: 'lewis',
-    name: 'Lewis JEVmilton',
-    short: 'JEVmilton',
-    number: '44',
-    color: '#b199eb',
-    style: 'Adaptive',
-    risk: 1.0,
-  },
-  {
-    id: 'charles',
-    name: 'Charles LeJEVclerc',
-    short: 'LeJEVclerc',
-    number: '16',
-    color: '#efb83e',
-    style: 'Precise',
-    risk: 0.94,
-  },
-  {
-    id: 'lando',
-    name: 'Lando JEVrris',
-    short: 'JEVrris',
-    number: '04',
-    color: '#58baa0',
-    style: 'Opportunistic',
-    risk: 1.04,
-  },
-  {
-    id: 'franco',
-    name: 'Franco ColJEVpinto',
-    short: 'ColJEVpinto',
-    number: '43',
-    color: '#64b4e9',
-    style: 'Patient',
-    risk: 0.88,
-  },
-];
+export { DRIVERS } from './race-config.js';
 export const ACTIONS = {
   push_left: { throttle: 1, brake: 0, steer: -0.3 },
   push_straight: { throttle: 1, brake: 0, steer: 0 },
@@ -281,6 +235,7 @@ export class Race {
     this.seed = seed;
     this.track = makeTrack(seed);
     this.cars = createCars(this.track);
+    this.configure(this.settings);
     this.time = 0;
     this.running = false;
     this.waiting = false;
@@ -297,6 +252,15 @@ export class Race {
     this.lastFrame = -1;
     this.captureFrame();
     this.addEvent('system', 'Ready. Drivers have not seen the circuit.');
+  }
+  configure(settings) {
+    this.settings = cleanSettings(settings);
+    for (const car of this.cars) {
+      const driver = this.settings.drivers.find((d) => d.id === car.id);
+      car.name = driver.name;
+      car.number = driver.number;
+      car.short = driver.name.split(' ').at(-1);
+    }
   }
   addEvent(id, text) {
     this.events.unshift({ id, text, time: this.time });

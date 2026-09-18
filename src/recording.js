@@ -5,6 +5,7 @@ export function recordRace(race, id, name, created) {
   const drivers = race.ranking().map((c) => ({
     id: c.id,
     name: c.name,
+    number: c.number,
     color: c.color,
     resolvedModel: c.resolvedModel || null,
     lapTimes: [...c.lapTimes],

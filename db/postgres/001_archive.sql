@@ -34,3 +34,9 @@ BEGIN
   RETURN true;
 END;
 $$;
+
+-- Publication is opt-in. Existing recordings stay private.
+ALTER TABLE jevrace_races ADD COLUMN IF NOT EXISTS published boolean NOT NULL DEFAULT false;
+ALTER TABLE jevrace_races ADD COLUMN IF NOT EXISTS public_id uuid NOT NULL DEFAULT gen_random_uuid();
+CREATE UNIQUE INDEX IF NOT EXISTS jevrace_races_public_id ON jevrace_races (public_id);
+CREATE INDEX IF NOT EXISTS jevrace_races_published_created ON jevrace_races (created DESC) WHERE published;

@@ -8,7 +8,7 @@
     "build": "vite build && node scripts/build-worker.mjs",
     "test": "node --test tests/*.test.js",
     "db:generate": "drizzle-kit generate",
-    "build:vercel": "vite build",
+    "build:vercel": "node scripts/prepare-vercel.mjs && vite build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:vercel": "node --env-file=.env.local scripts/migrate-postgres.mjs",

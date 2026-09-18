@@ -1,9 +1,30 @@
 // query accepts SQL and separate parameters. Neither prompts nor IDs become SQL text.
 export function postgresArchive(query) {
   return {
+    async community() {
+      const rows = await query(
+        "SELECT metadata || jsonb_build_object('id', public_id, 'shared', true) AS metadata FROM jevrace_races WHERE published ORDER BY created DESC LIMIT 30",
+        [],
+      );
+      return rows.map((r) => r.metadata);
+    },
+    async publicRace(id) {
+      const rows = await query(
+        "SELECT recording || jsonb_build_object('id', public_id, 'shared', true) AS recording FROM jevrace_races WHERE public_id = $1 AND published",
+        [id],
+      );
+      return rows[0]?.recording ?? null;
+    },
+    async publish(owner, id, published) {
+      const rows = await query(
+        "UPDATE jevrace_races SET published = $3 WHERE owner = $1 AND id = $2 AND (NOT $3 OR (recording->>'finished')::boolean) RETURNING public_id",
+        [owner, id, published],
+      );
+      return rows[0]?.public_id ?? null;
+    },
     async list(owner) {
       const rows = await query(
-        'SELECT metadata FROM jevrace_races WHERE owner = $1 ORDER BY created DESC LIMIT 50',
+        "SELECT metadata || jsonb_build_object('published', published) AS metadata FROM jevrace_races WHERE owner = $1 ORDER BY created DESC LIMIT 50",
         [owner],
       );
       return rows.map((r) => r.metadata);

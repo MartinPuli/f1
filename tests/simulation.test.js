@@ -105,3 +105,22 @@ test('Jev mode pauses on service failure without falling back to demo', async ()
     globalThis.fetch = old;
   }
 });
+
+test('custom driver identities survive a reset and old grids receive defaults', () => {
+  const race = new Race();
+  const settings = structuredClone(race.settings);
+  settings.drivers[0].name = 'Alex Racer';
+  settings.drivers[0].number = '77';
+  race.configure(settings);
+  race.reset(108);
+  assert.equal(race.cars[0].name, 'Alex Racer');
+  assert.equal(race.cars[0].number, '77');
+  assert.throws(() =>
+    race.configure({
+      ...settings,
+      drivers: settings.drivers.map((d) => ({ ...d, number: '100' })),
+    }),
+  );
+  race.configure({ ...settings, drivers: settings.drivers.map(({ name, number, ...d }) => d) });
+  assert.equal(race.cars[0].name, 'Max JEVstappen');
+});

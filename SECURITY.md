@@ -28,6 +28,10 @@ Negative quota caches last at most 60 seconds. Database errors trigger a ten-sec
 
 These controls apply to the Vercel adapter. Local Vite is for development; the separate Sites adapter doesn't use the Postgres traffic budgets. Don't present a Sites deployment as having Vercel's firewall settings.
 
+## Public replays
+
+Recordings stay private until their owner publishes a finished race. The publish operation verifies the signed owner and requires a same-origin POST. Public queries return only published rows, replace the private race ID with a separate random public ID, and never return an owner ID or API credential. Publication includes the saved prompts; the confirmation dialog states this before submission. Unpublishing removes public access, but can't revoke copies someone already downloaded. The public listing returns at most 30 metadata records; replay frames load only when selected.
+
 ## What storage contains
 
 Names, prompts, selected and resolved models, timing, and replay telemetry. Don't put credentials or private data in prompts. The application can catch the connected key in common input flows, but it can't recognize every secret someone types into arbitrary text.
