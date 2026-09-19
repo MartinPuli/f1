@@ -3248,3 +3248,22 @@ textarea,
     height: 34px;
   }
 }
+
+/* The film opens on the grid. Telemetry enters when the starting lights go out. */
+.showcase-active
+  :is(#jev-activity, .timing-tower, .lap-widget, .speed-widget, .onboard-strip, #stage-message) {
+  opacity: var(--film-hud-opacity, 1);
+}
+.showcase-active.film-grid
+  :is(
+    #jev-activity,
+    .timing-tower,
+    .lap-widget,
+    .speed-widget,
+    .onboard-strip,
+    #stage-message,
+    .reel-exit
+  ) {
+  visibility: hidden;
+  pointer-events: none;
+}

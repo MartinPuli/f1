@@ -942,6 +942,13 @@ function frame(now) {
       const view = reelFrame(showcase.elapsed, replay.record.duration, replay.record.startDelay);
       replay.time = view.time;
       $('#reel-lights').hidden = !view.lights;
+      document.body.classList.toggle('film-grid', !!view.lights);
+      const hudReveal = view.lights
+        ? 0
+        : scene?.reducedMotion
+          ? 1
+          : 1 - (1 - Math.min(1, view.time / 0.45)) ** 3;
+      document.body.style.setProperty('--film-hud-opacity', hudReveal);
       $$('#reel-lights span').forEach((light, i) => light.classList.toggle('lit', i < view.lights));
       $('#reel-winner').hidden = !view.finished;
       $('#winner-name').textContent = replay.record.drivers[0].name;
@@ -1314,7 +1321,8 @@ function startFilm(record = currentRecord()) {
         }
       })
       .catch(() => {});
-  document.body.classList.add('showcase-active');
+  document.body.classList.add('showcase-active', 'film-grid');
+  document.body.style.setProperty('--film-hud-opacity', 0);
   $('#exit-demo').hidden = false;
   scene.renderer.domElement.tabIndex = -1;
   scene.renderer.domElement.focus({ preventScroll: true });
@@ -1325,7 +1333,8 @@ function exitDemo() {
   sound.stop();
   const returnToSetup = showcase.returnToSetup;
   showcase = null;
-  document.body.classList.remove('showcase-active');
+  document.body.classList.remove('showcase-active', 'film-grid');
+  document.body.style.removeProperty('--film-hud-opacity');
   ['#exit-demo', '#reel-lights', '#reel-winner'].forEach((id) => ($(id).hidden = true));
   if (scene) {
     scene.controls.autoRotate = false;
