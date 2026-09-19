@@ -338,7 +338,7 @@ export class Race {
     this.phase = 'lights';
     this.running = false;
     this.waiting = false;
-    this.pendingRequest = null;
+    this.pendingRequests = new Map();
     this.finished = false;
     this.error = '';
     this.nextDecision = 0;
@@ -370,18 +370,35 @@ export class Race {
     this.events.unshift({ id, text, time: this.time });
     this.events = this.events.slice(0, 120);
   }
+  get pendingRequest() {
+    return [...this.pendingRequests.values()];
+  }
   async decide() {
-    const active = this.cars.filter((c) => !c.finished && !c.retired),
-      states = active.map((c) => observe(c, this.cars, this.track, this.time, this.limit));
+    const active = this.cars.filter((c) => !c.finished && !c.retired);
     if (this.mode === 'demo') {
-      active.forEach((c, i) => this.apply(c, demoDecision(states[i], c), states[i]));
+      active.forEach((car) => {
+        const state = observe(car, this.cars, this.track, this.time, this.limit);
+        this.apply(car, demoDecision(state, car), state);
+      });
       return;
     }
+    // Each driver owns one request slot. Fast replies never wait for a teammate.
+    await Promise.all(
+      active
+        .filter(
+          (car) => !this.pendingRequests.has(car.id) && (this.phase !== 'lights' || !car.intent),
+        )
+        .map((car) => this.decideDriver(car)),
+    );
+  }
+  async decideDriver(car) {
+    const active = [car];
+    const states = [observe(car, this.cars, this.track, this.time, this.limit)];
     const generation = this.generation;
     const sent = this.phase === 'lights' ? this.startClock - this.startDuration : this.time,
       requestedAt = performance.now();
     this.waiting = true;
-    this.pendingRequest = { sent, calls: active.length };
+    this.pendingRequests.set(car.id, { sent, calls: 1 });
     try {
       const response = await fetch('/api/decide', {
         method: 'POST',
@@ -397,6 +414,7 @@ export class Race {
         signal: AbortSignal.timeout(25000),
       });
       const body = await response.json();
+      if (generation !== this.generation) return;
       if (!response.ok) {
         if (response.status === 429 || response.status === 503)
           this.retryNotBefore =
@@ -461,8 +479,8 @@ export class Race {
       }
     } finally {
       if (generation === this.generation) {
-        this.waiting = false;
-        this.pendingRequest = null;
+        this.pendingRequests.delete(car.id);
+        this.waiting = this.pendingRequests.size > 0;
       }
     }
   }
@@ -478,6 +496,12 @@ export class Race {
           label: d.label,
           confidence: d.confidence,
         };
+      else
+        Object.assign(car.pendingIntent, {
+          intent: d.intent,
+          label: d.label,
+          confidence: d.confidence,
+        });
     } else Object.assign(car, { throttle: d.throttle, brake: d.brake, steer: d.steer });
     if (!car.pendingIntent) Object.assign(car, { action: d.label, confidence: d.confidence });
     car.memory.push({
@@ -497,8 +521,8 @@ export class Race {
     }
     this.accumulator += Math.min(realDelta, 0.1) * speed;
     while (this.accumulator >= 0.025) {
-      if (this.time >= this.nextDecision && !this.waiting) {
-        this.nextDecision = this.time + (this.mode === 'jev' ? 0.5 : 0.25);
+      if (this.mode === 'jev' || this.time >= this.nextDecision) {
+        this.nextDecision = this.time + 0.25;
         this.decide();
       }
       // Only the first grid decision holds the cars. Later requests run alongside

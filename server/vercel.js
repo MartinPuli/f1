@@ -1,3 +1,4 @@
+import { DRIVER_IDS } from '../src/race-config.js';
 import { timingSafeEqual } from 'node:crypto';
 import { api } from './api.js';
 import { boundedJson } from './archive.js';
@@ -27,7 +28,8 @@ export function createVercelHandler({ env, store }) {
   let circuitUntil = 0;
   return async (request) => {
     request = normalizeVercelRequest(request);
-    let cookie, activeOwner, uploadOwner;
+    let cookie, uploadOwner;
+    const activeKeys = [];
     let phase = 'configuration';
     const finish = (result) => {
       const response = secureResponse(result);
@@ -161,17 +163,30 @@ export function createVercelHandler({ env, store }) {
         uploadOwner = owner;
         uploads.add(owner);
       }
-      if (group === 'drive' && active.has(owner))
-        return finish(json({ error: 'A decision is already running. Wait and resume.' }, 409));
-      if (group === 'drive') {
-        activeOwner = owner;
-        active.add(owner);
-      }
       let bytes = 0;
       if (request.method === 'POST') {
         let body;
         try {
-          body = JSON.stringify(await boundedJson(request, maximum));
+          const parsed = await boundedJson(request, maximum);
+          if (group === 'drive') {
+            const ids = parsed.driverIds ?? DRIVER_IDS.slice(0, parsed.states?.length || 0);
+            if (
+              !Array.isArray(ids) ||
+              !ids.length ||
+              ids.length !== parsed.states?.length ||
+              new Set(ids).size !== ids.length ||
+              !ids.every((id) => DRIVER_IDS.includes(id))
+            )
+              return finish(json({ error: 'Invalid driver selection.' }, 400));
+            const keys = ids.map((id) => `${owner}:${id}`);
+            if (keys.some((key) => active.has(key)))
+              return finish(json({ error: 'A decision for this driver is already running.' }, 409));
+            keys.forEach((key) => {
+              active.add(key);
+              activeKeys.push(key);
+            });
+          }
+          body = JSON.stringify(parsed);
         } catch {
           return finish(json({ error: 'Invalid, oversized, or slow request body.' }, 400));
         }
@@ -236,7 +251,7 @@ export function createVercelHandler({ env, store }) {
         ),
       );
     } finally {
-      if (activeOwner) active.delete(activeOwner);
+      activeKeys.forEach((key) => active.delete(key));
       if (uploadOwner) uploads.delete(uploadOwner);
     }
   };

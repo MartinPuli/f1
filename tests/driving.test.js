@@ -132,8 +132,34 @@ test('ten Jev cars finish with mocked independent lane and pace targets', async 
     const body = JSON.parse(init.body);
     return Response.json({
       decisions: body.driverIds.map((id, i) => ({
-        line: ['left', 'center', 'right'][i % 3],
-        pace: ['attack', 'balanced', 'cautious'][i % 3],
+        line: ['left', 'center', 'right'][
+          [
+            'max',
+            'lewis',
+            'charles',
+            'lando',
+            'franco',
+            'oscar',
+            'fernando',
+            'carlos',
+            'george',
+            'alex',
+          ].indexOf(id) % 3
+        ],
+        pace: ['attack', 'balanced', 'cautious'][
+          [
+            'max',
+            'lewis',
+            'charles',
+            'lando',
+            'franco',
+            'oscar',
+            'fernando',
+            'carlos',
+            'george',
+            'alex',
+          ].indexOf(id) % 3
+        ],
         confidence: 0.9,
       })),
     });

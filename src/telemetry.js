@@ -94,7 +94,7 @@ export function cleanDecisionLog(log = []) {
 export function validDecisionLog(log) {
   return (
     Array.isArray(log) &&
-    log.length <= 2000 &&
+    log.length <= 20000 &&
     log.every(
       (batch, i) =>
         Number.isFinite(batch?.t) &&
@@ -189,10 +189,11 @@ export function requestActivity(log, time, pending = null) {
       if (Number.isFinite(batch.ms)) latency = batch.ms;
     }
   }
-  if (pending && pending.sent <= time + 0.0005) {
-    sent += pending.calls;
-    inFlight += pending.calls;
-    if (time - pending.sent < 12) sentBins[bin(pending.sent)] += pending.calls;
+  for (const request of Array.isArray(pending) ? pending : pending ? [pending] : []) {
+    if (request.sent > time + 0.0005) continue;
+    sent += request.calls;
+    inFlight += request.calls;
+    if (time - request.sent < 12) sentBins[bin(request.sent)] += request.calls;
   }
   return {
     sent,

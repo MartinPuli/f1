@@ -132,39 +132,50 @@ test('ten independent driver strategies and telemetry survive recording; five-ca
   assert.equal(validRecord(bad), false);
 });
 
-test('Jev drives continuously on its last answers while one later batch is pending', async (t) => {
-  let release,
-    calls = 0;
+test('Jev drivers request independently and keep driving while a slow rival waits', async (t) => {
+  const pending = new Map(),
+    calls = [];
   t.mock.method(globalThis, 'fetch', async (_url, init) => {
-    calls++;
-    if (calls > 1)
-      await new Promise((resolve) => {
-        release = resolve;
-      });
-    return Response.json({
-      decisions: JSON.parse(init.body).states.map(() => ({
-        line: 'center',
-        pace: 'balanced',
-        power: 'neutral',
-      })),
-    });
+    const body = JSON.parse(init.body),
+      id = body.driverIds[0];
+    assert.equal(body.states.length, 1);
+    calls.push(id);
+    await new Promise((resolve) => pending.set(id, resolve));
+    return Response.json({ decisions: [{ line: 'center', pace: 'balanced', power: 'neutral' }] });
   });
+  const flush = () => new Promise((resolve) => setImmediate(resolve));
   const race = new Race();
   race.mode = 'jev';
   race.running = true;
-  race.tick(0.1);
-  assert.equal(race.time, 0, 'No local decisions may drive the first grid');
-  await new Promise((resolve) => setImmediate(resolve));
-  for (let i = 0; i < 80; i++) race.tick(0.1);
-  assert.ok(race.waiting);
-  const time = race.time,
-    distance = race.cars[0].distance;
+  race.tick(0.025);
+  assert.equal(calls.length, 10);
+  pending.get('max')();
+  pending.delete('max');
+  await flush();
+  race.tick(0.025);
+  assert.equal(calls.length, 10, 'The grid only needs one initial answer per driver');
+  for (const resolve of pending.values()) resolve();
+  pending.clear();
+  await flush();
+  while (race.phase === 'lights') race.tick(0.025);
+  race.tick(0.025);
+  assert.equal(calls.length, 20);
+  pending.get('max')();
+  pending.delete('max');
+  await flush();
+  race.tick(0.025);
+  assert.equal(calls.filter((id) => id === 'max').length, 3);
+  assert.equal(calls.filter((id) => id === 'lewis').length, 2);
+  const time = race.time;
   for (let i = 0; i < 20; i++) race.tick(0.1);
   assert.ok(race.time > time + 1.9);
-  assert.ok(race.cars[0].distance > distance);
-  assert.equal(calls, 2, 'Only one batch may be in flight');
-  release();
-  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(calls.length, 21, 'Never overlap requests for the same driver');
+  race.running = false;
+  for (const resolve of pending.values()) resolve();
+  pending.clear();
+  await flush();
+  race.tick(0.1);
+  assert.equal(calls.length, 21, 'Pause stops new paid calls');
   assert.equal(race.waiting, false);
   assert.equal(race.error, '');
 });

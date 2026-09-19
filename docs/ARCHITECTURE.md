@@ -2,9 +2,9 @@
 
 JEVRACE has one browser scene. The interface opens dialogs over it for race setup, API connection, and results. It doesn't need a frontend framework; Three.js renders the world and ordinary DOM controls handle input.
 
-## A decision batch
+## Independent driver requests
 
-`Race.tick()` advances a fixed 25 ms physics step. Every half-second of simulation time, Jev mode requests decisions for the active cars. Only the first response holds the grid. Later requests run alongside physics, with at most one batch in flight; the controller follows the last validated target until its replacement arrives. There is no artificial gap between batches; the client still honors provider cooldown responses. Driving bypasses application rate counters. Demo decisions remain local and run every quarter-second. `observe()` gives each driver local road samples, nearby cars, and its own memory. It doesn't include a seed, full track, or another driver's prompt.
+`Race.tick()` advances a fixed 25 ms physics step. Each active Jev driver requests its next decision as soon as its previous request has completed, using a fresh observation. The client and the Vercel handler reserve one request slot per driver rather than one slot for the whole grid. Only the opening answers hold the grid; subsequent requests run alongside physics. Pausing or finishing stops new requests, and provider cooldown responses are honored. Driving bypasses application rate counters. Demo decisions remain local and run every quarter-second. `observe()` includes local road samples, nearby cars and the driver's own memory; it excludes the seed, full track and other drivers' prompts.
 
 `server/api.js` validates the batch, matches each driver ID to its configured model and prompt, then calls TypeSafe. It accepts only known action names. The response includes the resolved model when available. A generation counter stops an old network response from changing a reset race, while service errors pause the run instead of silently using demo driving.
 

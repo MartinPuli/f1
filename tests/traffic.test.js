@@ -108,11 +108,15 @@ test('invalid requests and returning status avoid Postgres; cached rejections av
   assert.equal(reads, 1);
 });
 
-test('driving skips rate counters and rejects overlapping batches from the same session', async (t) => {
+test('driving skips counters and reserves separate request slots for each driver', async (t) => {
   let release,
     reads = 0;
+  const releases = [];
   t.mock.method(globalThis, 'fetch', async () => {
-    await new Promise((resolve) => (release = resolve));
+    await new Promise((resolve) => {
+      release = resolve;
+      releases.push(resolve);
+    });
     return Response.json({
       answers: {
         power: { choice: 'neutral', confidence: 0.9 },
@@ -137,9 +141,14 @@ test('driving skips rate counters and rejects overlapping batches from the same 
   while (!release) await new Promise((resolve) => setImmediate(resolve));
   const second = await handler(req('decide', post(body, { authorization: 'Bearer test' })));
   assert.equal(second.status, 409);
+  const other = handler(
+    req('decide', post({ ...body, driverIds: ['lewis'] }, { authorization: 'Bearer test' })),
+  );
+  while (releases.length < 2) await new Promise((resolve) => setImmediate(resolve));
   assert.equal(reads, 0);
-  release();
+  releases.forEach((resolve) => resolve());
   assert.equal((await first).status, 200);
+  assert.equal((await other).status, 200);
 });
 
 test('slow and oversized streams are cancelled', async () => {
@@ -194,9 +203,11 @@ test('Jev has no artificial wall-clock cooldown but respects upstream rate respo
   let now = 100000,
     calls = 0;
   t.mock.method(Date, 'now', () => now);
-  t.mock.method(globalThis, 'fetch', async () => {
+  t.mock.method(globalThis, 'fetch', async (_url, init) => {
     calls++;
-    return Response.json({ decisions: Array(10).fill({ line: 'center', pace: 'balanced' }) });
+    return Response.json({
+      decisions: JSON.parse(init.body).states.map(() => ({ line: 'center', pace: 'balanced' })),
+    });
   });
   const race = new Race();
   race.mode = 'jev';
