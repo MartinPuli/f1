@@ -1,7 +1,9 @@
-export const GRID_HOLD = 3;
+export const GRID_HOLD = 1.5;
+export const filmGridHold = (recordedHold = GRID_HOLD) => Math.min(recordedHold, GRID_HOLD);
 export const WINNER_HOLD = 4;
 
 export function reelFrame(elapsed, duration, gridHold = GRID_HOLD) {
+  gridHold = filmGridHold(gridHold);
   const total = gridHold + duration + WINNER_HOLD;
   const clock = ((elapsed % total) + total) % total;
   const time = Math.max(0, Math.min(duration, clock - gridHold));
@@ -11,7 +13,7 @@ export function reelFrame(elapsed, duration, gridHold = GRID_HOLD) {
   return {
     time,
     shot,
-    lights: clock < gridHold ? Math.min(5, Math.floor(clock / (gridHold >= 5 ? 1 : 0.5)) + 1) : 0,
+    lights: clock < gridHold ? Math.min(5, Math.floor(clock / (gridHold / 6)) + 1) : 0,
     finished: clock >= gridHold + duration,
   };
 }

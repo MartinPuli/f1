@@ -1,9 +1,9 @@
-import { filmShot, reelFrame, GRID_HOLD, WINNER_HOLD } from './showcase.js';
+import { filmShot, reelFrame, filmGridHold, WINNER_HOLD } from './showcase.js';
 
 // Original synthesized effects. The same sample generator feeds the browser
 // and exported video, so engine pitch and impacts follow recorded motion.
 export function renderSoundtrack(record, sampleRate = 44100) {
-  const hold = record.startDelay ?? GRID_HOLD;
+  const hold = filmGridHold(record.startDelay);
   const length = Math.ceil((hold + record.duration + WINNER_HOLD) * sampleRate);
   const pcm = new Float32Array(length * 2);
   const frames = record.frames;
@@ -72,7 +72,7 @@ export function renderSoundtrack(record, sampleRate = 44100) {
       white * tire +
       filtered * 0.1;
     for (let light = 0; light < 5; light++) {
-      const age = t - light * (hold >= 5 ? 1 : 0.5);
+      const age = t - light * (hold / 6);
       if (age >= 0 && age < 0.11)
         sample += 0.1 * Math.sin(2 * Math.PI * 880 * age) * Math.sin((Math.PI * age) / 0.11);
     }

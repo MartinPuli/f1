@@ -1,3 +1,4 @@
+import { GRID_HOLD } from './showcase.js';
 import { cleanResponse, decisionObservation } from './telemetry.js';
 import { updateMechanical, startSpin } from './mechanics.js';
 import { raceIncidents } from './incidents.js';
@@ -334,7 +335,7 @@ export class Race {
     this.configure(this.settings);
     this.time = 0;
     this.startClock = 0;
-    this.startDuration = 5.5 + ((seed >>> 0) % 1000) / 1000;
+    this.startDuration = GRID_HOLD;
     this.phase = 'lights';
     this.running = false;
     this.waiting = false;

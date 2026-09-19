@@ -30,7 +30,7 @@ import { RaceScene } from './scene.js';
 import { recordRace, applyReplay } from './recording.js';
 import './style.css';
 import { validRecord, cleanRecord } from './recording-schema.js';
-import { reelFrame, filmShot } from './showcase.js';
+import { reelFrame, filmShot, filmGridHold } from './showcase.js';
 let editingKey = false;
 let showcase = null;
 const icons = {
@@ -734,7 +734,7 @@ function renderActivity(car) {
   document.body.classList.toggle('has-jev-activity', visible);
   if (!visible) return;
   const decisionTime = showcase
-    ? Math.min(race.time, showcase.elapsed - (replay.record.startDelay || 3))
+    ? Math.min(race.time, showcase.elapsed - filmGridHold(replay.record.startDelay))
     : !replay && race.phase === 'lights'
       ? race.startClock - race.startDuration
       : race.time;
@@ -875,7 +875,10 @@ function updateUi() {
     const lights = !replay && (race.running || race.startClock > 0) && race.phase === 'lights';
     $('#reel-lights').hidden = !lights;
     $$('#reel-lights span').forEach((light, i) =>
-      light.classList.toggle('lit', lights && i < Math.min(5, Math.floor(race.startClock) + 1)),
+      light.classList.toggle(
+        'lit',
+        lights && i < Math.min(5, Math.floor(race.startClock / (race.startDuration / 6)) + 1),
+      ),
     );
   }
   const incident = (replay?.record.events || race.events).find(
@@ -965,11 +968,14 @@ function frame(now) {
       $('#reel-winner').style.setProperty('--winner-color', replay.record.drivers[0].color);
       $('#reel-winner').style.setProperty(
         '--victory',
-        Math.max(0, showcase.elapsed - (replay.record.startDelay || 3) - replay.record.duration),
+        Math.max(
+          0,
+          showcase.elapsed - filmGridHold(replay.record.startDelay) - replay.record.duration,
+        ),
       );
       const victoryAge = Math.max(
         0,
-        showcase.elapsed - (replay.record.startDelay || 3) - replay.record.duration,
+        showcase.elapsed - filmGridHold(replay.record.startDelay) - replay.record.duration,
       );
       const reveal = scene?.reducedMotion ? 1 : Math.min(1, victoryAge / 0.65);
       $('#reel-winner').style.opacity = reveal;
