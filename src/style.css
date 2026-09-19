@@ -2812,7 +2812,7 @@ textarea,
   text-transform: capitalize;
   line-height: 1.15;
 }
-#decision-values .choice-probabilities span {
+#decision-probabilities .choice-probabilities span {
   position: relative;
   display: flex;
   justify-content: space-between;
@@ -2839,7 +2839,7 @@ textarea,
   font-weight: 400;
   font-style: normal;
 }
-#decision-values .choice-probabilities .probability-missing {
+#decision-probabilities .choice-probabilities .probability-missing {
   background: none;
   color: var(--muted);
   font: 10px var(--body);
@@ -3266,4 +3266,179 @@ textarea,
   ) {
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Compact broadcast view; the full telemetry stays one disclosure away. */
+#jev-activity,
+.showcase-active #jev-activity {
+  width: 248px;
+  padding: 14px;
+  border-radius: 22px;
+}
+.activity-heading strong {
+  font-size: 22px;
+}
+.decision-driver {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+}
+#decision-number {
+  width: 28px;
+  height: 30px;
+  flex-shrink: 0;
+  font-size: 21px;
+  border-radius: 9px;
+}
+#decision-name {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#decision-age {
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 9px;
+}
+#decision-values {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+#decision-values small {
+  color: var(--muted);
+  font-size: 10px;
+}
+#decision-values strong {
+  display: block;
+  font: 600 20px var(--display);
+  text-transform: capitalize;
+  margin-top: 3px;
+}
+.api-activity {
+  margin-top: 12px;
+  padding-top: 10px;
+}
+.api-metrics {
+  justify-content: flex-start;
+  gap: 18px;
+  margin-top: 7px;
+}
+.api-metrics b {
+  font-size: 12px;
+}
+#activity-chart {
+  height: 30px;
+  margin-top: 4px;
+}
+.activity-legend {
+  gap: 10px;
+  font-size: 9px;
+}
+.response-detail {
+  margin-top: 10px;
+}
+.response-detail summary {
+  padding-block: 3px;
+}
+.detail-meta {
+  margin: 14px 0 8px;
+  align-items: center;
+}
+#decision-probabilities .choice-row {
+  grid-template-columns: 64px 1fr;
+  gap: 10px;
+}
+#decision-probabilities .choice-row strong {
+  font-size: 18px;
+}
+.response-detail .decision-context {
+  display: block;
+}
+.response-detail #decision-history {
+  display: block;
+}
+.timing-tower {
+  width: 224px;
+  padding: 8px;
+  border-radius: 22px;
+}
+.timing-header {
+  height: 25px;
+  padding-inline: 10px;
+  font-size: 9px;
+}
+.timing-row {
+  height: 33px;
+  grid-template-columns: 15px 23px minmax(0, 1fr) auto;
+  gap: 8px;
+  padding-inline: 10px;
+}
+.timing-driver strong {
+  font-size: 13px;
+}
+.timing-driver small {
+  display: none;
+}
+.timing-pos {
+  font-size: 18px;
+}
+.timing-number {
+  width: 23px;
+  height: 25px;
+  font-size: 15px;
+  border-radius: 8px;
+}
+.timing-gap {
+  font-size: 9px;
+}
+#grid-toggle {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 10px;
+  border-top: 1px solid var(--line);
+}
+#grid-toggle:hover {
+  color: var(--accent);
+}
+@media (max-width: 720px) {
+  #jev-activity,
+  .showcase-active #jev-activity {
+    width: 236px;
+    max-height: 320px;
+    padding: 12px;
+  }
+  .timing-tower,
+  .showcase-active .timing-tower {
+    width: 190px;
+    max-height: 280px;
+    padding: 6px;
+  }
+  .timing-row {
+    height: 30px;
+    grid-template-columns: 12px 20px minmax(0, 1fr) auto;
+    gap: 5px;
+    padding-inline: 6px;
+  }
+  .timing-number {
+    width: 20px;
+    height: 22px;
+    font-size: 14px;
+  }
+  .timing-driver strong {
+    font-size: 12px;
+  }
+  .timing-gap {
+    font-size: 8px;
+  }
+  #decision-values {
+    gap: 8px;
+  }
+  body.has-jev-activity:not(.showcase-active) #replay-bar {
+    bottom: 398px;
+  }
 }

@@ -33,6 +33,7 @@ import { validRecord, cleanRecord } from './recording-schema.js';
 import { reelFrame, filmShot, filmGridHold } from './showcase.js';
 let editingKey = false;
 let showcase = null;
+let fullGrid = false;
 const icons = {
   Flag,
   Focus,
@@ -103,18 +104,16 @@ let race = new Race(42),
 $('#app').innerHTML = `
 <header class="topbar"><a href="/" class="brand" aria-label="JEVRACE home"><img src="/logo-mark.svg" alt=""/><span>JEV<em>RACE</em></span></a><nav aria-label="Race actions"><button id="new-race" class="nav-button">${icon('Plus')} New race</button><button id="results" class="nav-button">${icon('Trophy')} Results</button></nav><div class="header-end"><button class="icon-button" data-film-launch aria-label="Watch race film" title="Watch race film">${icon('Film')}</button><button id="sound-toggle" class="icon-button" aria-label="Enable sound" title="Sound" aria-pressed="false">${icon('Volume2')}</button><span id="mode-caption" class="mode-caption">DEMO</span><button class="icon-button" id="configure" aria-label="Session API key" title="Session API key">${icon('Settings2')}</button></div></header>
 <aside id="jev-activity" hidden aria-label="Jev decision activity">
-<div class="activity-heading"><strong>JEV <small>TypeSafe</small></strong><span id="activity-total">0 decisions</span></div>
-<div class="decision-driver"><span id="decision-number"></span><div><strong id="decision-name"></strong><small id="decision-model"></small></div><span id="decision-confidence"></span></div>
-<div class="response-heading"><span>Latest response</span><span id="decision-age"></span></div>
+<div class="activity-heading"><strong>JEV <small>TypeSafe</small></strong></div>
+<div class="decision-driver"><span id="decision-number"></span><strong id="decision-name"></strong><span id="decision-age"></span></div>
 <div id="decision-values"></div>
-<div class="decision-context"><span id="decision-sees"></span></div>
 <div class="car-condition"><span id="decision-condition"></span><span id="decision-temperature"></span></div>
-<div class="api-activity" aria-label="Jev API requests and responses"><div class="response-heading chart-heading"><strong>Jev activity</strong><span id="activity-batch"></span></div>
-<div class="api-metrics"><span><b id="api-sent">0</b> sent</span><span><b id="api-replies">0</b> replies</span><span><b id="api-pending">0</b> in flight</span></div>
+<div class="api-activity" aria-label="Jev API requests and responses"><div class="response-heading chart-heading"><strong>API activity</strong><span id="activity-batch"></span></div>
+<div class="api-metrics"><span><b id="api-replies">0</b> replies</span><span><b id="api-pending">0</b> pending</span></div>
 <svg id="activity-chart" viewBox="0 0 240 44" role="img" aria-label="Jev requests sent and responses received in the last twelve seconds"><path d="M0 42H240 M0 22H240" class="chart-grid"/><g class="reply-bars">${Array.from({ length: 24 }, (_, i) => `<rect x="${i * 10}" y="42" width="6" height="0" rx="2"/>`).join('')}</g><path id="request-line" fill="none"/><text id="activity-peak" x="239" y="8" text-anchor="end"></text></svg>
 <div class="activity-legend"><span class="sent-key">Requests</span><span class="reply-key">Replies</span><span>last 12s</span></div></div>
-<details class="response-detail"><summary>Response & history</summary><ol id="decision-history" aria-label="Recent driver decisions"></ol><pre id="decision-response"></pre></details>
-</aside><button id="exit-demo" class="reel-exit" hidden>Exit ${icon('X')}</button><div id="reel-lights" hidden aria-label="Starting lights">${Array.from({ length: 5 }, () => '<span></span>').join('')}</div><div id="reel-winner" hidden><div class="winner-ribbon" aria-hidden="true"></div><div class="winner-heading"><span class="winner-trophy">${icon('Trophy')}</span><small>RACE WINNER</small><span id="winner-number"></span></div><strong id="winner-name"></strong><div class="winner-detail"></div><div id="winner-podium"></div><div class="winner-confetti" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="--i:${i};--turn:${i * 47}deg"></i>`).join('')}</div></div><main><section id="race-view" aria-label="Race circuit"><div id="canvas-host"></div><aside class="timing-tower" aria-label="Live standings"><div class="timing-header"><span>CLASSIFICATION</span><span>INTERVAL</span></div><div id="timing-rows"></div></aside><div class="onboard-strip"><span id="position-number"></span><span id="position-name"></span><small>ONBOARD</small></div><div class="lap-widget"><span>LAP</span><strong id="lap"></strong><span id="clock">00:00.00</span></div>
+<details class="response-detail"><summary>Details</summary><div class="response-heading detail-meta"><span id="decision-model"></span><span id="decision-confidence"></span></div><div class="response-heading"><span id="activity-total">0 decisions</span><span><b id="api-sent">0</b> requests sent</span></div><div class="decision-context"><span id="decision-sees"></span></div><div id="decision-probabilities"></div><ol id="decision-history" aria-label="Recent driver decisions"></ol><pre id="decision-response"></pre></details>
+</aside><button id="exit-demo" class="reel-exit" hidden>Exit ${icon('X')}</button><div id="reel-lights" hidden aria-label="Starting lights">${Array.from({ length: 5 }, () => '<span></span>').join('')}</div><div id="reel-winner" hidden><div class="winner-ribbon" aria-hidden="true"></div><div class="winner-heading"><span class="winner-trophy">${icon('Trophy')}</span><small>RACE WINNER</small><span id="winner-number"></span></div><strong id="winner-name"></strong><div class="winner-detail"></div><div id="winner-podium"></div><div class="winner-confetti" aria-hidden="true">${Array.from({ length: 18 }, (_, i) => `<i style="--i:${i};--turn:${i * 47}deg"></i>`).join('')}</div></div><main><section id="race-view" aria-label="Race circuit"><div id="canvas-host"></div><aside class="timing-tower" aria-label="Live standings"><div class="timing-header"><span>POSITION</span><span>GAP</span></div><div id="timing-rows"></div><button id="grid-toggle" aria-expanded="false" aria-controls="timing-rows">Full grid</button></aside><div class="onboard-strip"><span id="position-number"></span><span id="position-name"></span><small>ONBOARD</small></div><div class="lap-widget"><span>LAP</span><strong id="lap"></strong><span id="clock">00:00.00</span></div>
 <button class="track-label" id="rename-race" aria-label="Rename race"><span id="race-name"></span><small id="seed-label"></small>${icon('Pencil')}</button><div class="speed-widget"><strong id="selected-speed">0</strong><span>km/h</span><div id="car-telemetry" hidden><small id="driver-tactic"></small><div class="car-resources"><label>ERS <meter id="car-energy" min="0" max="1" value="1"></meter></label><label>TIRES <meter id="car-tires" min="0" max="1" value="1"></meter></label></div></div></div><div id="stage-message" role="status"></div><div class="finish-banner" id="finish-overlay" hidden></div>
 <div class="driver-switcher" role="group" aria-label="Choose a driver to follow">${DRIVERS.map((d, i) => `<button class="pilot-button ${i === 4 ? 'active' : ''}" data-pilot="${i}" style="--pilot:${d.color}" aria-label="Follow ${d.name}" title="${d.name} · ${i + 1}" aria-pressed="${i === 4}"><span class="pilot-avatar"><b>${d.number}</b></span><span>${d.short}</span></button>`).join('')}</div>
 <div id="replay-bar" hidden><span>${icon('Film')} REPLAY</span><input id="replay-seek" type="range" min="0" step="0.1" value="0" aria-label="Replay position"/><output id="replay-time">00:00</output><button id="exit-replay" class="icon-button" aria-label="Exit replay">${icon('X')}</button></div>
@@ -688,6 +687,7 @@ function renderTiming(ranking, selected) {
       row.innerHTML =
         '<span class="timing-pos"></span><span class="timing-number"></span><span class="timing-driver"><strong></strong><small></small></span><span class="timing-gap"></span>';
     }
+    row.hidden = !fullGrid && index >= 5 && car !== selected;
     row.classList.toggle('selected', car === selected);
     row.setAttribute('aria-label', `Follow ${car.name}`);
     row.setAttribute('aria-pressed', String(car === selected));
@@ -723,6 +723,12 @@ function renderTiming(ranking, selected) {
     button.title = `${car.name} · ${index + 1}`;
   });
 }
+$('#grid-toggle').onclick = () => {
+  fullGrid = !fullGrid;
+  $('#grid-toggle').setAttribute('aria-expanded', String(fullGrid));
+  $('#grid-toggle').textContent = fullGrid ? 'Top 5' : 'Full grid';
+  updateUi();
+};
 $('#timing-rows').onclick = (event) => {
   const row = event.target.closest('[data-follow]');
   if (row) selectDriver(Number(row.dataset.follow));
@@ -771,7 +777,8 @@ function renderActivity(car) {
   $('#decision-number').textContent = car.number;
   $('#decision-number').style.background = car.color;
   $('#decision-number').style.color = numberInk(car.color);
-  $('#decision-name').textContent = car.name;
+  $('#decision-name').textContent = car.short;
+  $('#decision-name').title = car.name;
   const answer = activity.selected;
   const batch = activity.selectedBatch;
   $('#decision-model').textContent =
@@ -783,7 +790,7 @@ function renderActivity(car) {
     ? `${Math.round(answer.confidence * 100)}%\nconfidence`
     : '';
   $('#decision-age').textContent = batch
-    ? `${Math.max(0, decisionTime - batch.t).toFixed(1)}s ago${Number.isFinite(batch.ms) ? ` · ${batch.ms}ms` : ''}`
+    ? `${Math.max(0, decisionTime - batch.t).toFixed(1)}s ago`
     : 'Awaiting response';
   $('#decision-values').classList.toggle('choices-only', !answer?.response);
   const questions = [
@@ -792,6 +799,12 @@ function renderActivity(car) {
     ['power', 'Battery'],
   ];
   $('#decision-values').innerHTML = questions
+    .map(
+      ([key, label]) =>
+        `<div><small>${label}</small><strong>${esc(answer?.[key] || '—')}</strong></div>`,
+    )
+    .join('');
+  $('#decision-probabilities').innerHTML = questions
     .map(([key, label]) => {
       const response = answer?.response?.[key];
       const options = Object.entries(response?.probabilities || {}).sort((a, b) => b[1] - a[1]);
@@ -815,10 +828,10 @@ function renderActivity(car) {
   $('#decision-temperature').textContent = Number.isFinite(car.engineTemp)
     ? `${Math.round(car.engineTemp)}°C`
     : '';
-  $('.car-condition').classList.toggle(
-    'warning',
-    car.retired || car.coolingLeak || car.spinTime > 0 || car.engineTemp > 115,
-  );
+  const warning =
+    car.retired || car.coolingLeak || car.spinTime > 0 || car.engineTemp > 115 || car.damage > 0.1;
+  $('.car-condition').hidden = !warning;
+  $('.car-condition').classList.toggle('warning', warning);
   $('#decision-history').innerHTML = activity.history
     .map(
       ({ t, answer: a }) =>

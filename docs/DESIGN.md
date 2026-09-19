@@ -19,6 +19,6 @@ Measured contrast on paint white: graphite 13.19:1 and secondary text 5.07:1. Co
 
 A future dark theme can map panel/text/secondary/control to `#252b28`, `#f5f5ef`, `#bcc5bc`, `#eea393`; the app currently ships the light theme only.
 
-The timing panel has a 10 px horizontal inset, an 8 px top inset and 12 px below its last row. Rows keep 12 px between columns and their own 12 px side padding. Small screens use a 6 px panel inset and allow the list to scroll. The driver panel stays 308 px wide on desktop.
+The default timing panel is 224 px wide with an 8 px inset and 33 px rows. It shows the top five plus the selected driver; Full grid expands the list. The Jev panel is 248 px wide. Its default view contains the selected driver, three decisions and the API activity graph. Details holds probabilities, model information, observations and response history. Mobile panels are narrower and retain their scrollable expanded views.
 
 References: [McLaren’s papaya racing colours](https://www.mclaren.com/racing/heritage/the-story-of-the-marque/) and [Porsche’s Brumos liveries](https://newsroom.porsche.com/en_US/motorsport/porsche-gt-team-retro-colors-daytona-sebring-2019-18340.html). The palette is original to this app; it does not reproduce a team livery.
