@@ -3643,11 +3643,11 @@ textarea,
   color: #56635f;
 }
 
-.mobile-jev-toggle {
+.mobile-panel-toggle {
   display: none;
 }
 @media (max-width: 720px) {
-  body.has-jev-activity:not(.showcase-active) .mobile-jev-toggle {
+  body.has-jev-activity:not(.showcase-active) .mobile-panel-toggle {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -3661,7 +3661,9 @@ textarea,
     border-radius: 16px;
     background: #f5f5f0;
     color: #233744;
-    font: 600 13px var(--body);
+    font:
+      600 13px Barlow,
+      sans-serif;
     box-shadow: var(--shadow);
   }
   body.has-jev-activity:not(.showcase-active):not(.mobile-jev-open) #jev-activity {
@@ -3693,5 +3695,52 @@ textarea,
   body.mobile-jev-open #decision-confidence,
   body.mobile-jev-open .activity-legend {
     font-size: 10px;
+  }
+}
+
+@media (max-width: 720px) {
+  body.has-jev-activity:not(.showcase-active) .mobile-positions-toggle {
+    left: auto;
+    right: 12px;
+  }
+  body:not(.showcase-active):not(.mobile-positions-open) .timing-tower {
+    display: none;
+  }
+  body.mobile-positions-open:not(.showcase-active) .timing-tower {
+    display: block;
+    z-index: 44;
+    top: 202px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-height: calc(100dvh - var(--dock-height, 108px) - 300px);
+    overflow-y: auto;
+    background: #f5f5f0;
+    padding: 10px;
+  }
+  body.mobile-positions-open .timing-row {
+    height: 38px;
+    grid-template-columns: 20px 28px minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  body.mobile-positions-open .timing-driver strong {
+    font-size: 14px;
+  }
+  body.mobile-positions-open .timing-gap {
+    font-size: 11px;
+  }
+  body.mobile-positions-open .timing-driver small {
+    font-size: 9px;
+  }
+  body.mobile-jev-open #decision-probabilities .choice-probabilities span {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+  body.has-jev-activity:not(.showcase-active) #replay-bar {
+    bottom: calc(28px + var(--dock-height, 108px) + env(safe-area-inset-bottom));
+  }
+  body.mobile-jev-open:not(.showcase-active) #jev-activity {
+    bottom: calc(90px + var(--dock-height, 108px) + env(safe-area-inset-bottom));
+    max-height: calc(100dvh - var(--dock-height, 108px) - 300px);
   }
 }

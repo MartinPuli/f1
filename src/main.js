@@ -1420,14 +1420,32 @@ if (seasonRace && /^[a-z0-9-]{1,90}$/.test(seasonRace)) {
 
 if (!adminMode && !seasonRace) location.replace('/championship.html');
 
-const mobileJevToggle = document.createElement('button');
-mobileJevToggle.className = 'mobile-jev-toggle';
-mobileJevToggle.textContent = 'JEV data';
-mobileJevToggle.setAttribute('aria-controls', 'jev-activity');
-mobileJevToggle.setAttribute('aria-expanded', 'false');
-mobileJevToggle.onclick = () => {
-  const open = document.body.classList.toggle('mobile-jev-open');
-  mobileJevToggle.setAttribute('aria-expanded', String(open));
-  mobileJevToggle.textContent = open ? 'Close JEV data' : 'JEV data';
-};
-document.body.append(mobileJevToggle);
+const mobilePanels = [
+  { className: 'jev', label: 'JEV data', panel: $('#jev-activity') },
+  { className: 'positions', label: 'Positions', panel: $('.timing-tower') },
+];
+for (const item of mobilePanels) {
+  item.panel.id ||= 'mobile-positions';
+  const button = document.createElement('button');
+  button.className = `mobile-panel-toggle mobile-${item.className}-toggle`;
+  button.textContent = item.label;
+  button.setAttribute('aria-controls', item.panel.id);
+  button.setAttribute('aria-expanded', 'false');
+  item.button = button;
+  button.onclick = () => {
+    const open = !document.body.classList.contains(`mobile-${item.className}-open`);
+    for (const other of mobilePanels) {
+      const active = open && other === item;
+      document.body.classList.toggle(`mobile-${other.className}-open`, active);
+      other.button.setAttribute('aria-expanded', String(active));
+      other.button.textContent = active ? `Close ${other.label}` : other.label;
+    }
+  };
+  document.body.append(button);
+}
+new ResizeObserver(([entry]) => {
+  document.body.style.setProperty(
+    '--dock-height',
+    `${entry.target.getBoundingClientRect().height}px`,
+  );
+}).observe($('.control-dock'));
