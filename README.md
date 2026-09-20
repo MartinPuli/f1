@@ -91,3 +91,9 @@ The timing tower shows all ten drivers, with gaps from recorded leader crossings
 Enable **Race incidents** to run the optional scenario: a curb strike that starts a spin near traffic, then a cooling leak as the leader starts lap two. These are injected conditions, not mistakes attributed to Jev. Engine temperature rises with load and cooling loss; sustained overheating causes a DNF. Hard side impacts can independently break the suspension. Spins preserve world momentum while the car rotates and slows, then the controller attempts recovery. The retired car coasts toward the runoff area and remains visible. The chase camera moves above traffic instead of hiding nearby or finished cars.
 
 Default driver numbers follow the [2026 Formula 1 entry list](https://www.formula1.com/en/latest/article/all-the-2026-f1-driver-numbers-confirmed-in-full.5rh7o9mPntG7NerzVk9onc), checked on September 18, 2026: Verstappen 3, Norris 1, Hamilton 44, Leclerc 16, Colapinto 43, Piastri 81, Alonso 14, Sainz 55, Russell 63, Albon 23. Saved races retain the numbers used when they ran.
+
+## Championship and prompt search
+
+Open `/championship.html` for Season 01: six training races, a two-race held-out comparison and a three-round championship. The prompt lab keeps every driver’s tested prompts, lap times and replay. Jev selects strategy adjustments from measured results; the search keeps whichever tested prompt achieved the fastest average finish. Model weights do not change.
+
+The history and recordings live in `public/championship`; Results links to the page. See [the experiment protocol](docs/CHAMPIONSHIP.md) to run another season, inspect the limitations or export the results.

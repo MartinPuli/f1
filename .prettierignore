@@ -6,3 +6,4 @@ dist
 package-lock.json
 public/fonts
 drizzle/meta
+public/championship/*.json

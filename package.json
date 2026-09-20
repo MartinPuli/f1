@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:vercel": "node --env-file=.env.local scripts/migrate-postgres.mjs",
-    "check": "npm run format:check && npm test && npm run build:vercel"
+    "check": "npm run format:check && npm test && npm run build:vercel",
+    "championship": "node scripts/run-championship.mjs",
+    "championship:export": "node scripts/export-championship.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

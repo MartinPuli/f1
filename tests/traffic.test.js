@@ -210,6 +210,8 @@ test('Jev has no artificial wall-clock cooldown but respects upstream rate respo
     });
   });
   const race = new Race();
+  // Keep drivers active through the accelerated loop so the next request can fail.
+  race.limit = 5;
   race.mode = 'jev';
   race.running = true;
   for (let i = 0; i < 160; i++) {
@@ -222,6 +224,7 @@ test('Jev has no artificial wall-clock cooldown but respects upstream rate respo
     Response.json({ error: 'Wait' }, { status: 429, headers: { 'Retry-After': '120' } }),
   );
   now += 2000;
+  assert.equal(race.finished, false);
   await race.decide();
   assert.equal(race.retryNotBefore, now + 120000);
   race.running = true;
