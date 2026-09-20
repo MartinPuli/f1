@@ -18,7 +18,7 @@
     "prompts:search": "node scripts/search-prompts.mjs",
     "prompts:export": "node scripts/export-search.mjs",
     "prompts:refine": "node scripts/refine-prompts.mjs",
-    "archive:export": "node scripts/export-search.mjs && node scripts/export-archive.mjs"
+    "archive:export": "node scripts/export-search.mjs && node scripts/export-archive.mjs && node scripts/export-project.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

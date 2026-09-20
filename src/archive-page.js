@@ -15,7 +15,7 @@ const phase = (r) =>
     'refinement-screen': 'Prompt test',
     'refinement-confirm': 'Prompt test',
   })[r.phase] || 'Prompt test';
-const url = (r) => `/?seasonRace=${encodeURIComponent(r.id)}&archive=prompt-search`;
+const url = (r) => `/watch.html?seasonRace=${encodeURIComponent(r.id)}&archive=prompt-search`;
 let active = Math.max(0, Number(new URLSearchParams(location.search).get('season') || 1) - 1);
 let races = [];
 function render() {

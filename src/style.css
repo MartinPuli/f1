@@ -3586,3 +3586,16 @@ textarea,
     font-size: 7px;
   }
 }
+
+.public-replay #new-race,
+.public-replay #configure,
+.public-replay #share-current,
+.public-replay #save-race,
+.public-replay .result-tabs,
+.public-replay #film-current {
+  display: none !important;
+}
+
+.public-replay #rename-race {
+  display: none !important;
+}

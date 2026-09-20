@@ -1,3 +1,4 @@
+const adminMode = location.pathname === '/admin.html';
 import { RaceSound } from './sound.js';
 const sound = new RaceSound();
 import { decisionActivity, requestActivity, timingGap } from './telemetry.js';
@@ -305,6 +306,7 @@ function setMode(mode) {
     mode === 'demo' ? 'Switch to Jev to use prompts.' : 'Each driver uses its own prompt.';
 }
 function openSetup() {
+  if (!adminMode) return;
   draftSettings = cleanSettings(replay?.record.settings || race.settings);
   renderGridEditor();
   setSetupTab('circuit');
@@ -385,6 +387,7 @@ $('#setup-form').onsubmit = async (e) => {
   updateUi();
 };
 $('#configure').onclick = () => {
+  if (!adminMode) return;
   $('#key-status').textContent = key ? 'Connected' : 'Not connected';
   openModal('#key-dialog');
 };
@@ -405,6 +408,7 @@ $('#clear-key').onclick = () => {
   renderGridEditor();
 };
 $('#start').onclick = () => {
+  if (!adminMode && !replay) return;
   if (replay) {
     if (replay.time >= replay.record.duration) replay.time = 0;
     replay.playing = !replay.playing;
@@ -428,6 +432,7 @@ $('#start').onclick = () => {
   updateUi();
 };
 $('#rename-race').onclick = () => {
+  if (!adminMode) return;
   $('#new-name').value = raceName;
   openModal('#rename-dialog');
 };
@@ -1042,7 +1047,11 @@ requestAnimationFrame(frame);
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) pause();
 });
-$('#setup-dialog').showModal();
+if (adminMode) $('#setup-dialog').showModal();
+else {
+  document.body.classList.add('public-replay');
+  $('#exit-replay').onclick = () => location.assign('/championship.html');
+}
 window.jevSnapshot = () => ({
   time: race.time,
   phase: race.phase,
@@ -1400,3 +1409,5 @@ if (seasonRace && /^[a-z0-9-]{1,90}$/.test(seasonRace)) {
       $('#setup-error').textContent = error.message;
     });
 }
+
+if (!adminMode && !seasonRace) location.replace('/championship.html');

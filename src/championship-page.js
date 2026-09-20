@@ -11,7 +11,7 @@ const esc = (s) =>
 const seconds = (n) => (Number.isFinite(n) ? `${n.toFixed(3)}s` : '—');
 const signed = (n) => (Number.isFinite(n) ? `${n > 0 ? '+' : ''}${n.toFixed(3)}s` : '—');
 const replay = (r) =>
-  `/?seasonRace=${encodeURIComponent(r.id)}${search?.rounds.some((item) => item.id === r.id) ? '&archive=prompt-search' : ''}`;
+  `/watch.html?seasonRace=${encodeURIComponent(r.id)}${search?.rounds.some((item) => item.id === r.id) ? '&archive=prompt-search' : ''}`;
 const phaseName = (r) =>
   r.phase === 'training'
     ? `Prompt v${r.generation}`

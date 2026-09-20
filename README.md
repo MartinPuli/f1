@@ -1,8 +1,11 @@
 <p align="center"><img src="public/logo.svg" alt="JEVRACE" width="420"></p>
 
-Ten drivers race a circuit they haven't seen. You choose their Jev models and prompts, follow the cars in 3D, and replay the result.
+JEVRACE is a public showcase of a racing experiment with Jev: ten driver prompts, 30 recorded races, and comparisons of the strategies tested. The landing page shows a recorded decision and measured prompt changes; visitors can watch the original 3D replays without an API key or new inference calls.
 
-JEVRACE runs in English on desktop and phones. Demo mode needs no account or API key; it uses local driving policies. Jev mode calls [TypeSafe](https://docs.typesafe.ai/introduction) with the visitor's own credential. Demo results don't measure model performance.
+- `/` — project walkthrough and prompt comparisons.
+- `/championship.html` — recorded races, grouped into viewing seasons.
+- `/lab.html` — detailed results and prompt history.
+- `/admin.html` — private race creation. Production requires an admin password.
 
 ## Run locally
 
@@ -13,7 +16,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. Local recordings live in `.races/`, which Git ignores. The development server binds to your machine's loopback address and shares one local archive; don't expose it as a public server.
+Open `http://localhost:5173` for the showcase, or `/admin.html` to create races locally. Local recordings live in `.races/`, which Git ignores. The development server binds to your machine's loopback address and shares one local archive; don't expose it as a public server.
 
 ## Deploy on Vercel
 
@@ -23,7 +26,7 @@ Vercel stores each browser's results in Postgres and uses a signed, HttpOnly coo
 
 The existing OpenAI Sites deployment uses a separate adapter with platform identity, D1, and R2. Its recordings don't automatically move to Vercel.
 
-## Set up a race
+## Set up a race as admin
 
 **Circuit** controls the name, seed, lap count, and Demo/Jev mode. A seed reproduces a circuit under the same generator version. The 32-bit seed range contains 4,294,967,296 values; the project generates tracks on demand and doesn't claim to have tested every value.
 
@@ -33,7 +36,7 @@ Click a driver to follow them, drag to move the camera, or select the circuit an
 
 Autosaves need both 30 simulation seconds of new progress and 60 seconds since the previous autosave. Pausing and finishing also queue a save. The queue keeps the newest pending snapshot per race and spaces writes at least 15 seconds apart; opening a dialog without changing the race doesn't save it again. They include standings, prompts, models, and replay frames. Replays don't call TypeSafe. If storage fails, Results shows the error and lets you retry or download JSON. Closing the page can lose progress since the last completed save.
 
-## Community replays
+## Admin archive and sharing
 
 **Results → My races** lists your private archive. After a race finishes, **Share race** lets you publish its replay in **Community**, including names, models, and prompts. Nothing publishes automatically. Choose **Unpublish** in My races to remove a shared recording; someone who already downloaded it can retain a copy. Community results come from visitors' browsers and aren't verified race scores.
 

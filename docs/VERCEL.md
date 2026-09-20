@@ -102,3 +102,11 @@ The archive uses browser identity, with no sign-in or recovery. If you need cros
 ## References
 
 The deployment uses Vercel's [Node.js Web Standard handler](https://vercel.com/docs/functions/runtimes/node-js), [rewrites](https://vercel.com/docs/routing/rewrites), and [cron authorization](https://vercel.com/docs/cron-jobs/manage-cron-jobs). Neon documents its [HTTP query driver](https://neon.com/docs/serverless/serverless-driver). Vercel overwrites [forwarded client IP headers](https://vercel.com/docs/headers/request-headers); only use this adapter behind that trusted edge.
+
+## Showcase and admin
+
+The homepage and recorded replays are public. Visitors cannot create races or call the TypeSafe proxy. `/admin.html` requires `ADMIN_PASSWORD` (at least 24 characters) and the existing `SESSION_SECRET`. Set `ADMIN_PASSWORD` as a sensitive server environment variable in Vercel, then redeploy. Generate a random password with `openssl rand -hex 24`; store it in your password manager. Do not use your TypeSafe key as the password.
+
+Without that variable, admin login and online race creation stay closed. Successful login sets an eight-hour Secure, HttpOnly, SameSite=Strict cookie. Rotating either secret invalidates existing admin sessions. The TypeSafe key stays in tab memory as before. Local development on loopback opens admin directly; do not expose the Vite server publicly.
+
+The landing-page clip is a nine-second excerpt of the recorded Season 01 final race, not newly generated footage. It makes no TypeSafe requests.
