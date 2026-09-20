@@ -14,7 +14,11 @@
     "db:vercel": "node --env-file=.env.local scripts/migrate-postgres.mjs",
     "check": "npm run format:check && npm test && npm run build:vercel",
     "championship": "node scripts/run-championship.mjs",
-    "championship:export": "node scripts/export-championship.mjs"
+    "championship:export": "node scripts/export-championship.mjs",
+    "prompts:search": "node scripts/search-prompts.mjs",
+    "prompts:export": "node scripts/export-search.mjs",
+    "prompts:refine": "node scripts/refine-prompts.mjs",
+    "archive:export": "node scripts/export-search.mjs && node scripts/export-archive.mjs"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

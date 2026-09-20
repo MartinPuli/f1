@@ -7,3 +7,6 @@ package-lock.json
 public/fonts
 drizzle/meta
 public/championship/*.json
+public/prompt-search/*.json
+
+public/race-archive.json

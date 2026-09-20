@@ -32,3 +32,19 @@ npm run check
 The exporter checks all eleven recordings, the selected prompts, standings and model identity before copying them. It rejects scripted incidents, failed decision requests and key-shaped values. The public JSON includes prompts and decisions, not credentials or request headers. The CSV provides one row per driver per race.
 
 `/championship.html` displays standings, race replays, training lap times, prompt versions and the held-out comparison. Results in the race viewer links to it. The checked-in history is durable and public; it does not depend on browser storage or the ninety-day personal archive. New experiments remain local until exported and deployed.
+
+## Continued search
+
+Season 01 stays unchanged. `npm run prompts:search` resumes its prompts and recorded training samples in `.races/prompt-search`, tests the three remaining strategy priorities per driver, then compares the strongest proposed grid against the Season 01 selected grid in four paired races. Each training seed appears twice per grid, with run order reversed in the second pair. A candidate must finish at least 0.5% faster on average, win three of four pairs and add no unfinished races. An unchanged prompt cannot claim a promotion from a faster stochastic replay.
+
+`npm run prompts:refine` starts only after that confirmation. Jev chooses untested local edits to pace, battery policy, lane choice and wording. Each sweep measures every available single-edit neighbor on both training circuits, retaining the full prompt and the editing decision. The best candidate grid then runs eight paired comparisons against the incumbent. Promotion requires seven wins, at least a 0.5% mean gain and no additional unfinished races. Two complete sweeps without a promotion trigger final comparisons on fresh seeds 18493 and 99251. These comparisons are not fed back into the search.
+
+This stopping rule establishes the best confirmed prompts found in the tested neighborhood. It cannot prove optimality over all possible text prompts. Traffic couples the drivers, and request latency varies. Six refinement sweeps or 200,000 new requests pause at a review checkpoint; they never count as convergence. Broad screening has a separate 100,000-new-request checkpoint.
+
+Both runners checkpoint completed races and preserve partial failures separately. Restarting uses the same directory and skips completed work. `npm run prompts:export` validates the saved recordings and publishes a snapshot to `public/prompt-search`. The prompt lab loads that snapshot while retaining the original championship table and archive. Snapshots show their status; the website does not claim a disconnected local process is still running in real time.
+
+## Public replay archive
+
+`/championship.html` groups completed recordings chronologically, ten per season. These seasons are viewing collections, not new scored championships. Every card retains its original session type. The original championship standings and prompt history remain at `/lab.html`.
+
+Run `npm run archive:export` after recording new races. Export checks completed Jev recordings, saved decision logs and SHA-256 hashes before generating the card data. Circuit outlines come from each recording’s seed. Replays load the saved frames and answers without calling Jev again. Never substitute local demo races or staged incidents for missing recordings.

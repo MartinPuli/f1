@@ -6,7 +6,7 @@ export default defineConfig(({ mode }) => ({
     outDir: 'dist/client',
     chunkSizeWarningLimit: 650,
     rollupOptions: {
-      input: { race: 'index.html', championship: 'championship.html' },
+      input: { race: 'index.html', championship: 'championship.html', lab: 'lab.html' },
       output: { manualChunks: { three: ['three', 'three/addons/controls/OrbitControls.js'] } },
     },
   },
