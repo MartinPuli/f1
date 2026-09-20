@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { validRecord } from '../src/recording-schema.js';
 import { summarize } from '../src/championship.js';
-import { comparePairs } from '../src/prompt-search.js';
+import { comparePairs, availableEdits } from '../src/prompt-search.js';
+import { TRAINING_SEEDS } from '../src/championship.js';
 
 const source = resolve(process.argv[2] || '.races/prompt-search');
 const target = resolve(process.argv[3] || 'public/prompt-search');
@@ -32,6 +33,50 @@ if (state.confirmed) {
     if (state.localSelected?.[id]?.version === driver.version)
       state.localSelected[id].confirmation.samePrompt = comparison.samePrompt;
   }
+}
+// Recompute promotions from recorded results before publishing a completed sweep.
+for (const cycle of state.refinements || []) {
+  if (!cycle.complete) continue;
+  const prefix = `local-${cycle.index}`;
+  const accepted = [];
+  for (const [id, incumbent] of Object.entries(cycle.incumbent)) {
+    const tried = cycle.candidates.map((key) => state.grids[key][id].edit).filter(Boolean);
+    if (Object.keys(availableEdits(incumbent, tried)).length)
+      throw new Error(`Incomplete prompt neighborhood: ${prefix}/${id}`);
+    for (const key of [`${prefix}-base`, ...cycle.candidates]) {
+      for (const seed of TRAINING_SEEDS) {
+        if (!state.rounds.some((r) => r.id === `${key}-${seed}`))
+          throw new Error(`Missing screening race: ${key}-${seed}`);
+      }
+    }
+    const changed = Object.entries(cycle.proposed).some(
+      ([driverId, driver]) => driver.prompt !== cycle.incumbent[driverId].prompt,
+    );
+    if (!changed) continue;
+    const samples = (key) =>
+      Array.from({ length: 8 }, (_, pair) => {
+        const result = state.rounds
+          .find((r) => r.id === `${prefix}-pair-${pair}-${key}-${TRAINING_SEEDS[pair % 2]}`)
+          ?.results.find((d) => d.id === id);
+        if (!result) throw new Error(`Missing confirmation: ${prefix}/${pair}/${id}`);
+        return result;
+      });
+    const comparison = comparePairs(
+      samples(`${prefix}-base`),
+      samples(`${prefix}-proposed`),
+      incumbent.prompt === cycle.proposed[id].prompt,
+      8,
+    );
+    const saved = cycle.comparisons?.[id];
+    for (const [field, value] of Object.entries(comparison)) {
+      if (field === 'samePrompt' && saved?.[field] === undefined) continue;
+      if (saved?.[field] !== value)
+        throw new Error(`Refinement comparison mismatch: ${prefix}/${id}/${field}`);
+    }
+    if (comparison.accepted) accepted.push(id);
+  }
+  if (!isDeepStrictEqual(accepted.sort(), [...cycle.accepted].sort()))
+    throw new Error(`Refinement promotions mismatch: ${prefix}`);
 }
 await mkdir(target, { recursive: true });
 for (const round of state.rounds) {

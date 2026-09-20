@@ -60,10 +60,15 @@ async function upstream(body) {
   return response.json();
 }
 // Reuse the production request validation and parser; only the transport is local.
-globalThis.fetch = (path, init) => {
+globalThis.fetch = async (path, init) => {
   if (path === '/api/decide') return api(new Request('http://localhost/api/decide', init));
   if (String(path) === 'https://api.typesafe.ai/v1/systemone') countCall();
-  return send(path, init);
+  const response = await send(path, init);
+  if (!response.ok && String(path) === 'https://api.typesafe.ai/v1/systemone') {
+    state.upstreamFailure = { status: response.status, at: new Date().toISOString() };
+    console.error(JSON.stringify({ upstreamStatus: response.status }));
+  }
+  return response;
 };
 function settingsFor(drivers) {
   const settings = defaultSettings();
