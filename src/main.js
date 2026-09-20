@@ -1419,3 +1419,15 @@ if (seasonRace && /^[a-z0-9-]{1,90}$/.test(seasonRace)) {
 }
 
 if (!adminMode && !seasonRace) location.replace('/championship.html');
+
+const mobileJevToggle = document.createElement('button');
+mobileJevToggle.className = 'mobile-jev-toggle';
+mobileJevToggle.textContent = 'JEV data';
+mobileJevToggle.setAttribute('aria-controls', 'jev-activity');
+mobileJevToggle.setAttribute('aria-expanded', 'false');
+mobileJevToggle.onclick = () => {
+  const open = document.body.classList.toggle('mobile-jev-open');
+  mobileJevToggle.setAttribute('aria-expanded', String(open));
+  mobileJevToggle.textContent = open ? 'Close JEV data' : 'JEV data';
+};
+document.body.append(mobileJevToggle);
