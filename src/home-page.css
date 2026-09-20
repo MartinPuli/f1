@@ -649,7 +649,7 @@
 }
 .home-page .hero-toolbar {
   position: absolute;
-  inset: auto 20% 2%;
+  inset: auto 20% max(clamp(48px, 7svh, 88px), calc(100% - 100svh + 64px));
   padding: 0;
   min-height: 0;
   justify-content: center;
@@ -753,7 +753,7 @@
 @media (max-width: 700px) {
   .home-page .hero-screen {
     padding-top: 64px;
-    padding-bottom: 70px;
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
     background: #e8eef3;
   }
   .home-page .site-header {
@@ -782,7 +782,7 @@
     min-height: 40px;
   }
   .home-page .hero-toolbar {
-    inset: auto 12px 10px;
+    inset: auto 12px calc(18px + env(safe-area-inset-bottom));
   }
   .home-page .hero-actions {
     width: 100%;
