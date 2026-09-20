@@ -1,4 +1,5 @@
 @import './typography.css';
+@import './controls.css';
 :root {
   --brand-ink: #243748;
   --brand-accent: #bc4436;

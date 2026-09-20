@@ -91,3 +91,7 @@ Default driver numbers follow the [2026 Formula 1 entry list](https://www.formul
 Open `/championship.html` for Season 01: six training races, a two-race held-out comparison and a three-round championship. The prompt lab keeps every driver’s tested prompts, lap times and replay. Jev selects strategy adjustments from measured results; the search keeps whichever tested prompt achieved the fastest average finish. Model weights do not change.
 
 The history and recordings live in `public/championship`; Results links to the page. See [the experiment protocol](docs/CHAMPIONSHIP.md) to run another season, inspect the limitations or export the results.
+
+### Homepage footage
+
+The hero replays `round-3-20260920`, from 12 to 21 seconds of its film timeline. It is captured directly from the browser at 3840 × 2160 and 60 fps, with a 1920 × 1080 copy for smaller screens. Both files use the same saved Jev responses; capturing or viewing them makes no inference requests. Replace the poster and both video files together when changing this race, and update the hero’s replay link.

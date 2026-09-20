@@ -1,3 +1,4 @@
+import './controls.css';
 import './archive-page.css';
 import './leaderboard-page.css';
 import { siteNavigation } from './site-navigation.js';

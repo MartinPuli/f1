@@ -37,7 +37,7 @@
 }
 .leaderboard-scroll th,
 .leaderboard-scroll td {
-  padding: 21px 22px;
+  padding: 15px 20px;
   border-bottom: 1px solid #e7edf2;
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -77,5 +77,46 @@
   }
   .leaderboard-scroll table {
     font-size: 12px;
+  }
+}
+
+.leaderboard-scroll th:first-child,
+.leaderboard-scroll td:first-child {
+  width: 60px;
+  text-align: center;
+}
+.leaderboard-scroll tbody th {
+  font-weight: 650;
+}
+.leaderboard-scroll tbody tr:hover {
+  background: #f8fafb;
+}
+.leaderboard-heading select {
+  min-width: 205px;
+}
+@media (max-width: 560px) {
+  .leaderboard-heading {
+    gap: 14px;
+  }
+  .leaderboard-heading select {
+    width: 100%;
+  }
+  .leaderboard-scroll th,
+  .leaderboard-scroll td {
+    padding: 15px 12px;
+  }
+  .leaderboard-scroll th:first-child,
+  .leaderboard-scroll td:first-child {
+    padding-inline: 10px;
+    width: 36px;
+  }
+  .leaderboard-scroll th:nth-child(2) {
+    position: sticky;
+    left: 0;
+    background: white;
+    box-shadow: 1px 0 #e2e8ed;
+  }
+  .leaderboard-scroll tbody tr:first-child th {
+    background: #fcf0ed;
   }
 }

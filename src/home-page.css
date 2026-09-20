@@ -149,3 +149,24 @@
     padding: 12px 15px;
   }
 }
+.home-page .site-header {
+  position: fixed;
+  inset: 0 0 auto;
+  background: rgb(255 255 255 / 0.68);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom-color: rgb(255 255 255 / 0.4);
+  transition: background 160ms;
+}
+.home-page .site-header.is-scrolled {
+  background: rgb(255 255 255 / 0.94);
+}
+.home-page .site-header::after {
+  display: none;
+}
+.home-page .video-hero {
+  height: 100svh;
+}
+.home-page .site-header nav a:hover {
+  background: rgb(255 255 255 / 0.65);
+}

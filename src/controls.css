@@ -1,0 +1,73 @@
+/* Native menus preserve keyboard and mobile picker behavior; the chevron stays inside the field. */
+select,
+:root .prompt-tools select,
+:root .leaderboard-heading select,
+:root dialog select {
+  appearance: none;
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 46px;
+  padding: 11px 44px 11px 15px;
+  border: 1px solid #c4d1dc;
+  border-radius: 10px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23243748' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 16px 16px;
+  color: #243748;
+  font:
+    600 14px/1.4 Manrope,
+    sans-serif;
+  cursor: pointer;
+  text-overflow: ellipsis;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+}
+select:hover {
+  border-color: #8396a5;
+}
+select:focus-visible {
+  outline: 2px solid #bc4436;
+  outline-offset: 3px;
+  border-color: #bc4436;
+}
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button,
+select,
+a {
+  touch-action: manipulation;
+}
+@media (max-width: 600px) {
+  select,
+  :root .prompt-tools select,
+  :root .leaderboard-heading select,
+  :root dialog select {
+    font-size: 16px;
+    min-height: 48px;
+  }
+}
+@media (max-width: 600px) {
+  .race-footer a,
+  .race-footer button,
+  .season-tabs button,
+  .prompt-replay,
+  .back-to-versions,
+  .home-section-heading > a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  .race-footer {
+    gap: 12px;
+  }
+  .race-footer button {
+    padding-inline: 10px;
+  }
+}

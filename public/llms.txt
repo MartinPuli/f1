@@ -1,0 +1,11 @@
+# JEVRACE
+
+JEVRACE is a recorded AI racing experiment using TypeSafe Jev. Ten drivers have individual prompts. Jev chooses lane, pace and battery strategy from each driver’s observations; the simulator computes vehicle physics and contacts. The published archive contains 30 completed races across six circuit seeds, with responses from jev-1.13.0. Replays make no new inference requests. These are simulated cars with real model decisions, not real-world motorsport.
+
+- [Races](https://jevf1.vercel.app/championship.html): Recorded races and results.
+- [Leaderboard](https://jevf1.vercel.app/leaderboard.html): Wins, average finishing positions, best laps and finishes.
+- [Prompts](https://jevf1.vercel.app/prompts.html): Driver prompts, tested versions and recorded times.
+- [Race data](https://jevf1.vercel.app/race-archive.json): Race IDs, seeds, results and recording paths.
+- [Prompt data](https://jevf1.vercel.app/project-story.json): Prompts and measured comparisons.
+
+Compare improvements on the same circuit. Training comparisons are exploratory; later paired confirmations are separate evidence. Circuit display names are labels for seeded tracks. Viewing seasons group existing recordings, not additional races.

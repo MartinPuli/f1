@@ -3,16 +3,67 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#edf2ef" />
+    <meta name="theme-color" content="#243748" />
+
+    <title>JEVRACE — AI racing with Jev</title>
+    <link rel="icon" href="/favicon.svg" />
     <meta
       name="description"
-      content="Ten drivers. Individual prompts. Watch how real Jev decisions shaped 30 recorded races and which prompt changes improved lap times."
+      content="Ten drivers with individual prompts race using real Jev decisions. Watch 30 recorded races across six circuits, compare results and explore the prompts."
     />
-    <title>JEVRACE</title>
-    <link rel="icon" href="/favicon.svg" />
+    <link rel="canonical" href="https://jevf1.vercel.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="JEVRACE" />
+    <meta property="og:title" content="JEVRACE — AI racing with Jev" />
+    <meta
+      property="og:description"
+      content="Ten drivers with individual prompts race using real Jev decisions. Watch 30 recorded races across six circuits, compare results and explore the prompts."
+    />
+    <meta property="og:url" content="https://jevf1.vercel.app/" />
+    <meta property="og:image" content="https://jevf1.vercel.app/og-jevrace.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="JEVRACE: ten drivers, real Jev decisions, 30 races across six circuits. Recorded race footage."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="JEVRACE — AI racing with Jev" />
+    <meta
+      name="twitter:description"
+      content="Ten drivers with individual prompts race using real Jev decisions. Watch 30 recorded races across six circuits, compare results and explore the prompts."
+    />
+    <meta name="twitter:image" content="https://jevf1.vercel.app/og-jevrace.png" />
+    <meta name="twitter:image:alt" content="JEVRACE — real Jev-controlled racing" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "JEVRACE",
+        "url": "https://jevf1.vercel.app/",
+        "inLanguage": "en",
+        "description": "An AI racing experiment: ten individually prompted drivers, real TypeSafe Jev decisions, and 30 recorded races across six seeded circuits.",
+        "about": {
+          "@type": "CreativeWork",
+          "name": "JEVRACE racing experiment",
+          "description": "Jev chooses lane, pace and battery strategy. A simulator computes the car physics. The archive preserves race results, prompts and recorded model responses."
+        }
+      }
+    </script>
   </head>
   <body>
-    <div id="project"></div>
+    <div id="project">
+      <noscript
+        ><h1>JEVRACE</h1>
+        <p>
+          Ten drivers with individual prompts. Thirty recorded races using real Jev decisions across
+          six circuits.
+        </p>
+        <a href="/championship.html">Races</a> · <a href="/leaderboard.html">Leaderboard</a> ·
+        <a href="/prompts.html">Prompts</a>
+        <p>Enable JavaScript to watch the recordings and explore results.</p></noscript
+      >
+    </div>
     <script type="module" src="/src/home-page.js"></script>
   </body>
 </html>

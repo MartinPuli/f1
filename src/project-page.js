@@ -1,3 +1,4 @@
+import './controls.css';
 import { siteNavigation } from './site-navigation.js';
 import './project-page.css';
 const legacy = new URLSearchParams(location.search);

@@ -768,3 +768,20 @@ dialog h2 {
     gap: 8px;
   }
 }
+.race-footer button {
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #d9e2e9;
+  border-radius: 9px;
+  background: #fff;
+  color: #243748;
+  font-weight: 650;
+}
+.race-footer button:hover {
+  background: #f3f6f8;
+  border-color: #8396a5;
+}
+.race-footer button:focus-visible {
+  outline: 2px solid #bc4436;
+  outline-offset: 3px;
+}

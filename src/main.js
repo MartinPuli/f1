@@ -1,3 +1,4 @@
+import { circuitName } from './race-names.js';
 const adminMode = location.pathname === '/admin.html';
 import { RaceSound } from './sound.js';
 const sound = new RaceSound();
@@ -30,6 +31,8 @@ import { Race, DRIVERS, makeTrack, formatTime } from './simulation.js';
 import { RaceScene } from './scene.js';
 import { recordRace, applyReplay } from './recording.js';
 import './style.css';
+import './results-dialog.css';
+import './controls.css';
 import { validRecord, cleanRecord } from './recording-schema.js';
 import { reelFrame, filmShot, filmGridHold } from './showcase.js';
 let editingKey = false;
@@ -664,7 +667,7 @@ function updateResults() {
   if (renderKey === resultsRenderKey) return;
   resultsRenderKey = renderKey;
   const record = currentRecord();
-  $('#results-race-name').textContent = raceName;
+  $('#results-race-name').textContent = replay ? circuitName(record.seed) : raceName;
   $('#results-status').textContent =
     `${record.finished ? 'Final classification' : record.duration ? 'Paused' : 'Starting grid'} · ${record.laps} ${record.laps === 1 ? 'lap' : 'laps'}`;
   $('#results-body').innerHTML = record.drivers
