@@ -1,5 +1,5 @@
 import { secureResponse } from '../server/security.js';
-import { showcaseAccess } from '../server/showcase-access.js';
+import { publicShowcaseAccess } from '../server/public-showcase-access.js';
 import { normalizeVercelRequest } from '../server/vercel.js';
 import { neon } from '@neondatabase/serverless';
 import { postgresArchive } from '../server/postgres-archive.js';
@@ -9,7 +9,7 @@ let handler;
 export default {
   async fetch(request) {
     request = normalizeVercelRequest(request);
-    const access = await showcaseAccess(request, process.env);
+    const access = publicShowcaseAccess(request);
     if (access) return secureResponse(access);
     if (!handler) {
       let store;

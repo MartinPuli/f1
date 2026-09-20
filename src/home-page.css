@@ -924,3 +924,18 @@
     font-size: 12px;
   }
 }
+
+/* The opening screen keeps the next white section below the fold. */
+@media (min-width: 721px) {
+  .home-page .hero-screen {
+    min-height: 100svh;
+    background: #62696b;
+  }
+}
+
+@media (min-width: 721px) and (min-aspect-ratio: 3/2) {
+  .home-page .hero-screen video {
+    height: max(100svh, 56.25vw);
+    object-fit: fill;
+  }
+}

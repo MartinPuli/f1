@@ -1,3 +1,4 @@
+import './analytics.js';
 import './site-navigation.css';
 export function siteNavigation(current) {
   const items = [

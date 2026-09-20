@@ -1,3 +1,4 @@
+import './analytics.js';
 import { circuitName } from './race-names.js';
 const adminMode = location.pathname === '/admin.html';
 import { RaceSound } from './sound.js';
