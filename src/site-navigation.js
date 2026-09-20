@@ -1,10 +1,8 @@
 import './site-navigation.css';
 export function siteNavigation(current) {
   const items = [
-    ['project', '/', 'Project'],
     ['races', '/championship.html', 'Races'],
-    ['prompts', '/prompts.html', 'Prompt evolution'],
-    ['results', '/lab.html', 'Results'],
+    ['prompts', '/prompts.html', 'Prompts'],
   ];
   const header = document.createElement('header');
   header.className = 'site-header';

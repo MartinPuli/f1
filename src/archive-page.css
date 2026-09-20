@@ -680,3 +680,51 @@ select:focus-visible {
     font-size: 13px;
   }
 }
+.archive-heading {
+  margin: 8px 0 28px;
+  justify-content: space-between;
+}
+.archive-heading h1 {
+  margin: 0;
+  font-size: 48px;
+}
+.all-results {
+  font-size: 14px;
+  color: #5c7082;
+}
+.race-grid {
+  margin-top: 26px;
+}
+.race-body {
+  padding: 16px 20px;
+}
+.race-card-title {
+  margin: 0 0 15px;
+}
+.race-preview {
+  padding: 12px 18px;
+}
+.race-preview svg {
+  height: 125px;
+}
+.race-footer {
+  padding-top: 12px;
+}
+.season-tabs button span {
+  display: none;
+}
+@media (max-width: 560px) {
+  .archive-heading {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .archive-heading h1 {
+    font-size: 40px;
+  }
+  .all-results {
+    font-size: 12px;
+    text-align: right;
+    max-width: 125px;
+  }
+}
