@@ -36,6 +36,8 @@ try {
   if (error.code !== 'ENOENT') throw error;
 }
 if (!state?.confirmed) throw new Error('Complete the broad search and paired confirmation first.');
+if (state.status === 'stopped')
+  throw new Error('The owner ended this search. No requests were sent.');
 async function save() {
   state.updated = new Date().toISOString();
   const text = JSON.stringify(state, null, 2);

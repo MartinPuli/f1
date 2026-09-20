@@ -113,6 +113,11 @@ for (const round of state.rounds) {
   round.sha256 = createHash('sha256').update(text).digest('hex');
   await copyFile(resolve(source, round.file), resolve(target, round.file));
 }
+// The public archive contains recorded work, not drafts or failed API attempts.
+if (state.status === 'stopped') {
+  for (const field of ['current', 'error', 'failures', 'upstreamFailure']) delete state[field];
+  for (const cycle of state.refinements || []) delete cycle.draft;
+}
 const text = JSON.stringify(state, null, 2);
 if (/apikey_[a-z0-9_]+/i.test(text)) throw new Error('Credential pattern found.');
 await writeFile(resolve(target, 'season.json.tmp'), text);

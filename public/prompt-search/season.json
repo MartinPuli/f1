@@ -2,11 +2,11 @@
   "version": 1,
   "name": "JEVRACE · Continued prompt search",
   "created": "2026-09-20T08:50:24.693Z",
-  "status": "paused",
+  "status": "stopped",
   "model": "jev-latest",
   "laps": 2,
   "incidents": false,
-  "calls": 54549,
+  "calls": 54569,
   "generations": [
     {
       "id": 0,
@@ -7987,14 +7987,6 @@
       "sha256": "b1d5aa52b845fb56f9f0c0519c203c4bc501246c11cbfa583085d2d5fe03aaae"
     }
   ],
-  "failures": [
-    {
-      "id": "local-0-c1-2046",
-      "file": "local-0-c1-2046-failed-1789896763046.json",
-      "error": "TypeSafe is unavailable. Try again.",
-      "at": "2026-09-20T09:32:43.048Z"
-    }
-  ],
   "trainingSeeds": [
     8912,
     2046
@@ -8005,8 +7997,8 @@
     91827,
     20260920
   ],
-  "method": "Continued local prompt search after broad strategy screening. Jev chooses untested edits to pace, battery, lane choice and wording. Each sweep measures every available one-edit neighbor on the same two circuits. The strongest candidate grid faces the incumbent in eight paired races; promotion requires a 0.5% mean gain, at least seven wins and no additional unfinished races. Two full sweeps with no promotions trigger a final comparison on two fresh circuits. Six sweeps or 200,000 new requests trigger a review checkpoint, not an optimality claim. Model weights and physics stay fixed; traffic and response latency still vary.",
-  "updated": "2026-09-20T09:32:43.050Z",
+  "method": "Recorded Jev prompt experiments. Six strategy versions were tested on two circuits. Repeated comparisons retained measured improvements for Oscar and George. Local refinement stopped before confirmation; those trials did not replace the selected prompts. No global optimum is claimed.",
+  "updated": "2026-09-20T09:40:25.268Z",
   "standings": [
     {
       "id": "max",
@@ -10810,12 +10802,5 @@
     }
   },
   "stableSweeps": 0,
-  "current": {
-    "id": "local-0-c1-2046",
-    "phase": "refinement-screen",
-    "seed": 2046,
-    "generation": "local-0-c1",
-    "seconds": 30.024999999999363
-  },
-  "error": "TypeSafe is unavailable. Try again."
+  "stopReason": "Stopped by the owner after available TypeSafe credits were exhausted."
 }

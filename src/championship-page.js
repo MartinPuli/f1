@@ -63,7 +63,7 @@ function renderDriver() {
     search?.sourceSelected ||
     season.selected)?.[driverId];
   document.querySelector('#driver-panel').innerHTML = `
-    <div class="driver-heading"><span class="number" style="--paint:${driver.color}">${esc(driver.number)}</span><div><h2>${esc(driver.name)}</h2><p>${selected ? `Selected ${esc(selected.version)}` : 'Training in progress'}</p></div></div>
+    <div class="driver-heading"><span class="number" style="--paint:${driver.color}">${esc(driver.number)}</span><div><h2>${esc(driver.name)}</h2><p>${selected ? `Selected ${esc(selected.version)}` : 'Recorded prompt'}</p></div></div>
     <div class="chart-heading"><h3>Flying lap</h3><label>Circuit <select id="training-seed">${study.trainingSeeds.map((s) => `<option ${s === Number(seed) ? 'selected' : ''}>${s}</option>`).join('')}</select></label></div>
     ${chart(rows)}<p class="note">Lap 2 on the same circuit. Lower is faster.</p>
     <div class="table-scroll"><table><thead><tr><th>Prompt</th><th>Lap 2</th><th>Total</th><th>Contact</th><th></th></tr></thead><tbody>${rows
@@ -75,9 +75,10 @@ function renderDriver() {
     ${search ? confirmation(driverId) : validation(driverId)}
     <h3 class="section-label">Prompt history</h3>
     <div class="prompt-history">${study.generations
+      .filter((g) => study.rounds.some((r) => r.phase === 'training' && r.generation === g.id))
       .map((g) => {
         const d = g.drivers[driverId];
-        return `<details ${selected?.version === d.version ? 'open' : ''}><summary><span>v${g.id} · ${esc(d.strategy)}</span><span>${selected?.version === d.version ? 'Selected' : study.rounds.some((r) => r.phase === 'training' && r.generation === g.id) ? 'Tested' : 'Queued'}</span></summary><p>${esc(d.prompt)}</p>${g.id > 0 ? `<small>Strategy chosen by Jev from earlier results${Number.isFinite(d.selection?.confidence) ? ` · ${Math.round(d.selection.confidence * 100)}% confidence` : ''}</small>` : ''}</details>`;
+        return `<details ${selected?.version === d.version ? 'open' : ''}><summary><span>v${g.id} · ${esc(d.strategy)}</span><span>${selected?.version === d.version ? 'Selected' : 'Tested'}</span></summary><p>${esc(d.prompt)}</p>${g.id > 0 ? `<small>Strategy chosen by Jev from earlier results${Number.isFinite(d.selection?.confidence) ? ` · ${Math.round(d.selection.confidence * 100)}% confidence` : ''}</small>` : ''}</details>`;
       })
       .join('')}</div>${refinementHistory(driverId)}`;
   document.querySelector('#training-seed').onchange = (event) => {
@@ -89,14 +90,18 @@ function renderDriver() {
 function refinementHistory(id) {
   if (!search?.refinements?.length) return '';
   return search.refinements
+    .filter((cycle) =>
+      cycle.candidates.some((key) => search.rounds.some((r) => r.id === `${key}-${seed}`)),
+    )
     .map((cycle) => {
       const result = cycle.comparisons?.[id];
-      return `<h3 class="section-label">Refinement ${cycle.index + 1} · ${cycle.complete ? 'measured' : 'running'}</h3><p class="note">${result ? `${result.accepted ? 'Retained' : 'Rejected'} candidate: ${seconds(result.before)} → ${seconds(result.after)} mean total; ${result.wins}/${result.pairs} paired wins.` : 'Testing local edits to the current prompt.'}</p>${cycle.candidates
+      return `<h3 class="section-label">Refinement ${cycle.index + 1} · recorded</h3><p class="note">${result ? `${result.accepted ? 'Retained' : 'Rejected'} candidate: ${seconds(result.before)} → ${seconds(result.after)} mean total; ${result.wins}/${result.pairs} paired wins.` : 'Recorded trials. Selected prompt unchanged.'}</p>${cycle.candidates
+        .filter((key) => search.rounds.some((r) => r.id === `${key}-${seed}`))
         .map((key) => {
           const driver = search.grids[key][id];
           const round = search.rounds.find((r) => r.id === `${key}-${seed}`);
           const sample = round?.results.find((d) => d.id === id);
-          return `<details class="all-races"><summary>${esc(driver.version)} · ${esc(driver.edit || 'unchanged control')}${sample ? ` · lap 2 ${seconds(sample.flyingLap)} · total ${seconds(sample.finishTime)}` : ' · queued'}</summary><p>${esc(driver.prompt)}</p>${round ? `<a href="${replay(round)}">Replay ↗</a>` : ''}</details>`;
+          return `<details class="all-races"><summary>${esc(driver.version)} · ${esc(driver.edit || 'unchanged control')}${sample ? ` · lap 2 ${seconds(sample.flyingLap)} · total ${seconds(sample.finishTime)}` : ''}</summary><p>${esc(driver.prompt)}</p>${round ? `<a href="${replay(round)}">Replay ↗</a>` : ''}</details>`;
         })
         .join('')}`;
     })
@@ -140,7 +145,7 @@ function render() {
     .join(
       '',
     )}<p class="note">25–18–15–12–10–8–6–4–2–1 points. Finishers only. Ties use position countback.</p></section></div></section>
-  <section id="training-view" hidden>${search ? `<p class="note">Search snapshot · ${esc(search.status)} · ${esc(new Date(search.updated).toLocaleString())} · ${search.rounds.length - season.rounds.length} additional races · <a href="/prompt-search/season.json" download>Download search history</a></p>` : ''}<div class="lab-layout"><aside><label for="driver-select">Driver</label><select id="driver-select">${DRIVERS.map((d) => `<option value="${d.id}" ${d.id === driverId ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select><h2>Every version.<br/>Every attempt saved.</h2><p>Jev chooses a strategy adjustment using each driver’s earlier results. Candidates race the same two circuits. The continued search repeats comparisons before retaining a new prompt; the Season 01 championship stays unchanged.</p><p>Original prompts can win. Unfinished races receive a penalty; slower attempts stay in the history.</p><p class="note">This optimizes prompts. Model weights stay unchanged. All ten cars race together, so differences also include traffic and API latency.</p></aside><section id="driver-panel"></section></div></section>
+  <section id="training-view" hidden>${search ? `<p class="note">Recorded results · ${search.rounds.length} races · <a href="/prompt-search/season.json" download>Download search history</a></p>` : ''}<div class="lab-layout"><aside><label for="driver-select">Driver</label><select id="driver-select">${DRIVERS.map((d) => `<option value="${d.id}" ${d.id === driverId ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}</select><h2>Prompt history</h2><p>Real Jev calls, saved race results. Compare each driver’s tested prompts.</p></aside><section id="driver-panel"></section></div></section>
   <details class="all-races"><summary>All ${season.rounds.length} races & methodology</summary><p>${esc(season.method)}</p><p>Model: ${esc(season.resolvedModel || season.model)}. Physics: 40 Hz. Each driver requests the next decision after its previous reply; one request in flight per driver. Training and held-out seeds are excluded from the championship.</p><div class="table-scroll"><table><thead><tr><th>Session</th><th>Seed</th><th>Calls</th><th>Mean latency</th><th>Recording</th></tr></thead><tbody>${season.rounds.map((r) => `<tr><th>${phaseName(r)}</th><td>${r.seed}</td><td>${r.calls}</td><td>${Math.round(r.latencyMs)}ms</td><td><a href="${replay(r)}">Watch</a> · <a href="/championship/${esc(r.file)}" download>JSON</a></td></tr>`).join('')}</tbody></table></div></details>`;
   document.querySelectorAll('[data-tab]').forEach((button) => {
     button.onclick = () => {
@@ -158,7 +163,7 @@ function render() {
   if (search) {
     const detail = document.createElement('details');
     detail.className = 'all-races';
-    detail.innerHTML = `<summary>Continued search · all attempts</summary><p>${esc(search.method)}</p><div class="table-scroll"><table><thead><tr><th>Session</th><th>Seed</th><th>Calls</th><th>Replay</th></tr></thead><tbody>${search.rounds
+    detail.innerHTML = `<summary>Recorded trials</summary><div class="table-scroll"><table><thead><tr><th>Session</th><th>Seed</th><th>Calls</th><th>Replay</th></tr></thead><tbody>${search.rounds
       .filter((r) => !season.rounds.some((old) => old.id === r.id))
       .map(
         (r) =>
