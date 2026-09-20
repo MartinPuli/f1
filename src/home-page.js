@@ -8,14 +8,29 @@ const url = (id) => `/watch.html?seasonRace=${encodeURIComponent(id)}&archive=pr
 host.innerHTML = `<main class="home-main">
 <section class="video-hero" aria-label="Recorded Jev race">
 <div class="hero-screen"><video muted loop playsinline preload="metadata" poster="/race-preview-hq.jpg" aria-label="Golden Coast race recording"><source src="/race-preview-4k.mp4" media="(min-width: 1100px)" type="video/mp4"><source src="/race-preview-1080.mp4" type="video/mp4"></video></div>
-<div class="hero-toolbar"><div class="hero-caption"><strong>Golden Coast</strong><span>10 drivers · Jev 1.13.0</span></div><div class="hero-actions"><button id="hero-play" aria-label="Play preview">▶</button><a href="${url('round-3-20260920')}" class="hero-watch">Watch race <span aria-hidden="true">▶</span></a></div></div>
+<div class="hero-toolbar"><div class="hero-caption"><strong>Golden Coast</strong><span>10 drivers · Jev 1.13.0</span></div><div class="hero-actions"><button id="show-race-data" aria-haspopup="dialog">Race data</button><button id="hero-play" aria-label="Play preview">▶</button><a href="${url('round-3-20260920')}" class="hero-watch">Watch race <span aria-hidden="true">▶</span></a></div></div>
 </section>
-<section class="jev-explainer home-section" aria-labelledby="jev-title"><div class="section-heading"><div><span class="section-kicker">Behind the race</span><h1 id="jev-title">Ten drivers.<br>Real <em>Jev</em> decisions.</h1></div><p>Each driver has a prompt.<br>Jev chooses. The physics engine drives.</p></div>
-<div class="decision-flow" aria-label="How Jev controls a driver"><div><span class="flow-number">01</span><strong>Observe</strong><small>Track + traffic + driver prompt</small></div><span class="flow-link" aria-hidden="true"></span><div><span class="flow-number">02</span><strong>Ask Jev</strong><small>Lane, pace and battery</small></div><span class="flow-link" aria-hidden="true"></span><div><span class="flow-number">03</span><strong>Drive</strong><small>Physics, grip and contact</small></div></div>
-<div id="decision-example" class="decision-example"><a href="/prompts.html">Explore driver prompts</a></div></section>
-<section id="circuits" class="home-circuits home-section"><div class="home-section-heading"><h2>Six circuits. Every race saved.</h2><a href="/championship.html">All races</a></div><div class="circuit-grid" id="circuit-grid"></div></section></main>`;
+<dialog id="race-data" aria-labelledby="race-data-title"><form method="dialog"><button class="data-close" aria-label="Close race data">×</button></form><h2 id="race-data-title">Golden Coast</h2><p class="data-summary">Each driver’s prompt and observations go to Jev.<br>It chooses lane, pace and battery. Physics handles the car.</p><div id="decision-example" class="decision-example"><a href="/prompts.html">Driver prompts</a></div></dialog>
+<section id="circuits" class="home-circuits home-section"><div class="home-section-heading"><h1>Circuits</h1><a href="/championship.html">All races</a></div><div class="circuit-grid" id="circuit-grid"></div></section></main>`;
 siteNavigation('project');
 document.body.classList.add('home-page');
+const heroScreen = document.querySelector('.hero-screen');
+heroScreen.append(document.querySelector('.site-header'));
+heroScreen.append(document.querySelector('.hero-toolbar'));
+const raceData = document.querySelector('#race-data');
+document.querySelector('#show-race-data').onclick = () => raceData.showModal();
+raceData.addEventListener('click', (event) => {
+  if (event.target === raceData) {
+    const rect = raceData.getBoundingClientRect();
+    if (
+      event.clientX < rect.left ||
+      event.clientX > rect.right ||
+      event.clientY < rect.top ||
+      event.clientY > rect.bottom
+    )
+      raceData.close();
+  }
+});
 const video = document.querySelector('video'),
   button = document.querySelector('#hero-play');
 const sync = () => {
