@@ -9,8 +9,8 @@ export default defineConfig(({ mode }) => ({
       input: {
         race: 'index.html',
         prompts: 'prompts.html',
+        leaderboard: 'leaderboard.html',
         watch: 'watch.html',
-        admin: 'admin.html',
         championship: 'championship.html',
         lab: 'lab.html',
       },

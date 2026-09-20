@@ -1,3 +1,4 @@
+@import './typography.css';
 :root {
   --brand-ink: #243748;
   --brand-accent: #bc4436;
@@ -42,7 +43,7 @@
   padding: 12px 17px;
   border-radius: 8px;
   font:
-    600 15px Barlow,
+    600 15px Manrope,
     sans-serif;
   color: var(--brand-muted);
   text-decoration: none;
@@ -59,7 +60,7 @@
 }
 .site-admin {
   font:
-    600 13px Barlow,
+    600 13px Manrope,
     sans-serif;
   color: var(--brand-muted);
   white-space: nowrap;
@@ -127,5 +128,66 @@ html {
   }
   html {
     scroll-padding-top: 132px !important;
+  }
+}
+.site-header nav {
+  margin-left: auto;
+  margin-right: 0;
+}
+.site-header nav a {
+  font-size: 14px;
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .site-header-inner {
+    flex-wrap: nowrap;
+    padding: 15px 20px;
+    gap: 20px;
+  }
+  .site-header nav {
+    order: 0;
+    width: auto;
+    margin-left: auto;
+    gap: 3px;
+  }
+  .site-header nav a {
+    font-size: 12px;
+    padding: 11px 10px;
+    border-radius: 7px;
+  }
+  .site-logo img {
+    width: 135px;
+  }
+  .site-header nav a:first-child {
+    margin: 0;
+  }
+  html {
+    scroll-padding-top: 100px !important;
+  }
+}
+@media (max-width: 560px) {
+  .site-header-inner {
+    gap: 8px;
+    padding: 15px 16px;
+  }
+  .site-logo img {
+    width: 105px;
+  }
+  .site-header nav a {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  .site-header nav {
+    gap: 0;
+  }
+}
+@media (max-width: 370px) {
+  .site-header-inner {
+    flex-wrap: wrap;
+  }
+  .site-header nav {
+    width: 100%;
+    justify-content: flex-end;
+    order: 2;
   }
 }

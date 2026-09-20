@@ -24,7 +24,7 @@ test('landing evidence matches completed Jev recordings and confirmed prompt com
     for (const version of driver.versions)
       for (const run of version.races) {
         const result = search.rounds.find((r) => r.id === run.id);
-        assert.equal(result.phase, 'training');
+        assert.equal(result.promptVersions[driver.id], `${driver.id}-v${version.version}`);
         assert.equal(result.seed, run.seed);
         assert.equal(result.results.find((d) => d.id === driver.id).finishTime, run.time);
       }

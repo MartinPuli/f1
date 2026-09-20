@@ -1,0 +1,81 @@
+.leaderboard-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin: 8px 0 28px;
+}
+.page-title {
+  font:
+    750 36px/1.2 Manrope,
+    sans-serif;
+  letter-spacing: -1px;
+  margin: 0 0 26px;
+}
+.leaderboard-heading .page-title {
+  margin: 0;
+}
+.leaderboard-heading select {
+  font: 600 13px Manrope;
+  padding: 12px;
+  background: white;
+  border: 1px solid #d9e2e9;
+  border-radius: 8px;
+  color: #243748;
+}
+.leaderboard-scroll {
+  overflow-x: auto;
+  background: white;
+  border: 1px solid #d9e2e9;
+  border-radius: 12px;
+}
+.leaderboard-scroll table {
+  border-collapse: collapse;
+  width: 100%;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.leaderboard-scroll th,
+.leaderboard-scroll td {
+  padding: 21px 22px;
+  border-bottom: 1px solid #e7edf2;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.leaderboard-scroll th:nth-child(2),
+.leaderboard-scroll th[scope='row'] {
+  text-align: left;
+}
+.leaderboard-scroll thead th {
+  font-size: 11px;
+  font-weight: 600;
+  color: #5c7082;
+  background: #edf2f6;
+}
+.leaderboard-scroll tbody tr:first-child {
+  background: #fcf0ed;
+}
+.leaderboard-scroll tbody tr:first-child td:first-child {
+  color: #bc4436;
+  font-weight: 750;
+}
+.leaderboard-scroll tbody tr:last-child > * {
+  border: 0;
+}
+@media (max-width: 560px) {
+  .leaderboard-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .page-title {
+    font-size: 30px;
+  }
+  .leaderboard-scroll th,
+  .leaderboard-scroll td {
+    padding: 17px 13px;
+  }
+  .leaderboard-scroll table {
+    font-size: 12px;
+  }
+}

@@ -20,7 +20,12 @@ const story = {
       prompt: g.drivers[id].prompt,
       strategy: g.drivers[id].strategy,
       races: search.rounds
-        .filter((r) => r.phase === 'training' && r.generation === g.id)
+        .filter(
+          (r) =>
+            (r.phase === 'training' && r.generation === g.id) ||
+            (!search.trainingSeeds.includes(r.seed) &&
+              r.promptVersions[id] === g.drivers[id].version),
+        )
         .map((r) => ({
           id: r.id,
           seed: r.seed,

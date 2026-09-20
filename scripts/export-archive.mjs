@@ -15,6 +15,16 @@ for (const round of state.rounds) {
     !record.finished ||
     record.mode !== 'jev' ||
     !record.decisionLog.length ||
+    record.decisionLog.some(
+      (batch) =>
+        batch.failed || batch.answers.some((answer) => answer.model !== state.resolvedModel),
+    ) ||
+    record.settings.drivers.some(
+      (driver) =>
+        !record.decisionLog.some((batch) =>
+          batch.answers.some((answer) => answer.id === driver.id),
+        ),
+    ) ||
     record.incidents
   )
     throw new Error(`Unverified race: ${round.id}`);
@@ -46,8 +56,10 @@ for (const round of state.rounds) {
     calls: round.calls,
     drivers: record.drivers.length,
     path,
-    results: round.results.map(({ name, position, finishTime, finished }) => ({
+    results: round.results.map(({ id, name, position, finishTime, finished, bestLap }) => ({
+      id,
       name,
+      bestLap,
       position,
       finishTime,
       finished,

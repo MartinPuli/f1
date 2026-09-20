@@ -1,23 +1,6 @@
-@font-face {
-  font-family: Barlow;
-  src: url('/fonts/barlow-regular.ttf');
-  font-weight: 400;
-  font-display: swap;
-}
-@font-face {
-  font-family: Barlow;
-  src: url('/fonts/barlow-semibold.ttf');
-  font-weight: 600;
-  font-display: swap;
-}
-@font-face {
-  font-family: Condensed;
-  src: url('/fonts/barlow-condensed-semibold.ttf');
-  font-weight: 600;
-  font-display: swap;
-}
+@import './typography.css';
 :root {
-  font-family: Barlow, sans-serif;
+  font-family: Manrope, sans-serif;
   color: #243748;
   background: #f3f6f8;
   --orange: #bc4436;
@@ -63,7 +46,7 @@ button:focus-visible {
   font-weight: 600;
 }
 main {
-  max-width: 1240px;
+  max-width: 1280px;
   margin: auto;
   padding: 30px 36px 32px;
 }
@@ -81,7 +64,7 @@ main {
 }
 h1 {
   font:
-    600 clamp(54px, 6vw, 88px)/0.98 Condensed,
+    600 clamp(54px, 6vw, 88px)/0.98 Manrope,
     sans-serif;
   letter-spacing: -2px;
   margin: 18px 0 0;
@@ -92,7 +75,7 @@ h1 {
   gap: 4px;
 }
 .archive-meta strong {
-  font: 600 52px/1 Condensed;
+  font: 600 52px/1 Manrope;
 }
 .archive-meta span {
   color: var(--muted);
@@ -234,7 +217,7 @@ h1 {
   font-weight: 600;
 }
 .place {
-  font: 600 24px Condensed;
+  font: 600 24px Manrope;
   color: var(--orange);
   border-right: 1px solid var(--line);
   padding-right: 12px;
@@ -297,7 +280,7 @@ dialog::backdrop {
   color: var(--muted);
 }
 dialog h2 {
-  font: 600 36px Condensed;
+  font: 600 36px Manrope;
   margin: 10px 0 20px;
 }
 .results-list {
@@ -401,7 +384,7 @@ dialog h2 {
 }
 .archive-heading h1 {
   font-size: clamp(44px, 5vw, 68px);
-  font-style: italic;
+  font-style: normal;
   letter-spacing: -1px;
 }
 .featured-race {
@@ -499,7 +482,7 @@ dialog h2 {
   font-size: 13px;
 }
 .race-filter select {
-  font: 600 14px Barlow;
+  font: 600 14px Manrope;
   background: white;
   border: 1px solid #bdccd8;
   border-radius: 8px;
@@ -521,14 +504,14 @@ dialog h2 {
   height: 140px;
 }
 .race-card-title {
-  font: 600 27px Condensed;
+  font: 600 27px Manrope;
   margin: 14px 0 8px;
   display: flex;
   gap: 10px;
   align-items: center;
 }
 .race-card-title > span {
-  font: 400 12px Barlow;
+  font: 400 12px Manrope;
   color: #5c7082;
   background: #edf2f6;
   padding: 5px 8px;
@@ -545,7 +528,7 @@ dialog h2 {
 .card-watch {
   background: #bc4436;
   color: white;
-  font: 600 14px Barlow;
+  font: 600 14px Manrope;
   padding: 12px 16px;
   border-radius: 8px;
 }
@@ -726,5 +709,62 @@ select:focus-visible {
     font-size: 12px;
     text-align: right;
     max-width: 125px;
+  }
+}
+/* The showcase uses one uncompressed type family; data keeps tabular figures. */
+h1 {
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+}
+.archive-heading h1 {
+  font-size: 40px;
+  font-weight: 750;
+  letter-spacing: -1.3px;
+}
+.race-card-title {
+  font-size: 20px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+}
+.race-card-title > span {
+  letter-spacing: 0;
+  font-size: 11px;
+}
+.season-tabs button {
+  font-size: 15px;
+  font-weight: 700;
+}
+.card-watch {
+  font-size: 13px;
+  font-weight: 700;
+}
+.race-footer button {
+  font-size: 13px;
+}
+.race-preview svg {
+  height: 125px;
+}
+.results-list li {
+  font-size: 13px;
+  line-height: 1.5;
+}
+dialog h2 {
+  font-size: 28px;
+  letter-spacing: -0.7px;
+}
+@media (max-width: 560px) {
+  .archive-heading h1 {
+    font-size: 34px;
+  }
+  .race-card-title {
+    font-size: 21px;
+  }
+  .season-tabs button {
+    font-size: 13px;
+  }
+  .results-list li {
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    gap: 8px;
   }
 }
