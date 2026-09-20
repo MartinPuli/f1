@@ -40,10 +40,16 @@ test('admin login fails closed, rejects foreign origins and verifies signed sess
   assert.match(cookie, /HttpOnly; Secure; SameSite=Strict/);
   const authenticated = req('/api/decide', { method: 'POST', headers: { cookie } });
   assert.equal(await showcaseAccess(authenticated, env), null);
-  assert.equal(hasAdmin(authenticated, env, Date.now() + 9 * 60 * 60 * 1000), false);
-  assert.equal(hasAdmin(authenticated, { ...env, ADMIN_PASSWORD: 'rotated-password' }), false);
+  assert.equal(await hasAdmin(authenticated, env, Date.now() + 9 * 60 * 60 * 1000), false);
   assert.equal(
-    hasAdmin(req('/api/decide', { headers: { cookie: cookie.replace(/\.[a-f0-9]/, '.z') } }), env),
+    await hasAdmin(authenticated, { ...env, ADMIN_PASSWORD: 'rotated-password' }),
+    false,
+  );
+  assert.equal(
+    await hasAdmin(
+      req('/api/decide', { headers: { cookie: cookie.replace(/\.[a-f0-9]/, '.z') } }),
+      env,
+    ),
     false,
   );
 });
