@@ -869,6 +869,7 @@
   #race-data {
     margin: auto 0 0;
     width: 100%;
+    max-width: none;
     max-height: calc(100dvh - 30px);
     border-radius: 22px 22px 0 0;
     padding: 24px 18px calc(24px + env(safe-area-inset-bottom));
