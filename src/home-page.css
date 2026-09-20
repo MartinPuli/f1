@@ -837,3 +837,89 @@
     margin-left: 0;
   }
 }
+@media (max-width: 700px) {
+  .home-page .hero-screen {
+    padding-top: 68px;
+  }
+  .home-page .site-header nav {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .home-page .site-header nav a {
+    min-height: 44px;
+    font-size: 12px;
+    padding: 10px 16px;
+  }
+  .home-page .site-logo {
+    top: 56px;
+  }
+  .home-page .hero-actions {
+    gap: 3px;
+    padding: 5px;
+  }
+  .home-page .hero-actions button {
+    flex-shrink: 0;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .home-page .hero-watch {
+    padding: 12px;
+    gap: 8px;
+  }
+  #race-data {
+    margin: auto 0 0;
+    width: 100%;
+    max-height: calc(100dvh - 30px);
+    border-radius: 22px 22px 0 0;
+    padding: 24px 18px calc(24px + env(safe-area-inset-bottom));
+  }
+  #race-data h2 {
+    padding-right: 32px;
+  }
+  #race-data .data-close {
+    position: sticky;
+    float: right;
+    top: 0;
+    margin: -10px -4px 0 0;
+    z-index: 2;
+  }
+  #race-data .decision-tabs {
+    gap: 12px;
+  }
+  #race-data .decision-tabs button {
+    flex: 1;
+    min-height: 46px;
+    font-size: 14px;
+  }
+  #race-data .choice-row {
+    font-size: 12px;
+    grid-template-columns: 58px 1fr 34px;
+  }
+  #race-data .choice-row b {
+    font-size: 11px;
+  }
+  #race-data #choice-output {
+    gap: 12px;
+    grid-template-columns: 78px 1fr;
+  }
+  .circuit-caption {
+    min-height: 76px;
+  }
+}
+@media (max-width: 370px) {
+  .home-page .hero-toolbar {
+    left: 8px;
+    right: 8px;
+  }
+  .home-page #show-race-data {
+    padding: 0 6px;
+    font-size: 11px;
+  }
+  .home-page .hero-watch {
+    font-size: 11px;
+    padding: 12px 10px;
+  }
+  .home-page .site-header nav a {
+    font-size: 12px;
+  }
+}
