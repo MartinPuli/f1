@@ -1050,6 +1050,10 @@ document.addEventListener('visibilitychange', () => {
 if (adminMode) $('#setup-dialog').showModal();
 else {
   document.body.classList.add('public-replay');
+  $('#new-race').insertAdjacentHTML(
+    'afterend',
+    '<a class="nav-button" href="/championship.html">All races</a>',
+  );
   $('#exit-replay').onclick = () => location.assign('/championship.html');
 }
 window.jevSnapshot = () => ({

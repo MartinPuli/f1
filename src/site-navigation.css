@@ -1,0 +1,131 @@
+:root {
+  --brand-ink: #243748;
+  --brand-accent: #bc4436;
+  --brand-bg: #f3f6f8;
+  --brand-line: #d9e2e9;
+  --brand-muted: #5c7082;
+}
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #fff;
+  border-bottom: 1px solid var(--brand-line);
+  box-shadow: 0 3px 18px #24374806;
+}
+.site-header-inner {
+  max-width: 1280px;
+  margin: auto;
+  padding: 0 36px;
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 36px;
+}
+.site-logo {
+  flex-shrink: 0;
+}
+.site-logo img {
+  display: block;
+  width: 175px;
+  height: 42px;
+}
+.site-header nav {
+  display: flex;
+  gap: 8px;
+  margin: auto;
+}
+.site-header nav a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 12px 17px;
+  border-radius: 8px;
+  font:
+    600 15px Barlow,
+    sans-serif;
+  color: var(--brand-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-header nav a:hover {
+  background: #f3f6f8;
+  color: var(--brand-ink);
+}
+.site-header nav a[aria-current='page'] {
+  background: #faeae7;
+  color: #a2372b;
+  box-shadow: inset 0 -3px var(--brand-accent);
+}
+.site-admin {
+  font:
+    600 13px Barlow,
+    sans-serif;
+  color: var(--brand-muted);
+  white-space: nowrap;
+  text-decoration: none;
+}
+.site-header a:focus-visible {
+  outline: 3px solid var(--brand-accent);
+  outline-offset: 3px;
+}
+.skip-content {
+  position: fixed;
+  left: 20px;
+  top: -80px;
+  z-index: 100;
+  padding: 14px 20px;
+  background: #fff;
+  color: var(--brand-ink);
+}
+.skip-content:focus {
+  top: 12px;
+}
+.site-header:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 76px;
+  height: 4px;
+  background: var(--brand-accent);
+  transform: skewX(-25deg);
+  transform-origin: top left;
+}
+html {
+  scroll-padding-top: 112px !important;
+}
+@media (max-width: 760px) {
+  .site-header-inner {
+    padding: 14px 20px 0;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-height: 0;
+  }
+  .site-logo img {
+    width: 143px;
+    height: 35px;
+  }
+  .site-admin {
+    margin-left: auto;
+  }
+  .site-header nav {
+    order: 3;
+    width: 100%;
+    margin: 0;
+    justify-content: space-between;
+    gap: 0;
+  }
+  .site-header nav a {
+    font-size: 13px;
+    padding: 13px 8px;
+    border-radius: 6px 6px 0 0;
+    min-height: 46px;
+  }
+  .site-header nav a:first-child {
+    margin-left: -8px;
+  }
+  html {
+    scroll-padding-top: 132px !important;
+  }
+}

@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       input: {
         race: 'index.html',
+        prompts: 'prompts.html',
         watch: 'watch.html',
         admin: 'admin.html',
         championship: 'championship.html',

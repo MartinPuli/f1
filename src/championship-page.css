@@ -17,10 +17,10 @@
   font-display: swap;
 }
 :root {
-  --paper: #f5f5ef;
-  --ink: #252b28;
-  --muted: #606b65;
-  --line: #d6dcd4;
+  --paper: #f3f6f8;
+  --ink: #243748;
+  --muted: #5c7082;
+  --line: #d9e2e9;
   --accent: #bc4436;
   --display: 'Barlow Condensed', sans-serif;
   --mono: ui-monospace, SFMono-Regular, Consolas, monospace;

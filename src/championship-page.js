@@ -1,3 +1,4 @@
+import { siteNavigation } from './site-navigation.js';
 import './championship-page.css';
 import { DRIVERS } from './race-config.js';
 import { standings } from './championship.js';
@@ -128,8 +129,8 @@ function validation(id) {
 function render() {
   const rounds = season.rounds.filter((r) => r.phase === 'championship');
   const table = standings(season.rounds, DRIVERS);
-  host.innerHTML = `<section class="season-title"><div><p class="eyebrow">JEVRACE / CHAMPIONSHIP</p><h1>Season 01</h1></div><div class="season-meta"><span class="status">${season.status === 'complete' ? 'Season complete' : esc(season.status)}</span><p>${season.rounds.length} races · 10 drivers<br/>${esc(season.resolvedModel || season.model)} · 2 laps<br/>No scripted incidents</p><a href="/championship/season.json" download>Download history ↓</a> · <a href="/championship/results.csv" download>CSV</a></div></section>
-  <nav class="season-tabs" aria-label="Championship views"><button data-tab="championship" aria-pressed="true">Championship <span>${rounds.length}/3</span></button><button data-tab="training" aria-pressed="false">Prompt lab <span>${(search || season).generations.length} versions</span></button></nav>
+  host.innerHTML = `<section class="season-title"><div><p class="eyebrow">ORIGINAL THREE-RACE CHAMPIONSHIP</p><h1>Race results</h1></div><div class="season-meta"><span class="status">${season.status === 'complete' ? 'Season complete' : esc(season.status)}</span><p>${season.rounds.length} races · 10 drivers<br/>${esc(season.resolvedModel || season.model)} · 2 laps<br/>No scripted incidents</p><a href="/championship/season.json" download>Download history ↓</a> · <a href="/championship/results.csv" download>CSV</a></div></section>
+  <nav class="season-tabs" aria-label="Championship views"><button data-tab="championship" aria-pressed="true">Championship <span>${rounds.length}/3</span></button><button data-tab="training" aria-pressed="false">Prompt data <span>${(search || season).generations.length} versions</span></button></nav>
   <section id="championship-view"><div class="champ-layout"><section><div class="section-heading"><h2>Driver standings</h2><span>POINTS</span></div><ol class="standings">${table
     .map((d, i) => {
       const paint = DRIVERS.find((p) => p.id === d.id);
@@ -187,6 +188,7 @@ try {
   }
   seed = season.trainingSeeds[0];
   render();
+  siteNavigation('results');
 } catch (error) {
   host.innerHTML = `<h1>Championship</h1><p role="alert">${esc(error.message)}</p><a href="/championship.html">Try again</a>`;
 }

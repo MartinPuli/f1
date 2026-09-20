@@ -4,7 +4,8 @@ JEVRACE is a public showcase of a racing experiment with Jev: ten driver prompts
 
 - `/` — project walkthrough and prompt comparisons.
 - `/championship.html` — recorded races, grouped into viewing seasons.
-- `/lab.html` — detailed results and prompt history.
+- `/prompts.html` — driver-by-driver prompt versions, race times and replay links.
+- `/lab.html` — detailed championship results and experiment data.
 - `/admin.html` — private race creation. Production requires an admin password.
 
 ## Run locally
