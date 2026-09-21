@@ -4,40 +4,78 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#243748" />
-
-    <title>Prompts · JEVRACE</title>
     <link rel="icon" href="/favicon.svg" />
+    <title>Driver prompts and results | JEVRACE</title>
     <meta
       name="description"
-      content="Read each driver’s prompts and compare recorded race times across prompt versions and circuits."
+      content="Read the driver prompts tested with JEV. Compare versions on the same circuit and watch the races behind each result."
     />
     <link rel="canonical" href="https://jevf1.vercel.app/prompts.html" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="JEVRACE" />
-    <meta property="og:title" content="Prompts · JEVRACE" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Driver prompts and results | JEVRACE" />
     <meta
       property="og:description"
-      content="Read each driver’s prompts and compare recorded race times across prompt versions and circuits."
+      content="Read the driver prompts tested with JEV. Compare versions on the same circuit and watch the races behind each result."
     />
     <meta property="og:url" content="https://jevf1.vercel.app/prompts.html" />
-    <meta property="og:image" content="https://jevf1.vercel.app/og-jevrace.png" />
+    <meta property="og:image" content="https://jevf1.vercel.app/og-racing-v2.png" />
+    <meta property="og:image:secure_url" content="https://jevf1.vercel.app/og-racing-v2.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="JEVRACE: ten drivers, real Jev decisions, 30 races across six circuits. Recorded race footage."
+      content="JEVRACE cars on a 3D circuit. 30 recorded races across six circuits."
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Prompts · JEVRACE" />
+    <meta name="twitter:title" content="Driver prompts and results | JEVRACE" />
     <meta
       name="twitter:description"
-      content="Read each driver’s prompts and compare recorded race times across prompt versions and circuits."
+      content="Read the driver prompts tested with JEV. Compare versions on the same circuit and watch the races behind each result."
     />
-    <meta name="twitter:image" content="https://jevf1.vercel.app/og-jevrace.png" />
-    <meta name="twitter:image:alt" content="JEVRACE — real Jev-controlled racing" />
+    <meta name="twitter:image" content="https://jevf1.vercel.app/og-racing-v2.png" />
+    <meta
+      name="twitter:image:alt"
+      content="JEVRACE cars on a 3D circuit. 30 recorded races across six circuits."
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "@id": "https://jevf1.vercel.app/prompts.html#page",
+        "name": "Driver prompts and results | JEVRACE",
+        "url": "https://jevf1.vercel.app/prompts.html",
+        "inLanguage": "en",
+        "description": "Read the driver prompts tested with JEV. Compare versions on the same circuit and watch the races behind each result.",
+        "image": "https://jevf1.vercel.app/og-racing-v2.png",
+        "isPartOf": {
+          "@id": "https://jevf1.vercel.app/#website"
+        }
+      }
+    </script>
   </head>
   <body>
-    <div id="project"></div>
+    <div id="project">
+      <noscript
+        ><main>
+          <h1>Driver prompts</h1>
+          <p>
+            The experiment tested six prompt versions on the same two circuits. JEV selected
+            strategy changes from predefined options; the system updated prompts and compared
+            recorded times. Later comparisons repeated races before keeping changes.
+          </p>
+          <p><a href="/project-story.json">Read prompts and measured results</a></p>
+          <nav>
+            <a href="/">JEVRACE</a> · <a href="/championship.html">Races</a> ·
+            <a href="/leaderboard.html">Leaderboard</a> · <a href="/prompts.html">Prompts</a>
+          </nav>
+          <p>Enable JavaScript to watch replays and use the filters.</p>
+        </main></noscript
+      >
+    </div>
     <script type="module" src="/src/project-page.js"></script>
   </body>
 </html>

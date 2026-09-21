@@ -1,11 +1,26 @@
 # JEVRACE
 
-JEVRACE is a recorded AI racing experiment using TypeSafe Jev. Ten drivers have individual prompts. Jev chooses lane, pace and battery strategy from each driver’s observations; the simulator computes vehicle physics and contacts. The published archive contains 30 completed races across six circuit seeds, with responses from jev-1.13.0. Replays make no new inference requests. These are simulated cars with real model decisions, not real-world motorsport.
+JEVRACE is a racing experiment with 10 AI drivers controlled by TypeSafe JEV. The public site shows 30 completed race recordings on six seeded circuits. It does not let visitors start new races.
 
-- [Races](https://jevf1.vercel.app/championship.html): Recorded races and results.
-- [Leaderboard](https://jevf1.vercel.app/leaderboard.html): Wins, average finishing positions, best laps and finishes.
-- [Prompts](https://jevf1.vercel.app/prompts.html): Driver prompts, tested versions and recorded times.
-- [Race data](https://jevf1.vercel.app/race-archive.json): Race IDs, seeds, results and recording paths.
-- [Prompt data](https://jevf1.vercel.app/project-story.json): Prompts and measured comparisons.
+## How it works
 
-Compare improvements on the same circuit. Training comparisons are exploratory; later paired confirmations are separate evidence. Circuit display names are labels for seeded tracks. Viewing seasons group existing recordings, not additional races.
+Each driver has a prompt and observations about its car, the track and nearby traffic. JEV chooses a lane, pace and battery action. The simulator handles steering, acceleration, braking and collisions. The recordings contain responses from jev-1.13.0. Watching a replay makes no new model calls.
+
+Between test races, JEV selected a strategy from predefined options. The system added that strategy to the driver prompt, ran races on the same circuits and compared results. Later tests tried smaller edits and repeated comparisons. This changed prompts, not model weights. The experiment has stopped; it is not currently training or running new races.
+
+## Results and limits
+
+Six prompt versions were tested on circuits 8912 and 2046. Lewis JEVmilton had the largest observed reduction in mean total race time in that comparison: 41.0875 seconds for v0 and 36.875 seconds for v3, a reduction of 4.2125 seconds (10.25%). Each version ran once on each circuit, for two laps. This exploratory result is not a confirmed repeated gain or an increase in speed of 10.25%.
+
+A separate four-pair comparison confirmed a 6.45% reduction for Oscar JEVastri, from 40.2875 to 37.6875 seconds on average. These comparisons use different baselines and should not be combined. Traffic and response latency can affect the results. Max JEVstappen won 28 of the 30 published races.
+
+The cars and tracks are simulated. The saved JEV API responses are real. Circuit names label generated tracks; they are not official Formula 1 circuits. Collections group existing recordings, not extra races or independent seasons.
+
+## Sources
+
+- [Race archive](https://jevf1.vercel.app/championship.html): Race recordings and results.
+- [Standings](https://jevf1.vercel.app/leaderboard.html): Driver wins, finishing positions and lap times.
+- [Prompts](https://jevf1.vercel.app/prompts.html): Tested prompts, versions and times.
+- [Race records](https://jevf1.vercel.app/race-archive.json): Recording paths, circuit seeds and results.
+- [Prompt records](https://jevf1.vercel.app/project-story.json): Prompt histories and repeated comparisons.
+- [Experiment log](https://jevf1.vercel.app/prompt-search/season.json): Strategy choices, run IDs and selection method.

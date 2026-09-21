@@ -4,44 +4,76 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f5f5ef" />
-
-    <title>Races · JEVRACE</title>
     <link rel="icon" href="/favicon.svg" />
+    <title>Race replays | JEVRACE</title>
     <meta
       name="description"
-      content="Watch 30 recorded races driven by real Jev decisions across six circuits. Browse race results and replays."
+      content="Watch 30 recorded races on six circuits. Follow each driver and inspect the JEV responses behind their decisions."
     />
     <link rel="canonical" href="https://jevf1.vercel.app/championship.html" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="JEVRACE" />
-    <meta property="og:title" content="Races · JEVRACE" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Race replays | JEVRACE" />
     <meta
       property="og:description"
-      content="Watch 30 recorded races driven by real Jev decisions across six circuits. Browse race results and replays."
+      content="Watch 30 recorded races on six circuits. Follow each driver and inspect the JEV responses behind their decisions."
     />
     <meta property="og:url" content="https://jevf1.vercel.app/championship.html" />
-    <meta property="og:image" content="https://jevf1.vercel.app/og-jevrace.png" />
+    <meta property="og:image" content="https://jevf1.vercel.app/og-racing-v2.png" />
+    <meta property="og:image:secure_url" content="https://jevf1.vercel.app/og-racing-v2.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="JEVRACE: ten drivers, real Jev decisions, 30 races across six circuits. Recorded race footage."
+      content="JEVRACE cars on a 3D circuit. 30 recorded races across six circuits."
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Races · JEVRACE" />
+    <meta name="twitter:title" content="Race replays | JEVRACE" />
     <meta
       name="twitter:description"
-      content="Watch 30 recorded races driven by real Jev decisions across six circuits. Browse race results and replays."
+      content="Watch 30 recorded races on six circuits. Follow each driver and inspect the JEV responses behind their decisions."
     />
-    <meta name="twitter:image" content="https://jevf1.vercel.app/og-jevrace.png" />
-    <meta name="twitter:image:alt" content="JEVRACE — real Jev-controlled racing" />
+    <meta name="twitter:image" content="https://jevf1.vercel.app/og-racing-v2.png" />
+    <meta
+      name="twitter:image:alt"
+      content="JEVRACE cars on a 3D circuit. 30 recorded races across six circuits."
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "@id": "https://jevf1.vercel.app/championship.html#page",
+        "name": "Race replays | JEVRACE",
+        "url": "https://jevf1.vercel.app/championship.html",
+        "inLanguage": "en",
+        "description": "Watch 30 recorded races on six circuits. Follow each driver and inspect the JEV responses behind their decisions.",
+        "image": "https://jevf1.vercel.app/og-racing-v2.png",
+        "isPartOf": {
+          "@id": "https://jevf1.vercel.app/#website"
+        }
+      }
+    </script>
   </head>
   <body>
     <header class="masthead">
       <a href="/" aria-label="JEVRACE race viewer"><img src="/logo.svg" alt="JEVRACE" /></a
       ><a href="/">The project ↗</a>
     </header>
-    <main id="season"><p role="status">Loading races…</p></main>
+    <main id="season">
+      <p role="status">Loading races…</p>
+      <noscript
+        ><h1>Race replays</h1>
+        <p>
+          Watch 30 recorded JEVRACE races across six circuits. Recordings include driver prompts,
+          saved JEV decisions and final times.
+        </p>
+        <a href="/race-archive.json">Download recorded results</a>
+        <p>Enable JavaScript to watch races and use the filters.</p></noscript
+      >
+    </main>
     <script type="module" src="/src/archive-page.js"></script>
   </body>
 </html>
